@@ -1,6 +1,8 @@
 // zap van dink
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
+
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
@@ -191,8 +193,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final EntityDataAccessor<Boolean> DATA_BEAM_DEPLETED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_CUSTOM_DIVE_LOOP_ENABLED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
-    public static final float MAX_BEAM_YAW_DEG = 40.0f;
-    public static final float MAX_BEAM_PITCH_DEG = 50.0f;
+    public static final float MAX_BEAM_YAW_DEG = RaevyxStatProfile.BeamAbility.MAX_AIM_YAW_DEGREES;
+    public static final float MAX_BEAM_PITCH_DEG = RaevyxStatProfile.BeamAbility.MAX_AIM_PITCH_DEGREES;
+    private static final DragonCombatAim.Profile BEAM_AIM =
+            new DragonCombatAim.Profile(MAX_BEAM_YAW_DEG, MAX_BEAM_PITCH_DEG, 9, 0.0);
     public static final double BEAM_RANGE = RaevyxStatProfile.Entity.BEAM_RANGE;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final int RIDER_LANDING_BLEND_DURATION = RaevyxStatProfile.Entity.RIDER_LANDING_BLEND_DURATION; // ticks to keep landing blend active after triggering
@@ -212,6 +216,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     private final ScreenShakeComponent screenShakeComponent;
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final DragonBreathPose breathPose = new DragonBreathPose(RaevyxStatProfile.BreathPose.PROFILE);
     public int timeFlying = 0;
     public boolean landingFlag = false;
     public boolean landedFlag = false;
@@ -750,6 +755,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         return computeBeamStartFallback(partialTicks);
     }
+
+    public DragonBreathPose getBreathPose() { return breathPose; }
 
     public boolean isBeaming() { return getBooleanData(DATA_BEAMING); }
     public void setBeaming(boolean beaming) {
@@ -1672,6 +1679,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         if (level().isClientSide) {
             tickClientSideUpdates();
+            tickBreathPose();
             return;
         }
         tickSittingState();
@@ -1761,12 +1769,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             tickAnimationStates();
         }
         if (this.isDodging()) {
+            tickBreathPose();
             return;
         }
 
         if (isBeaming() || isBeamGlowActive() || beamAimDir != null) {
             tickBeamLook();
         }
+        tickBreathPose();
 
         if (!level().isClientSide && isBaby()) {
             if (getTarget() != null) {
@@ -1883,6 +1893,30 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return beamAimDir;
     }
 
+    private void tickBreathPose() {
+        breathPose.tick(this, isBeaming() || isBeamGlowActive(), getBeamVisualDirection(1.0F));
+    }
+
+    public Vec3 getBeamVisualDirection(float partialTick) {
+        Entity rider = getControllingPassenger();
+        if (level().isClientSide && rider instanceof LivingEntity) {
+            Vec3 aim = DragonAimHelper.clampDirectionToHead(rider.getViewVector(partialTick),
+                    Mth.rotLerp(partialTick, yHeadRotO, yHeadRot), Mth.lerp(partialTick, xRotO, getXRot()),
+                    MAX_BEAM_YAW_DEG, MAX_BEAM_PITCH_DEG);
+            if (aim != null) return aim;
+        }
+        if (!level().isClientSide && beamAimDir != null) return beamAimDir;
+        // Read the replicated shot, not the animated mouth since the pose cannot chase its own locator
+        Vec3 start = getBeamStartPosition();
+        Vec3 end = getBeamEndPosition();
+        if (start != null && end != null) {
+            Vec3 aim = DragonAimHelper.directionTo(start, end);
+            if (aim != null) return aim;
+        }
+        return Vec3.directionFromRotation(Mth.lerp(partialTick, xRotO, getXRot()),
+                Mth.rotLerp(partialTick, yHeadRotO, yHeadRot));
+    }
+
     public Vec3 refreshBeamAimDirection(Vec3 start, boolean smooth) {
         if (getControllingPassenger() == null && aiBeamLockedDirection != null) {
             beamAimDir = aiBeamLockedDirection;
@@ -1891,7 +1925,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return beamAimDir;
         }
         if (!level().isClientSide && getControllingPassenger() == null && isTargetValid(getTarget())) {
-            beamAimDir = getCombatAim().track(getTarget(), start, DragonCombatAim.BEAM);
+            beamAimDir = getCombatAim().track(getTarget(), start, BEAM_AIM);
             updateBeamOffsets(beamAimDir);
             beamAimRefreshTick = tickCount;
             return beamAimDir;
@@ -2012,7 +2046,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return;
         }
         if (isAerial() && getControllingPassenger() == null) return;
-        float desiredYaw = (float)(Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
+        float desiredYaw = DragonAimHelper.yawOrFallback(aimDir, this.yHeadRot);
         float desiredPitch = (float)(-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
 
         float headYawSpeed = 15.0F;
@@ -2050,7 +2084,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
 
         Vec3 dir = direction.normalize();
-        float finalYawDeg = (float)(Math.atan2(-dir.x, dir.z) * (180.0 / Math.PI));
+        float finalYawDeg = DragonAimHelper.yawOrFallback(dir, this.yHeadRot);
         float finalPitchDeg = (float)(-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0 / Math.PI));
 
         float headYaw = this.yHeadRot;

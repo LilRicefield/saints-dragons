@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.model;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
@@ -26,6 +27,31 @@ public final class DragonModelPoseHelper {
 
     public static Optional<GeoBone> bone(GeoModel<?> model, String boneName) {
         return model.getBone(boneName);
+    }
+
+    public static DragonBreathPose.Editor poseEditor(GeoModel<?> model) {
+        return new DragonBreathPose.Editor() {
+            @Override
+            public String parent(String name) {
+                return model.getBone(name).map(GeoBone::getParent).map(GeoBone::getName).orElse(null);
+            }
+
+            @Override
+            public float rotation(String name, int axis) {
+                return model.getBone(name).map(bone -> axis == 0 ? bone.getRotX()
+                        : axis == 1 ? bone.getRotY() : bone.getRotZ()).orElse(0.0F);
+            }
+
+            @Override
+            public void rotate(String name, int axis, float rotation, boolean fromInitial) {
+                model.getBone(name).ifPresent(bone -> {
+                    var initial = bone.getInitialSnapshot();
+                    if (axis == 0) bone.setRotX((fromInitial ? initial.getRotX() : bone.getRotX()) + rotation);
+                    else if (axis == 1) bone.setRotY((fromInitial ? initial.getRotY() : bone.getRotY()) + rotation);
+                    else bone.setRotZ((fromInitial ? initial.getRotZ() : bone.getRotZ()) + rotation);
+                });
+            }
+        };
     }
 
     public static void addRotationX(GeoModel<?> model, String boneName, float rotation) {
@@ -70,10 +96,15 @@ public final class DragonModelPoseHelper {
 
     public static void applyGroundNeckTurn(GeoModel<?> model, DragonEntity entity, float partialTick,
                                            WeightedBoneChain chain, double clampDegrees) {
+        applyGroundNeckTurn(model, entity, partialTick, chain, clampDegrees, 1.0F);
+    }
+
+    public static void applyGroundNeckTurn(GeoModel<?> model, DragonEntity entity, float partialTick,
+                                           WeightedBoneChain chain, double clampDegrees, float weight) {
         double velocity = entity.getYawVelocity().get(partialTick);
         velocity = Mth.clamp(velocity, -clampDegrees, clampDegrees);
         float turnRad = (float) (-velocity * Mth.DEG_TO_RAD);
-        applyWeightedRotationY(model, chain, turnRad);
+        applyWeightedRotationY(model, chain, turnRad * weight);
     }
 
     public static void applyTailDrag(GeoModel<?> model, DragonEntity entity, float partialTick,

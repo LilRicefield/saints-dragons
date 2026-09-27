@@ -133,7 +133,8 @@ public final class DragonCombatAim {
         if (!isActive()) return movementYaw;
         // At low speed the body can face the shot while making a small lateral correction.
         float allowance = (float) Mth.clamp((1.0D - dragon.getDeltaMovement().horizontalDistance()) * 240.0D, 0, 180);
-        return movementYaw + Mth.clamp(Mth.wrapDegrees(yaw(desired) - movementYaw), -allowance, allowance);
+        return movementYaw + Mth.clamp(Mth.wrapDegrees(DragonAimHelper.yawOrFallback(desired, movementYaw)
+                - movementYaw), -allowance, allowance);
     }
 
     public Shot assess(Vec3 origin, Vec3 firingDirection, LivingEntity target, double range,
@@ -259,7 +260,7 @@ public final class DragonCombatAim {
                 Mth.clamp(point.z, box.minZ, box.maxZ));
     }
 
-    private static float yaw(Vec3 direction) { return (float) Math.toDegrees(Math.atan2(-direction.x, direction.z)); }
+    private float yaw(Vec3 direction) { return DragonAimHelper.yawOrFallback(direction, dragon.yBodyRot); }
     private static float pitch(Vec3 direction) { return (float) -Math.toDegrees(Math.atan2(direction.y, direction.horizontalDistance())); }
 
     public record Profile(float yawLimit, float pitchLimit, float turnDegrees, double leadTicks) { }

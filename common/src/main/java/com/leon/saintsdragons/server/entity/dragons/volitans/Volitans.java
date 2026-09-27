@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
+
 import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
@@ -11,6 +13,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightP
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
@@ -216,8 +219,8 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_COOLDOWN_TICKS;
-    private static final int RIDER_DASH_SOUND_TICKS = VolitansStatProfile.Entity.RIDER_DASH_SOUND_TICKS; // 3.0s
-    private static final int RIDER_DODGE_SOUND_TICKS = 60; // 3.0s
+    private static final int RIDER_DASH_SOUND_TICKS = VolitansStatProfile.Entity.RIDER_DASH_SOUND_TICKS;
+    private static final int RIDER_DODGE_SOUND_TICKS = 60;
     private static final int FLEX_CONTROL_LOCK_TICKS = 65;
     private static final int FLEX_COOLDOWN_TICKS = VolitansStatProfile.Entity.FLEX_COOLDOWN_TICKS;
     private static final int RIDER_BACK_DASH_LOCK_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_LOCK_TICKS;
@@ -236,10 +239,10 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private static final int RIDER_BACK_DASH_SPIKE_DELAY_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_DELAY_TICKS;
     private static final double RIDER_BACK_DASH_SPIKE_Y_OFFSET = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_Y_OFFSET;
     private static final float REACTIVE_HIT_EVADE_CHANCE = VolitansStatProfile.Entity.REACTIVE_HIT_EVADE_CHANCE;
-    private static final int RIDER_FORWARD_DASH_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DURATION_TICKS; // 1.25s
+    private static final int RIDER_FORWARD_DASH_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DURATION_TICKS;
     private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DISTANCE_BLOCKS;
     private static final double RIDER_FORWARD_DASH_HORIZONTAL_DRAG = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_HORIZONTAL_DRAG;
-    private static final int RIDER_FORWARD_DASH_DAMAGE_TICK = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE_TICK; // late hit near animation end
+    private static final int RIDER_FORWARD_DASH_DAMAGE_TICK = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE_TICK;
     private static final float RIDER_FORWARD_DASH_DAMAGE = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE;
     private static final double RIDER_FORWARD_DASH_DAMAGE_RADIUS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE_RADIUS;
     private static final int RIDER_SIDE_DODGE_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_SIDE_DODGE_DURATION_TICKS;
@@ -266,6 +269,10 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
             .build();
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final DragonBreathPose breathPose = new DragonBreathPose(VolitansStatProfile.BreathPose.PROFILE);
+    private static final DragonCombatAim.Profile BREATH_AIM = new DragonCombatAim.Profile(
+            VolitansStatProfile.BreathAbility.MAX_AIM_YAW_DEGREES,
+            VolitansStatProfile.BreathAbility.MAX_AIM_PITCH_DEGREES, 8, 1.0);
     private final VolitansBreathStream breathStream = new VolitansBreathStream(this);
     private final DragonCombatLearning combatLearning = new DragonCombatLearning(this,
             DragonCombatLearning.Profile.standard(DragonCombatLearning.Attack.BREATH));
@@ -1091,6 +1098,8 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         tickBankingLogic();
         tickBarrelRollLogic();
         tickPitchingLogic();
+        breathPose.tick(this, (isBreathing() || getBreathIntroAge(1.0F) >= 0.0F)
+                && !isBurrowing() && !isUltimateSlamActive(), getBreathVisualDirection(1.0F));
 
         this.noPhysics = false;
         boolean shouldUseAirNavigation = isAerial();
@@ -1397,6 +1406,24 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         Vec3 mouth = getClientLocatorPosition("breathVisualOrigin");
         if (mouth != null) return mouth;
         return getBreathOrigin().subtract(position()).add(getPosition(partialTick));
+    }
+
+    public DragonBreathPose getBreathPose() { return breathPose; }
+
+    public Vec3 getBreathVisualDirection(float partialTick) {
+        Entity rider = getControllingPassenger();
+        if (rider instanceof LivingEntity) return rider.getViewVector(partialTick);
+        // Combat aim replicates its pitch and head yaw
+        // Also works for observers whose client has no AI target entity
+        return Vec3.directionFromRotation(Mth.lerp(partialTick, xRotO, getXRot()),
+                Mth.rotLerp(partialTick, yHeadRotO, yHeadRot));
+    }
+
+    public Vec3 refreshBreathAimDirection(Vec3 origin) {
+        Vec3 riderDirection = DragonAimHelper.riderViewDirection(this);
+        if (riderDirection != null) return riderDirection;
+        if (isTargetValid(getTarget())) return getCombatAim().track(getTarget(), origin, BREATH_AIM);
+        return DragonAimHelper.lookDirectionOrDefault(this);
     }
 
     private Vec3 computeBreathOriginFallback() {
@@ -1921,7 +1948,7 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
 
     public DragonCombatAim.Shot getAiBreathShot(LivingEntity target) {
         Vec3 origin = getBreathOrigin();
-        Vec3 direction = getCombatAim().track(target, origin, DragonCombatAim.BREATH);
+        Vec3 direction = getCombatAim().track(target, origin, BREATH_AIM);
         origin = getBreathOrigin();
         return getCombatAim().assess(origin, direction, target, VolitansBreathMotion.RANGE,
                 0, VolitansBreathStream.collisionProfile(isPoisonBreathMode()));
@@ -2589,7 +2616,8 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         return DATA_ACCUMULATED_ROLL;
     }
 
-    // remove this and voli ain't pitching right
+    // Remove this and voli ain't pitching right
+    // Needs custom pitching logic for both water and air locomotions
     private void tickPitchingLogic() {
         prevFlightPitchRad = flightPitchRad;
         if (level().isClientSide) {

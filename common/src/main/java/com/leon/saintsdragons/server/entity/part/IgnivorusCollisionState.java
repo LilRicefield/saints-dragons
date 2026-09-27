@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.part;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -138,13 +139,28 @@ public final class IgnivorusCollisionState {
     private void applySteering(CollisionRig rig, float[] pose) {
         if (!dragon.isAlive() || dragon.isScentAssessing()) return;
         IgnivorusPoseOffsets.apply(dragon, 1.0F, -dragon.getXRot(),
-                -Mth.wrapDegrees(dragon.yHeadRot - dragon.yBodyRot), (name, axis, rotation, fromInitial) -> {
-                    int index = rig.index(name);
-                    if (index < 0) return;
-                    Vec3 initial = rig.bones().get(index).rotation();
-                    float base = fromInitial ? (float) (axis == 0 ? initial.x : axis == 1 ? initial.y : initial.z)
-                            : pose[index * 9 + axis];
-                    pose[index * 9 + axis] = base + (float) Math.toDegrees(rotation) * (axis < 2 ? -1 : 1);
+                -Mth.wrapDegrees(dragon.yHeadRot - dragon.yBodyRot), new DragonBreathPose.Editor() {
+                    @Override
+                    public String parent(String name) {
+                        int index = rig.index(name);
+                        return index < 0 ? null : rig.bones().get(index).parent();
+                    }
+
+                    @Override
+                    public float rotation(String name, int axis) {
+                        int index = rig.index(name);
+                        return index < 0 ? 0.0F : pose[index * 9 + axis] * Mth.DEG_TO_RAD * (axis < 2 ? -1 : 1);
+                    }
+
+                    @Override
+                    public void rotate(String name, int axis, float rotation, boolean fromInitial) {
+                        int index = rig.index(name);
+                        if (index < 0) return;
+                        Vec3 initial = rig.bones().get(index).rotation();
+                        float base = fromInitial ? (float) (axis == 0 ? initial.x : axis == 1 ? initial.y : initial.z)
+                                : pose[index * 9 + axis];
+                        pose[index * 9 + axis] = base + (float) Math.toDegrees(rotation) * (axis < 2 ? -1 : 1);
+                    }
                 });
     }
 }

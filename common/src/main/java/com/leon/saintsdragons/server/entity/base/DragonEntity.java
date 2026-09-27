@@ -228,6 +228,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.waterPathController = new AsyncSwimController(this, this.waterPathSteering);
     }
 
+    private boolean isSimulationActiveForTracking() {
+        if (!(level() instanceof ServerLevel serverLevel)) return true;
+        Entity vehicle = getRootVehicle();
+        if (vehicle instanceof ServerPlayer) return true;
+        for (Entity passenger : vehicle.getIndirectPassengers()) {
+            if (passenger instanceof ServerPlayer) return true;
+        }
+        return serverLevel.isPositionEntityTicking(vehicle.blockPosition());
+    }
+
+    @Override
+    public boolean broadcastToPlayer(ServerPlayer player) {
+        return super.broadcastToPlayer(player) && isSimulationActiveForTracking();
+    }
+
     @Override
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;

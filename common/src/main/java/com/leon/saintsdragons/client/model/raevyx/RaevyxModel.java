@@ -73,6 +73,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
+            entity.getBreathPose().apply(entity, partialTick, DragonModelPoseHelper.poseEditor(this));
         }
     }
 
@@ -143,7 +144,8 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
         }
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 35.0f * Mth.DEG_TO_RAD;
-        DragonModelPoseHelper.applyWeightedRotationY(this, NECK_FOLLOW, neckLeanRad);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK_FOLLOW,
+                neckLeanRad * (1.0F - entity.getBreathPose().weight(partialTick)));
     }
 
     private void applyGroundNeckTurn(Raevyx entity, float partialTick) {
@@ -151,7 +153,8 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             return;
         }
 
-        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK_FOLLOW, 25.0);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK_FOLLOW, 25.0,
+                1.0F - entity.getBreathPose().weight(partialTick));
     }
 
     private void applyNeckFollow(Raevyx entity, EntityModelData modelData, float partialTick) {
@@ -162,7 +165,9 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_TURN, lookPitchRad, totalYawRad);
+        float lookWeight = 1.0F - entity.getBreathPose().weight(partialTick);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_TURN,
+                lookPitchRad * lookWeight, totalYawRad * lookWeight);
     }
 
     private void applyTailDrag(Raevyx entity, float partialTick) {

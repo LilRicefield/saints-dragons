@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
 
 import com.leon.saintsdragons.server.entity.part.IgnivorusCollisionState;
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
@@ -263,8 +264,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final double BULLDOZE_DAMAGE_HALF_WIDTH = IgnivorusStatProfile.Entity.BULLDOZE_DAMAGE_HALF_WIDTH;
     private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = IgnivorusStatProfile.Entity.BULLDOZE_DAMAGE_HALF_HEIGHT;
     private static final int BULLDOZE_ENTER_TICKS = 25;
-    private static final float MAX_FIRE_YAW_DEG = 70.0F;
-    private static final float MAX_FIRE_PITCH_DEG = 55.0F;
+    private static final float MAX_FIRE_YAW_DEG = IgnivorusStatProfile.FireBreathAbility.MAX_AIM_YAW_DEGREES;
+    private static final float MAX_FIRE_PITCH_DEG = IgnivorusStatProfile.FireBreathAbility.MAX_AIM_PITCH_DEGREES;
     private static final double LEAP_ARC_FORWARD_DISTANCE = IgnivorusStatProfile.Entity.LEAP_ARC_FORWARD_DISTANCE;
     private static final double LEAP_ARC_HEIGHT = IgnivorusStatProfile.Entity.LEAP_ARC_HEIGHT;
     private static final int LEAP_ARC_ASCENT_TICKS = IgnivorusStatProfile.Entity.LEAP_ARC_ASCENT_TICKS;
@@ -334,6 +335,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private int airTicks;
     public int groundTicks;
     private Vec3 fireAimDir;
+    private final DragonBreathPose breathPose = new DragonBreathPose(IgnivorusStatProfile.BreathPose.PROFILE);
     private String aiFireBreathDecision = "idle";
     private String aiFireballDecision = "idle";
     private final DragonCombatLearning combatLearning = new DragonCombatLearning(this,
@@ -365,7 +367,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             DragonCombatFlightProfile.ignivorus(ExpandingBreathSection.DEFAULT_RANGE, false);
     private static final DragonCombatFlightProfile COMBAT_FLIGHT_PHASE2 =
             DragonCombatFlightProfile.ignivorus(ExpandingBreathSection.DEFAULT_RANGE, true);
-    private static final DragonCombatAim.Profile AIR_FIRE_AIM = new DragonCombatAim.Profile(70, 55, 3, 1.0);
+    private static final DragonCombatAim.Profile GROUND_FIRE_AIM =
+            new DragonCombatAim.Profile(MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG, 6, 1.0);
+    private static final DragonCombatAim.Profile AIR_FIRE_AIM =
+            new DragonCombatAim.Profile(MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG, 3, 1.0);
     private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(this,
             () -> isPhase2Active() ? COMBAT_FLIGHT_PHASE2 : COMBAT_FLIGHT_PHASE1,
             this::isAiRangedFlightReady, this::isAiCombatMovementCommitted);
@@ -679,6 +684,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tickBankingLogic();
         tickBarrelRollLogic();
         tickStandardPitchingLogic();
+        breathPose.tick(this, isBreathingFire() && getSkyfallElapsedTicks(1.0F) < 0.0F,
+                getFireBreathVisualDirection(1.0F));
+        collisionState.invalidate();
 
         if (!level().isClientSide) {
             if (isBaby()) {
@@ -2378,6 +2386,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return this.entityData.get(DATA_FIRE_BREATHING);
     }
 
+    public DragonBreathPose getBreathPose() {
+        return breathPose;
+    }
+
     public void setBreathingFire(boolean breathing) {
         boolean wasBreathing = this.entityData.get(DATA_FIRE_BREATHING);
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
@@ -2455,7 +2467,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (origin == null) return false;
         Vec3 offset = target.getBoundingBox().getCenter().subtract(origin);
         if (offset.lengthSqr() < 1.0E-6D || offset.lengthSqr() > range * range) return false;
-        Vec3 direction = clampFireDirection(offset.normalize());
+        Vec3 direction = DragonAimHelper.clampDirectionToHead(offset.normalize(), yHeadRot, getXRot(),
+                DragonCombatAim.FIRE.yawLimit(), DragonCombatAim.FIRE.pitchLimit());
         if (direction == null) return false;
         Vec3 end = origin.add(direction.scale(Math.min(range, offset.length() + target.getBbWidth() + 1.0D)));
         Vec3 impact = level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
@@ -2658,7 +2671,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             Vec3 aimOffset = active instanceof IgnivorusFireBreathAbility breath
                     ? breath.getLearnedAimOffset() : Vec3.ZERO;
             fireAimDir = getCombatAim().track(getTarget(), start,
-                    isAerial() ? AIR_FIRE_AIM : DragonCombatAim.FIRE, aimOffset);
+                    isAerial() ? AIR_FIRE_AIM : GROUND_FIRE_AIM, aimOffset);
             return fireAimDir;
         }
         Vec3 desired = computeRawFireAimDirection(start);

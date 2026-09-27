@@ -108,11 +108,8 @@ public final class VolitansBreathCombatComponent {
     public boolean continueBreath(LivingEntity target, boolean active, int activeTicks) {
         if (!canFight(target) || dragon.isTakeoff() || dragon.isLanding()) return stop("combat-interrupted");
         if (gap(target) < STOP_GAP) return stop("melee-range");
-        Vec3 offset = target.getBoundingBox().getCenter().subtract(dragon.getBoundingBox().getCenter());
-        double horizontalGap = offset.horizontalDistance() - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
-        if (dragon.isAerial() && !dragon.isInWaterOrBubble() && horizontalGap < 3 && offset.y < -3) {
-            return stop("target-underneath");
-        }
+        // The neck can now aim vertically; let shot alignment decide whether a target
+        // below us is reachable instead of cancelling every overhead breath pass.
         DragonCombatAim.Shot shot = dragon.getAiBreathShot(target);
         if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) return stop("shot:" + shot.name().toLowerCase(Locale.ROOT));
         if (active && shot == DragonCombatAim.Shot.ALIGNED) firingOpportunityTicks++;

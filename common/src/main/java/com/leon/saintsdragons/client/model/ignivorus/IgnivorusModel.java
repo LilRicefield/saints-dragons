@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.model.ignivorus;
 
 import com.leon.saintsdragons.client.model.DragonGeoModel;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -52,14 +53,7 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
                 return;
             }
             IgnivorusPoseOffsets.apply(entity, partialTick,
-                    modelData.headPitch(), modelData.netHeadYaw(), (name, axis, rotation, fromInitial) -> {
-                        getBone(name).ifPresent(bone -> {
-                            var initial = bone.getInitialSnapshot();
-                            if (axis == 0) bone.setRotX((fromInitial ? initial.getRotX() : bone.getRotX()) + rotation);
-                            else if (axis == 1) bone.setRotY((fromInitial ? initial.getRotY() : bone.getRotY()) + rotation);
-                            else bone.setRotZ((fromInitial ? initial.getRotZ() : bone.getRotZ()) + rotation);
-                        });
-                    });
+                    modelData.headPitch(), modelData.netHeadYaw(), DragonModelPoseHelper.poseEditor(this));
         }
     }
 

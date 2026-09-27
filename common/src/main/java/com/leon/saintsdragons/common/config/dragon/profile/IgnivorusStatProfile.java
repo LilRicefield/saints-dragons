@@ -2,8 +2,10 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class IgnivorusStatProfile {
@@ -166,8 +168,35 @@ public final class IgnivorusStatProfile {
 
     public static final class FireBreathAbility {
         public static final int COOLDOWN_TICKS = 40;
+        public static final float MAX_AIM_YAW_DEGREES = 70.0F;
+        public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
 
         private FireBreathAbility() {
+        }
+    }
+
+    public static final class BreathPose {
+        public static final int BLEND_IN_TICKS = 6;
+        public static final int BLEND_OUT_TICKS = 8;
+        public static final float AIM_RESPONSE = 0.45F;
+        // Vertical shot can need more than 90 degrees from an upward-facing animation pose
+        public static final float MAX_CORRECTION_DEGREES = 135.0F;
+        // Relative shares of the total correction as we keep the base of the neck restrained
+        public static final float NECK_1_WEIGHT = 0.06F;
+        public static final float NECK_2_WEIGHT = 0.16F;
+        public static final float NECK_3_WEIGHT = 0.22F;
+        public static final float NECK_4_WEIGHT = 0.26F;
+        public static final float HEAD_WEIGHT = 0.30F;
+
+        public static final DragonBreathPose.Profile PROFILE = new DragonBreathPose.Profile(
+                BLEND_IN_TICKS, BLEND_OUT_TICKS, AIM_RESPONSE, MAX_CORRECTION_DEGREES, List.of(
+                new DragonBreathPose.Joint("neck1Controller", NECK_1_WEIGHT),
+                new DragonBreathPose.Joint("neck2Controller", NECK_2_WEIGHT),
+                new DragonBreathPose.Joint("neck3Controller", NECK_3_WEIGHT),
+                new DragonBreathPose.Joint("neck4Controller", NECK_4_WEIGHT),
+                new DragonBreathPose.Joint("headController", HEAD_WEIGHT)));
+
+        private BreathPose() {
         }
     }
 

@@ -3,14 +3,11 @@ package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
-import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -102,7 +99,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
 
         Vec3 origin = dragon.getBreathOrigin();
-        Vec3 direction = getBreathDirection(dragon, origin);
+        Vec3 direction = dragon.refreshBreathAimDirection(origin);
         if (direction == null || direction.lengthSqr() < 1.0E-6) {
             return;
         }
@@ -120,16 +117,6 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     protected boolean canContinueUsing() {
         Volitans dragon = getUser();
         return dragon.isAlive() && !dragon.isRemoved();
-    }
-
-    private Vec3 getBreathDirection(Volitans dragon, Vec3 origin) {
-        Vec3 riderDirection = DragonAimHelper.riderViewDirection(dragon);
-        if (riderDirection != null) return riderDirection;
-        LivingEntity target = dragon.getTarget();
-        if (dragon.isTargetValid(target)) {
-            return dragon.getCombatAim().track(target, origin, DragonCombatAim.BREATH);
-        }
-        return DragonAimHelper.lookDirectionOrDefault(dragon);
     }
 
     @Override

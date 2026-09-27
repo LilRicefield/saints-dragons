@@ -29,8 +29,7 @@ public final class VolitansBreathIntroRenderer {
 
         Vec3 mouth = dragon.getBreathVisualOrigin(partialTick);
         if (mouth == null) return;
-        var rider = dragon.getControllingPassenger();
-        Vec3 forward = rider != null ? rider.getViewVector(partialTick) : dragon.getViewVector(partialTick);
+        Vec3 forward = dragon.getBreathVisualDirection(partialTick);
         Vec3 renderOrigin = new Vec3(Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
                 Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
                 Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));

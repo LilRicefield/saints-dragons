@@ -71,6 +71,7 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             applySwimPitch(entity, animationState.getPartialTick());
             applySwimRoll(entity, animationState.getPartialTick());
             applyTailDrag(entity, animationState.getPartialTick());
+            entity.getBreathPose().apply(entity, animationState.getPartialTick(), DragonModelPoseHelper.poseEditor(this));
 
         }
     }
@@ -149,7 +150,9 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK, lookPitchRad, totalYawRad);
+        float lookWeight = 1.0F - entity.getBreathPose().weight(partialTick);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK,
+                lookPitchRad * lookWeight, totalYawRad * lookWeight);
     }
 
     private void applyNeckBankingLean(Volitans entity, float partialTick) {
@@ -159,7 +162,8 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        DragonModelPoseHelper.applyWeightedRotationY(this, NECK, neckLeanRad);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK,
+                neckLeanRad * (1.0F - entity.getBreathPose().weight(partialTick)));
     }
 
     private void applyGroundNeckTurn(Volitans entity, float partialTick) {
@@ -167,7 +171,8 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             return;
         }
 
-        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0,
+                1.0F - entity.getBreathPose().weight(partialTick));
     }
 
     private void applySwimPitch(Volitans entity, float partialTick) {

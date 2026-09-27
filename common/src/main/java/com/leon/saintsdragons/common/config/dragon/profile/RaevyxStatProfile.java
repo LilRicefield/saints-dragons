@@ -2,8 +2,10 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
+import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class RaevyxStatProfile {
@@ -91,6 +93,8 @@ public final class RaevyxStatProfile {
     }
 
     public static final class BeamAbility {
+        public static final float MAX_AIM_YAW_DEGREES = 40.0F;
+        public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
         public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
         public static final double AI_TARGET_HIT_RADIUS = 0.55D;
         public static final double RIDER_BEAM_RADIUS = 1.2D;
@@ -106,6 +110,26 @@ public final class RaevyxStatProfile {
         public static final double RANGE = 6.0;
 
         private BiteAbility() {
+        }
+    }
+
+    public static final class BreathPose {
+        public static final int BLEND_IN_TICKS = 6;
+        public static final int BLEND_OUT_TICKS = 8;
+        public static final float AIM_RESPONSE = 0.45F;
+        public static final float MAX_CORRECTION_DEGREES = 135.0F;
+        public static final float NECK_1_WEIGHT = 0.06F;
+        public static final float NECK_2_WEIGHT = 0.24F;
+        public static final float NECK_3_WEIGHT = 0.32F;
+        public static final float HEAD_WEIGHT = 0.38F;
+        public static final DragonBreathPose.Profile PROFILE = new DragonBreathPose.Profile(
+                BLEND_IN_TICKS, BLEND_OUT_TICKS, AIM_RESPONSE, MAX_CORRECTION_DEGREES, List.of(
+                new DragonBreathPose.Joint("neck1Controller", NECK_1_WEIGHT),
+                new DragonBreathPose.Joint("neck2Controller", NECK_2_WEIGHT),
+                new DragonBreathPose.Joint("neck3Controller", NECK_3_WEIGHT),
+                new DragonBreathPose.Joint("headController", HEAD_WEIGHT)));
+
+        private BreathPose() {
         }
     }
 

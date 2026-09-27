@@ -2,7 +2,6 @@ package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
-import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -38,15 +37,7 @@ public final class VolitansWaterRingRenderer {
         Vec3 mouth = dragon.getBreathVisualOrigin(partialTick);
         if (time < 0 || mouth == null) return;
 
-        var rider = dragon.getControllingPassenger();
-        Vec3 forward = rider != null ? rider.getViewVector(partialTick) : dragon.getViewVector(partialTick);
-        var target = dragon.getTarget();
-        if (rider == null && dragon.isTargetValid(target)) {
-            Vec3 aim = DragonAimHelper.directionTo(mouth,
-                    target.getEyePosition(partialTick).add(target.getDeltaMovement().scale(0.35D)));
-            if (aim != null) forward = aim;
-        }
-        forward = forward.normalize();
+        Vec3 forward = dragon.getBreathVisualDirection(partialTick).normalize();
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 right = forward.cross(reference).normalize();
         Vec3 up = right.cross(forward).normalize();

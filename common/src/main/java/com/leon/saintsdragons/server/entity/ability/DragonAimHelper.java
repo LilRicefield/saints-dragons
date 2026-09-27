@@ -92,7 +92,7 @@ public final class DragonAimHelper {
             return null;
         }
 
-        float desiredYaw = (float) (Math.atan2(-dir.x, dir.z) * (180.0D / Math.PI));
+        float desiredYaw = yawOrFallback(dir, headYaw);
         float desiredPitch = (float) (-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0D / Math.PI));
         float yawErr = Mth.degreesDifference(headYaw, desiredYaw);
         float pitchErr = desiredPitch - headPitch;
@@ -100,6 +100,13 @@ public final class DragonAimHelper {
         float finalPitch = headPitch + Mth.clamp(pitchErr, -maxPitchDeg, maxPitchDeg);
 
         return normalizeOrNull(Vec3.directionFromRotation(finalPitch, finalYaw));
+    }
+
+    public static float yawOrFallback(Vec3 direction, float fallbackYaw) {
+        // Vertical aim has no heading. Tiny X/Z roundoff at +/-90 degrees must not
+        // make the dragon turn toward an arbitrary compass direction.
+        return direction.horizontalDistanceSqr() < 1.0E-8D
+                ? fallbackYaw : (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
     }
 
     public static Vec3 turnDirection(@Nullable Vec3 current, Vec3 desired, double maxDegrees) {
