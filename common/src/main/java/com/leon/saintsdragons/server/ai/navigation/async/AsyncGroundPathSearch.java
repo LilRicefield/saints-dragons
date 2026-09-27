@@ -157,7 +157,11 @@ final class AsyncGroundPathSearch {
     Path findPath(@Nullable DragonPathSearchDebug.SearchSession debugSession) {
         long startedNanos = System.nanoTime();
         BlockPos startNode = resolveStartNode();
-        if (startNode == null || this.cancelled.getAsBoolean()) {
+        if (this.cancelled.getAsBoolean()) {
+            return null;
+        }
+        if (startNode == null) {
+            publishDebug(debugSession, Set.of(), Map.of(), false, startedNanos);
             return null;
         }
 
@@ -309,22 +313,62 @@ final class AsyncGroundPathSearch {
     }
 
     private @Nullable BlockPos resolveStartNode() {
-        if (withinBounds(this.rawStartNode) && evaluateNode(this.rawStartNode).usable()) {
-            return this.rawStartNode;
+        BlockPos start = resolveStartColumn(this.rawStartNode);
+        if (start != null) {
+            return start;
+        }
+
+        // Snapping a wide body to the grid can put it inside a wall even when its
+        // actual position is clear. Connect to the closest reachable nearby node.
+        BlockPos closest = null;
+        double closestDistance = Double.POSITIVE_INFINITY;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (this.cancelled.getAsBoolean()) {
+                    return null;
+                }
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+                BlockPos candidate = resolveStartColumn(this.rawStartNode.offset(dx, 0, dz));
+                if (candidate == null) {
+                    continue;
+                }
+                double distance = this.origin.distanceToSqr(
+                        standingEntityPosition(candidate, evaluateNode(candidate)));
+                if (distance < closestDistance) {
+                    closest = candidate;
+                    closestDistance = distance;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private @Nullable BlockPos resolveStartColumn(BlockPos column) {
+        if (isUsableStartNode(column)) {
+            return column;
         }
         for (int up = 1; up <= this.maxStepUp; up++) {
-            BlockPos candidate = this.rawStartNode.above(up);
-            if (withinBounds(candidate) && evaluateNode(candidate).usable()) {
+            BlockPos candidate = column.above(up);
+            if (isUsableStartNode(candidate)) {
                 return candidate;
             }
         }
         for (int down = 1; down <= this.maxDropDown; down++) {
-            BlockPos candidate = this.rawStartNode.below(down);
-            if (withinBounds(candidate) && evaluateNode(candidate).usable()) {
+            BlockPos candidate = column.below(down);
+            if (isUsableStartNode(candidate)) {
                 return candidate;
             }
         }
         return null;
+    }
+
+    private boolean isUsableStartNode(BlockPos candidate) {
+        return withinBounds(candidate)
+                && withinRange(candidate)
+                && evaluateNode(candidate).usable()
+                && isTransitionClear(this.origin, standingEntityPosition(candidate, evaluateNode(candidate)));
     }
 
     private @Nullable BlockPos resolveNeighbor(long startKey,
@@ -387,6 +431,10 @@ final class AsyncGroundPathSearch {
                 ? this.origin
                 : standingEntityPosition(current, evaluateNode(current));
         Vec3 to = standingEntityPosition(candidate, candidateEvaluation);
+        return isTransitionClear(from, to);
+    }
+
+    private boolean isTransitionClear(Vec3 from, Vec3 to) {
         AABB startBox = this.relativeBounds.move(from);
         double dy = to.y - from.y;
         Vec3 horizontal = new Vec3(to.x - from.x, 0.0D, to.z - from.z);
