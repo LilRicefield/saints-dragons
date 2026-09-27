@@ -34,6 +34,7 @@ public final class IgnivorusStatProfile {
         public static final double TAMING_CHANCE_PORKCHOP = 14.2857D;
         public static final double TAMING_CHANCE_HEARTY = 25.0D;
         public static final boolean LEGACY_TAMING = false;
+        public static final boolean DOVAHKIIN_IGNIVORUS = false;
         public static final double FIRE_BREATH_DRAIN_PER_TICK = 0.004166666666666667D;
         public static final double FIRE_BREATH_REGEN_PER_TICK = 0.0025D;
         public static final double EGG_HATCH_TIME_TICKS_NORMAL = 36000.0D;
@@ -305,6 +306,7 @@ public final class IgnivorusStatProfile {
         double tamingChancePorkchop = Config.TAMING_CHANCE_PORKCHOP;
         double tamingChanceHearty = Config.TAMING_CHANCE_HEARTY;
         boolean legacyTaming = Config.LEGACY_TAMING;
+        boolean dovahkiinIgnivorus = Config.DOVAHKIIN_IGNIVORUS;
         double fireBreathDrainPerTick = Config.FIRE_BREATH_DRAIN_PER_TICK;
         double fireBreathRegenPerTick = Config.FIRE_BREATH_REGEN_PER_TICK;
         double eggHatchTimeTicksNormal = Config.EGG_HATCH_TIME_TICKS_NORMAL;
@@ -336,6 +338,7 @@ public final class IgnivorusStatProfile {
                 tamingChancePorkchop = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_PORKCHOP").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_PORKCHOP").get(null));
                 tamingChanceHearty = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null));
                 legacyTaming = (boolean) configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null));
+                dovahkiinIgnivorus = (boolean) configClass.getField("IGNIVORUS_DOVAHKIIN_MODE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_DOVAHKIIN_MODE").get(null));
                 fireBreathDrainPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null));
                 fireBreathRegenPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
@@ -379,7 +382,8 @@ public final class IgnivorusStatProfile {
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
-                        "aggressive_wild", aggressiveWild
+                        "aggressive_wild", aggressiveWild,
+                        "dovahkiin_ignivorus", dovahkiinIgnivorus
                 )
         );
     }

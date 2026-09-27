@@ -615,6 +615,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD::set,
                 null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.dovahkiin_ignivorus"),
+                () -> ForgeDragonAttributesConfig.IGNIVORUS_DOVAHKIIN_MODE.get(),
+                ForgeDragonAttributesConfig.IGNIVORUS_DOVAHKIIN_MODE::set,
+                null));
     }
 
     private void addNulljawEntries(List<ConfigEntry> entries) {
@@ -1042,6 +1046,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_DOVAHKIIN_MODE.set(ForgeDragonAttributesConfig.IGNIVORUS_DOVAHKIIN_MODE.getDefault());
             }
             case VOLITANS -> {
                 ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.set(ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.getDefault());

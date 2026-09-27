@@ -110,11 +110,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.setBreathingFire(false);
             dragon.setFireBreathProgress(0);
             dragon.clearFireBreathPath();
-            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_start");
             if (!dragon.level().isClientSide) {
                 float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
+                if (isDovahkiinModeEnabled()) {
+                    dragon.playSound(ModSounds.IGNIVORUS_YOL.get(), 2.0f, pitch);
+                }
                 dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_START.get(), 2.0f, pitch);
             }
+            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_start");
 
         } else if (section.sectionType == ACTIVE) {
             dragon.getCombatLearning().releaseAttack(learningTrial);
@@ -123,6 +126,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.setBreathingFire(true);
             dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breathing");
             breathLoopActive = true;
+            if (!dragon.level().isClientSide && isDovahkiinModeEnabled()) {
+                dragon.playSound(ModSounds.IGNIVORUS_TOOR_SHUL.get(), 2.0f, 1.0f);
+            }
         }
     }
 
@@ -181,6 +187,12 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
         breathStartPlayed = false;
         breathLoopActive = false;
+    }
+
+    private boolean isDovahkiinModeEnabled() {
+        return DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
+                .extraBoolean("dovahkiin_ignivorus", false);
     }
 
     @Override

@@ -113,6 +113,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
+    public static ForgeConfigSpec.BooleanValue IGNIVORUS_DOVAHKIIN_MODE;
 
     // Stegonaut
     public static ForgeConfigSpec.DoubleValue STEGONAUT_MAX_HEALTH;
@@ -314,6 +315,7 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", IgnivorusStatProfile.Config.EGG_HATCH_TIME_TICKS_NORMAL, 20.0, 72000.0);
         IGNIVORUS_LEGACY_TAMING = builder.define("legacy_taming", IgnivorusStatProfile.Config.LEGACY_TAMING);
         IGNIVORUS_AGGRESSIVE_WILD = builder.define("aggressive_wild", IgnivorusStatProfile.Config.AGGRESSIVE_WILD);
+        IGNIVORUS_DOVAHKIIN_MODE = builder.define("dovahkiin_ignivorus", IgnivorusStatProfile.Config.DOVAHKIIN_IGNIVORUS);
         builder.pop();
 
         builder.push("stegonaut");

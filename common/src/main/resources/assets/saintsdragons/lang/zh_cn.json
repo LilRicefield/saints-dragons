@@ -1005,6 +1005,7 @@
   "config.saintsdragons.attributes.ignivorus.fire_breath_damage": "炎息伤害",
   "config.saintsdragons.attributes.ignivorus.fire_breath_drain_per_tick": "炎息每游戏刻能量消耗",
   "config.saintsdragons.attributes.ignivorus.fire_breath_regen_per_tick": "炎息每游戏刻能量恢复",
+  "config.saintsdragons.attributes.ignivorus.dovahkiin_ignivorus": "龙裔噬焰龙",
   "config.saintsdragons.attributes.ignivorus.fireball_damage": "火球伤害",
   "config.saintsdragons.attributes.ignivorus.magma_pillar_damage": "熔岩地晶伤害",
   "config.saintsdragons.attributes.ignivorus.wing_swipe_damage": "翼拍伤害",

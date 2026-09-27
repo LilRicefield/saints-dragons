@@ -1538,7 +1538,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_start",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 48
       }
@@ -1549,7 +1549,27 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breathing",
-        "volume": 1.5,
+        "volume": 3.0,
+        "pitch": 1.0,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "ignivorus_yol": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_yol",
+        "volume": 3.0,
+        "pitch": 1.0,
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "ignivorus_toor_shul": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_toor_shul",
+        "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 48
       }
@@ -1979,7 +1999,7 @@
         "name": "saintsdragons:entity/volitans/volitans_breath_start",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 32
       }
     ]
   },
@@ -1988,9 +2008,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/volitans/volitans_breathing",
-        "volume": 1.8,
+        "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 32
       }
     ]
   },
@@ -2001,7 +2021,7 @@
         "name": "saintsdragons:entity/volitans/volitans_breath_end",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 32
       }
     ]
   },
@@ -2188,7 +2208,7 @@
         "name": "saintsdragons:entity/volitans/volitans_takeoff",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 32
       }
     ]
   },
@@ -2199,7 +2219,7 @@
         "name": "saintsdragons:entity/volitans/volitans_landed",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 32
       }
     ]
   },
