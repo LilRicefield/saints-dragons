@@ -106,7 +106,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 IgnivorusStatProfile.Brain.ROOST_RETURN_GROUND_SPEED,
                                                 IgnivorusStatProfile.Brain.ROOST_RETURN_SWIM_SPEED,
                                                 IgnivorusStatProfile.Brain.ROOST_RETURN_SWIM_TURN_DEGREES,
-                                                1.5D
+                                                IgnivorusStatProfile.Brain.ROOST_RETURN_AIR_SPEED
                                         ),
                                         new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.ignivorus(),

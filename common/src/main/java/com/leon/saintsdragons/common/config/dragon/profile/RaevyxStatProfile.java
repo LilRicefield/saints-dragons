@@ -93,6 +93,11 @@ public final class RaevyxStatProfile {
     }
 
     public static final class BeamAbility {
+        public static final int AI_POST_BEAM_COOLDOWN_MIN_TICKS = 300;
+        public static final int AI_POST_BEAM_COOLDOWN_MAX_TICKS = 400;
+        public static final int AI_AIR_TARGET_COOLDOWN_MIN_TICKS = 160;
+        public static final int AI_AIR_TARGET_COOLDOWN_MAX_TICKS = 240;
+        public static final int AI_ABORTED_START_COOLDOWN_TICKS = 40;
         public static final float MAX_AIM_YAW_DEGREES = 40.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
         public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;

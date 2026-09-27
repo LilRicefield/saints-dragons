@@ -48,6 +48,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private boolean breathLoopActive = false;
     private boolean openingBurstEmitted = false;
     private boolean aiControlled;
+    private boolean aiAirTarget;
     private int aiActiveTicks;
     private long learningTrial;
     private int learningFiringTicks;
@@ -72,6 +73,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         if (section.sectionType == STARTUP) {
             aiControlled = dragon.getControllingPassenger() == null;
+            aiAirTarget = aiControlled && dragon.isAerial() && dragon.getCombatFlightState().targetNeedsFlight();
             aiActiveTicks = aiControlled ? 80 + dragon.getRandom().nextInt(81) : RIDER_ACTIVE_TICKS;
             shotGrace.reset();
             learningTrial = 0;
@@ -175,9 +177,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         learnedAimOffset = Vec3.ZERO;
         dragon.getCombatAim().clear();
         if (isUsing() && aiControlled && !dragon.level().isClientSide) {
-            // Shared across ground/air combat, and measured from completion or cancellation.
-            dragon.getAiCombatPacing().recordUse(getAbilityType(), 10,
-                    400 + dragon.getRandom().nextInt(201), false, 0, 0);
+            int minCooldown = aiAirTarget ? IgnivorusStatProfile.FireBreathAbility.AI_AIR_TARGET_COOLDOWN_MIN_TICKS
+                    : IgnivorusStatProfile.FireBreathAbility.AI_POST_BREATH_COOLDOWN_MIN_TICKS;
+            int maxCooldown = aiAirTarget ? IgnivorusStatProfile.FireBreathAbility.AI_AIR_TARGET_COOLDOWN_MAX_TICKS
+                    : IgnivorusStatProfile.FireBreathAbility.AI_POST_BREATH_COOLDOWN_MAX_TICKS;
+            int cooldown = learningFiringTicks == 0
+                    ? IgnivorusStatProfile.FireBreathAbility.AI_ABORTED_START_COOLDOWN_TICKS
+                    : minCooldown + dragon.getRandom().nextInt(maxCooldown - minCooldown + 1);
+            dragon.getAiCombatPacing().recordUse(getAbilityType(), 10, cooldown, false, 0, 0);
         }
         super.end();
     }

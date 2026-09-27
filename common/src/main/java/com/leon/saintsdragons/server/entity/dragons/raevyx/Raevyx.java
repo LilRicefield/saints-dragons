@@ -843,9 +843,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return aiBeamDecision + (aiBeamNeedsFollowup ? ":awaiting-followup" : "");
     }
 
-    public void finishAiBeam() {
-        nextAiBeamGameTime = level().getGameTime() + 300 + getRandom().nextInt(101);
-        aiBeamNeedsFollowup = true;
+    public void finishAiBeam(boolean airborneTarget, boolean fired) {
+        int minCooldown = airborneTarget ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MIN_TICKS
+                : RaevyxStatProfile.BeamAbility.AI_POST_BEAM_COOLDOWN_MIN_TICKS;
+        int maxCooldown = airborneTarget ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MAX_TICKS
+                : RaevyxStatProfile.BeamAbility.AI_POST_BEAM_COOLDOWN_MAX_TICKS;
+        int cooldown = fired ? minCooldown + getRandom().nextInt(maxCooldown - minCooldown + 1)
+                : RaevyxStatProfile.BeamAbility.AI_ABORTED_START_COOLDOWN_TICKS;
+        nextAiBeamGameTime = level().getGameTime() + cooldown;
+        aiBeamNeedsFollowup = fired && !airborneTarget;
         aiBeamPursuitTicks = 0;
         getAiCombatPacing().setCadenceCooldownMin(10);
         clearAiBeamRetreat();
@@ -858,6 +864,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     private void tickAiBeamPursuit() {
         if (!aiBeamNeedsFollowup) return;
+        if (isAerial() && combatFlightState.targetNeedsFlight()) {
+            recordAiBeamFollowup();
+            return;
+        }
         LivingEntity target = getTarget();
         Vec3 movement = position().subtract(new Vec3(xo, yo, zo));
         if (target != null && target.isAlive() && !isVehicle() && getActiveAbility() == null

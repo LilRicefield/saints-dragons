@@ -96,6 +96,7 @@ public final class IgnivorusStatProfile {
         public static final float WATER_ESCAPE_TURN_DEGREES = 8.0F;
         public static final double WATER_ESCAPE_SPEED = 0.12D;
         public static final float ROOST_RETURN_GROUND_SPEED = 1.0F;
+        public static final double ROOST_RETURN_AIR_SPEED = 3.5D;
         public static final double ROOST_RETURN_SWIM_SPEED = 0.25D;
         public static final float ROOST_RETURN_SWIM_TURN_DEGREES = 8.0F;
         public static final double WATER_CHASE_SPEED = 0.12D;
@@ -169,6 +170,11 @@ public final class IgnivorusStatProfile {
 
     public static final class FireBreathAbility {
         public static final int COOLDOWN_TICKS = 40;
+        public static final int AI_POST_BREATH_COOLDOWN_MIN_TICKS = 400;
+        public static final int AI_POST_BREATH_COOLDOWN_MAX_TICKS = 600;
+        public static final int AI_AIR_TARGET_COOLDOWN_MIN_TICKS = 120;
+        public static final int AI_AIR_TARGET_COOLDOWN_MAX_TICKS = 200;
+        public static final int AI_ABORTED_START_COOLDOWN_TICKS = 40;
         public static final float MAX_AIM_YAW_DEGREES = 70.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
 

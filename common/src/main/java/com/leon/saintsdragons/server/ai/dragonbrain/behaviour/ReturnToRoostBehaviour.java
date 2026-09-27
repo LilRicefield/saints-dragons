@@ -412,6 +412,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
             Vec3 landingTarget = Vec3.atBottomCenterOf(destination.pos());
             if (returnPhase != ReturnPhase.AIR_ROUTE) {
                 clearGroundReturnMovement(context);
+                dragon.getAIMovement().clearLandingPlanRetry();
             }
             if (shouldIssueRouteIntent(context, ReturnPhase.AIR_ROUTE)) {
                 context.memories().set(

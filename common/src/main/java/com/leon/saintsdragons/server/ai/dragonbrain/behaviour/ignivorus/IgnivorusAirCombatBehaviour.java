@@ -149,6 +149,14 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
     private void tickChase(DragonBrainContext<Ignivorus> context, LivingEntity target, boolean visible) {
         Ignivorus dragon = context.dragon();
         double gap = bodyGap(dragon, target);
+        boolean airborneTarget = dragon.getCombatFlightState().targetNeedsFlight();
+        // A flying opponent keeps moving: take a clear shot on the pursuit course instead
+        // of abandoning it for a fixed setup point that the target will immediately outfly
+        if (airborneTarget && visible && gap >= 10.0D && dragon.distanceTo(target) <= FIRING_RANGE
+                && rangedReady(dragon, target)
+                && tryRangedOpening(context, target, dragon.getAiFireBreathShot(target, FIRING_RANGE))) {
+            return;
+        }
         if (visible && dragon.shouldFavorRangedCombat(target) && gap < 10.0D + dragon.getAiBreathSpacingBonus(target)
                 && dragon.level().getGameTime() >= nextApproach && rangedReady(dragon, target)) {
             nextApproach = dragon.level().getGameTime() + 20;
@@ -165,7 +173,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
             tickBitePass(context, target, true);
             return;
         }
-        if (visible && dragon.level().getGameTime() >= nextApproach
+        if (!airborneTarget && visible && dragon.level().getGameTime() >= nextApproach
                 && gap >= 10.0D && dragon.distanceTo(target) <= FIRING_RANGE && rangedReady(dragon, target)) {
             enterApproach(context, target);
             return;
@@ -228,6 +236,13 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
 
     private void tickApproach(DragonBrainContext<Ignivorus> context, LivingEntity target, boolean visible) {
         Ignivorus dragon = context.dragon();
+        if (dragon.getCombatFlightState().targetNeedsFlight()) {
+            phase = AirPhase.CHASE;
+            phaseTicks = 0;
+            clearRouteState();
+            tickChase(context, target, visible);
+            return;
+        }
         if (phaseTicks >= APPROACH_TIMEOUT || routeFailed(dragon) || !visible
                 || !rangedReady(dragon, target) || bodyGap(dragon, target) < 8
                 || approachAnchor == null || targetCenter(target).distanceToSqr(approachAnchor) > 400) {
@@ -242,37 +257,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
             return;
         }
         DragonCombatAim.Shot shot = dragon.getAiFireBreathShot(target, FIRING_RANGE);
-        long now = dragon.level().getGameTime();
-        if (now >= nextAttackDecision) {
-            nextAttackDecision = now + 16;
-            boolean breathReady = dragon.isAiAirBreathReady() && shot == DragonCombatAim.Shot.ALIGNED
-                    && IgnivorusFireBreathAbility.canStartAiBreath(dragon, target);
-            boolean favorRanged = dragon.shouldFavorRangedCombat(target);
-            boolean fireballReady = canUseAirFireball(dragon, target)
-                    && dragon.hasAiFireballShot(target, 64);
-            double fireballWeight = dragon.getCombatLearning()
-                    .expectation(target, DragonCombatLearning.Attack.PROJECTILE, true).attackWeight();
-            double breathWeight = dragon.getCombatLearning()
-                    .expectation(target, DragonCombatLearning.Attack.BREATH, true).attackWeight();
-            double baseChance = favorRanged ? 0.50D : 0.35D;
-            double fireballChance = baseChance * fireballWeight
-                    / (baseChance * fireballWeight + (1.0D - baseChance) * breathWeight);
-            if (fireballReady && (!breathReady || dragon.getRandom().nextFloat() < fireballChance)
-                    && dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIREBALL,
-                    true, 12, favorRanged ? 240 : 400, 60, 80)) {
-                phase = AirPhase.FIREBALL_PASS;
-                phaseTicks = 0;
-                nextFireballRoute = 0;
-                dragon.getCombatFlightState().holdFlightFor(60);
-                lastDecision = favorRanged ? "fireball:ground-target-opening" : "fireball:phase2-opening";
-                return;
-            }
-            if (breathReady && dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH,
-                    true, 12, 0, 30, 0)) {
-                startBreathPass(context, target);
-                return;
-            }
-        }
+        if (tryRangedOpening(context, target, shot)) return;
         Vec3 correction = routeTarget.subtract(dragon.position());
         Vec3 towardTarget = targetCenter(target).subtract(dragon.getBoundingBox().getCenter());
         double speed = correction.lengthSqr() > 1 && correction.normalize().dot(towardTarget.normalize()) < 0.6D
@@ -280,6 +265,46 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         context.memories().set(DragonMemories.MOVEMENT_INTENT,
                 DragonMovementIntent.flight(DragonFlightRequest.track(routeTarget, speed, 3)));
         lastDecision = "approach:" + shot.name().toLowerCase();
+    }
+
+    private boolean tryRangedOpening(DragonBrainContext<Ignivorus> context, LivingEntity target,
+                                     DragonCombatAim.Shot shot) {
+        Ignivorus dragon = context.dragon();
+        long now = dragon.level().getGameTime();
+        if (now >= nextAttackDecision) {
+            boolean breathReady = dragon.isAiAirBreathReady() && shot == DragonCombatAim.Shot.ALIGNED
+                    && IgnivorusFireBreathAbility.canStartAiBreath(dragon, target);
+            boolean favorRanged = dragon.shouldFavorRangedCombat(target);
+            boolean airborneTarget = dragon.getCombatFlightState().targetNeedsFlight();
+            boolean fireballReady = canUseAirFireball(dragon, target)
+                    && dragon.hasAiFireballShot(target, 64);
+            if (!breathReady && !fireballReady) return false;
+            nextAttackDecision = now + 16;
+            double fireballWeight = dragon.getCombatLearning()
+                    .expectation(target, DragonCombatLearning.Attack.PROJECTILE, true).attackWeight();
+            double breathWeight = dragon.getCombatLearning()
+                    .expectation(target, DragonCombatLearning.Attack.BREATH, true).attackWeight();
+            double baseChance = favorRanged ? 0.50D : 0.35D;
+            double fireballChance = baseChance * fireballWeight
+                    / (baseChance * fireballWeight + (1.0D - baseChance) * breathWeight);
+            if (fireballReady && (!breathReady || !airborneTarget && dragon.getRandom().nextFloat() < fireballChance)
+                    && dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIREBALL,
+                    true, 12, favorRanged ? 240 : 400, 60, 80)) {
+                phase = AirPhase.FIREBALL_PASS;
+                phaseTicks = 0;
+                nextFireballRoute = 0;
+                dragon.getCombatFlightState().holdFlightFor(60);
+                lastDecision = airborneTarget ? "fireball:air-target-opening"
+                        : favorRanged ? "fireball:ground-target-opening" : "fireball:phase2-opening";
+                return true;
+            }
+            if (breathReady && dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH,
+                    true, 12, 0, 30, 0)) {
+                startBreathPass(context, target);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void startBreathPass(DragonBrainContext<Ignivorus> context, LivingEntity target) {

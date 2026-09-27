@@ -219,8 +219,11 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
         if (phaseTicks >= BEAM_OPENING_TICKS) {
+            if (dragon.getCombatFlightState().targetNeedsFlight()
+                    && tryBeamOpening(context, target, hasLineOfSight)) return;
             if (tryRoarOpening(context, target, hasLineOfSight)) return;
-            if (tryBeamOpening(context, target, hasLineOfSight)) return;
+            if (!dragon.getCombatFlightState().targetNeedsFlight()
+                    && tryBeamOpening(context, target, hasLineOfSight)) return;
         }
 
         if (attackCooldown <= 0
@@ -647,6 +650,33 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void commandBeamApproach(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (dragon.getCombatFlightState().targetNeedsFlight()) {
+            // Keep the firing lane moving with the opponent; a stationary setup position
+            // otherwise forces us to brake while the opponent leaves beam range.
+            Vec3 center = predictTargetCenter(dragon, target, 3.0D, 6.0D);
+            Vec3 toTarget = center.subtract(dragon.getBoundingBox().getCenter());
+            Vec3 motion = dragon.getCombatFlightState().targetVelocity();
+            Vec3 course = horizontalDirection(motion.horizontalDistanceSqr() > 0.09D && motion.dot(toTarget) > 0
+                    ? motion : toTarget, dragon.getLookAngle());
+            Vec3 side = new Vec3(-course.z, 0, course.x).scale(attackSide * 4.0D);
+            Vec3 destination = dragon.getAIMovement().flightSpace().fitDestination(
+                    flightFeet(dragon, center).subtract(course.scale(28.0D)).add(side));
+            if (destination == null) {
+                commandChaseIntent(context, target);
+                return;
+            }
+            boolean closing = motion.dot(course) > 0.6D && toTarget.dot(course) > 40.0D;
+            double speed = closing ? DIRECT_CHASE_SPEED
+                    : Mth.clamp((motion.horizontalDistance() + 0.35D) / Math.max(0.1D, dragon.getFlightSpeed()),
+                            BEAM_PASS_SPEED, DIRECT_CHASE_SPEED);
+            if (routeTarget == null) routeGraceTicks = 3;
+            routeTarget = destination;
+            beamSegment = dragon.isBeaming() ? 1 : 0;
+            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(closing
+                    ? DragonFlightRequest.chase(destination, speed)
+                    : DragonFlightRequest.track(destination, speed, 2.0D)));
+            return;
+        }
         if (beamSetupTarget == null || beamApproachOffset == null) {
             if (!selectBeamPosition(dragon, target)) return;
         }
@@ -805,7 +835,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         beamAvailability = beamBlockReason(dragon, target, hasLineOfSight);
         if (!"ready".equals(beamAvailability)) return false;
         clearRouteState();
-        if (!selectBeamPosition(dragon, target)) {
+        if (!dragon.getCombatFlightState().targetNeedsFlight() && !selectBeamPosition(dragon, target)) {
             beamRetryTick = dragon.tickCount + 100;
             dragon.getCombatFlightState().deferRangedFlightFor(100);
             beamAvailability = "no-firing-position";
@@ -825,7 +855,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         if ("ready".equals(beamAvailability)) {
             if (phaseTicks >= BEAM_SETUP_TIMEOUT_TICKS) beamAvailability = "alignment-timeout";
             else if (routeFailed(dragon)) beamAvailability = "setup-route-failed";
-            else if (beamSetupAnchor == null || targetCenter(target).distanceToSqr(beamSetupAnchor) > 144.0D) {
+            else if (!dragon.getCombatFlightState().targetNeedsFlight()
+                    && (beamSetupAnchor == null || targetCenter(target).distanceToSqr(beamSetupAnchor) > 144.0D)) {
                 beamAvailability = "target-left-setup";
             }
         }
@@ -845,7 +876,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         } else {
             beamAlignmentTicks++;
             commandBeamApproach(context, target);
-            lastDecision = "beam:braking-to-align";
+            lastDecision = dragon.getCombatFlightState().targetNeedsFlight()
+                    ? "beam:aligning-in-pursuit" : "beam:braking-to-align";
         }
     }
 

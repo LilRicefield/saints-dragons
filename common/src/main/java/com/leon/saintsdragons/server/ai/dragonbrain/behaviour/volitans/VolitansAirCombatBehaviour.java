@@ -250,11 +250,14 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
             dragon.getCombatFlightState().deferRangedFlightFor(60);
             return;
         }
+        boolean closingAirTarget = !passing && dragon.getCombatFlightState().targetNeedsFlight()
+                && dragon.getCombatFlightState().targetVelocity().horizontalDistanceSqr() > 0.04D
+                && dragon.position().distanceToSqr(fitted) > 144.0D;
         double speed = passing ? Mth.clamp(0.42D + dragon.getCombatFlightState().targetVelocity().length(), 0.42D, 1.25D)
-                / Math.max(0.01D, dragon.getFlightSpeed()) : POSITION_SPEED;
+                / Math.max(0.01D, dragon.getFlightSpeed()) : closingAirTarget ? CHASE_SPEED : POSITION_SPEED;
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
                 DragonFlightRequest.maneuver(fitted, speed, 3,
-                        passing ? DragonFlightRequest.Arrival.PASS_THROUGH : DragonFlightRequest.Arrival.BRAKE)));
+                        passing || closingAirTarget ? DragonFlightRequest.Arrival.PASS_THROUGH : DragonFlightRequest.Arrival.BRAKE)));
     }
 
     private void tickTakeoff(DragonBrainContext<Volitans> context, LivingEntity target) {

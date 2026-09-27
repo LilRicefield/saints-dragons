@@ -417,6 +417,11 @@ public class DragonAIMovementController {
                 ? currentWaypoint.target() : "none");
     }
 
+    /** A new destination must not inherit the backoff from an unrelated landing search. */
+    public void clearLandingPlanRetry() {
+        landingPlanRetryTicks = 0;
+    }
+
     private boolean beginGroundTransition(Vec3 touchdown, double speed) {
         boolean accepted = startWaypoint(new QueuedWaypoint(touchdown, speed, false, MovementMode.LANDING));
         landingPlanDebugReason = accepted
