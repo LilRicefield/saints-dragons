@@ -178,6 +178,7 @@ public final class IgnivorusStatProfile {
         public static final float MAX_AIM_YAW_DEGREES = 70.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
         public static final float AI_AIR_AIM_TURN_DEGREES = 6.0F;
+        public static final double AI_AIR_FIRING_DISTANCE = 30.0D;
         public static final float AI_AIR_BODY_TURN_DEGREES = 6.0F;
 
         private FireBreathAbility() {

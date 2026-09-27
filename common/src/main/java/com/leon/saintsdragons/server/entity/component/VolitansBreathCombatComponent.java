@@ -108,6 +108,7 @@ public final class VolitansBreathCombatComponent {
     public boolean continueBreath(LivingEntity target, boolean active, int activeTicks) {
         if (!canFight(target) || dragon.isTakeoff() || dragon.isLanding()) return stop("combat-interrupted");
         if (gap(target) < STOP_GAP) return stop("melee-range");
+        if (active && dragon.getCombatAim().flightPassOverextended(target)) return stop("pass-overextended");
         // The neck can now aim vertically; let shot alignment decide whether a target
         // below us is reachable instead of cancelling every overhead breath pass.
         DragonCombatAim.Shot shot = dragon.getAiBreathShot(target);
@@ -132,7 +133,7 @@ public final class VolitansBreathCombatComponent {
         running = false;
         DragonCombatLearning.Outcome outcome = switch (decision) {
             case "shot:blocked" -> DragonCombatLearning.Outcome.BLOCKED;
-            case "melee-range", "target-underneath", "burst-complete", "shot:aligning", "shot:out_of_arc", "shot:out_of_range" ->
+            case "melee-range", "target-underneath", "burst-complete", "pass-overextended", "shot:aligning", "shot:out_of_arc", "shot:out_of_range" ->
                     firingOpportunityTicks >= 10 ? DragonCombatLearning.Outcome.COMPLETED : DragonCombatLearning.Outcome.RESPONSE_ONLY;
             default -> DragonCombatLearning.Outcome.CANCELLED;
         };

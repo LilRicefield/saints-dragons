@@ -269,6 +269,45 @@ public final class DragonCombatAim {
         return flightPassTarget;
     }
 
+    public double flightPassSpeed(Vec3 targetFeet, Vec3 targetVelocity,
+                                  double maximumModifier, double firingDistance) {
+        Vec3 offset = targetFeet.subtract(dragon.position()).multiply(1, 0, 1);
+        Vec3 toward = offset.lengthSqr() > 1.0E-6D ? offset.normalize()
+                : Vec3.directionFromRotation(0, dragon.yBodyRot);
+        double targetSpeed = targetVelocity.dot(toward);
+        double closingSpeed = Math.max(0, dragon.getDeltaMovement().dot(toward) - targetSpeed);
+        double brakingDistance = closingSpeed * FLIGHT_PASS_UPDATE_TICKS
+                + closingSpeed * closingSpeed / (2.0D * 0.12D);
+        double gap = offset.length() - firingDistance - brakingDistance;
+        double flightSpeed = Math.max(0.01D, dragon.getFlightSpeed());
+        double speed = Math.min(flightSpeed * maximumModifier, Math.max(0.2D, targetSpeed + gap * 0.1D));
+        return speed / flightSpeed;
+    }
+
+    public boolean flightPassOverextended(LivingEntity opponent) {
+        if (!dragon.isAerial() || opponent == null) return false;
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning == null || !learning.hasVisibleObservation(opponent)) return false;
+        Vec3 predicted = learning.predictCenter(opponent, 4, 6);
+        if (predicted == null) return false;
+        Vec3 offset = opponent.getBoundingBox().getCenter().subtract(dragon.getBoundingBox().getCenter());
+        Vec3 horizontal = offset.multiply(1, 0, 1);
+        Vec3 bodyForward = Vec3.directionFromRotation(0, dragon.yBodyRot);
+        if (horizontal.lengthSqr() > 1.0D && horizontal.normalize().dot(bodyForward) < Math.cos(Math.toRadians(110))) {
+            return true;
+        }
+        Vec3 motion = dragon.getDeltaMovement().multiply(1, 0, 1);
+        if (motion.lengthSqr() < 0.01D) return false;
+        Vec3 course = motion.normalize();
+        double ahead = horizontal.dot(course);
+        if (ahead < -2.0D) return true;
+        Vec3 futureOffset = predicted.subtract(dragon.getBoundingBox().getCenter().add(motion.scale(4)));
+        double futureAhead = futureOffset.dot(course);
+        double clearance = (dragon.getBbWidth() + opponent.getBbWidth()) * 0.5D + 3.0D;
+        double lateral = Math.abs(futureOffset.x * course.z - futureOffset.z * course.x);
+        return ahead > 0 && futureAhead < ahead - 0.2D && futureAhead < clearance && lateral < clearance;
+    }
+
     public DragonFlightRequest firingApproach(LivingEntity target, double maximumSpeed,
                                               double spacing, double sideOffset) {
         Vec3 center = target.position().add(0, target.getBbHeight() + 2.0D, 0);

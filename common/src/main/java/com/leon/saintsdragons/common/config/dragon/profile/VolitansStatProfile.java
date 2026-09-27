@@ -102,6 +102,7 @@ public final class VolitansStatProfile {
         public static final float MAX_AIM_YAW_DEGREES = 70.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
         public static final float AI_AIR_AIM_TURN_DEGREES = 8.0F;
+        public static final double AI_AIR_FIRING_DISTANCE = 18.0D;
         public static final float AI_AIR_BODY_TURN_DEGREES = 8.0F;
 
         private BreathAbility() {

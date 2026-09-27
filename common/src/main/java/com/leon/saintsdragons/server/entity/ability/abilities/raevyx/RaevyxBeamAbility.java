@@ -203,6 +203,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 || !target.isAlive()) return stopAiBeam("target-lost");
         if (isAtAiBeamMercyThreshold(target)) return stopAiBeam("mercy-threshold");
         if (active && getTicksInSection() >= aiBurstTicks) return stopAiBeam("burst-complete");
+        if (active && wyvern.getCombatAim().flightPassOverextended(target)) return stopAiBeam("pass-overextended");
 
         if (groundAiBeam) {
             if (wyvern.isAerial() || wyvern.isInWaterOrBubble()) return stopAiBeam("locomotion-changed");
@@ -249,7 +250,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean stopAiBeam(String reason) {
         learningOutcome = switch (reason) {
             case "blocked", "retreat-blocked" -> DragonCombatLearning.Outcome.BLOCKED;
-            case "close-melee", "flanked", "retreat-spent", "burst-complete", "aligning", "out_of_arc", "out_of_range"
+            case "close-melee", "flanked", "retreat-spent", "burst-complete", "pass-overextended", "aligning", "out_of_arc", "out_of_range"
                     -> learningFiringTicks >= 8 ? DragonCombatLearning.Outcome.COMPLETED
                     : DragonCombatLearning.Outcome.RESPONSE_ONLY;
             // Only recordHit confirms success; another attacker can also push the target below this threshold.

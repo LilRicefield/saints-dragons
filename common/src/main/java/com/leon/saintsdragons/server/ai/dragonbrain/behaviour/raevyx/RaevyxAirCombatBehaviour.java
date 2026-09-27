@@ -716,8 +716,9 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             commandChaseIntent(context, target);
             return;
         }
-        double speed = Mth.clamp((dragon.getCombatFlightState().targetVelocity().horizontalDistance() + 0.35D)
-                / Math.max(0.1D, dragon.getFlightSpeed()), BEAM_PASS_SPEED, DIRECT_CHASE_SPEED);
+        double speed = dragon.getCombatAim().flightPassSpeed(targetFeet,
+                dragon.getCombatFlightState().targetVelocity(), DIRECT_CHASE_SPEED,
+                RaevyxStatProfile.BeamAbility.AI_AIR_FIRING_DISTANCE);
         if (routeTarget == null) routeGraceTicks = 3;
         routeTarget = fitted;
         beamSegment = dragon.isBeaming() ? 1 : 0;

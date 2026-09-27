@@ -101,6 +101,7 @@ public final class RaevyxStatProfile {
         public static final float MAX_AIM_YAW_DEGREES = 40.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
         public static final float AI_AIR_AIM_TURN_DEGREES = 12.0F;
+        public static final double AI_AIR_FIRING_DISTANCE = 26.0D;
         public static final float AI_AIR_BODY_TURN_DEGREES = 12.0F;
         public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
         public static final double AI_TARGET_HIT_RADIUS = 0.55D;

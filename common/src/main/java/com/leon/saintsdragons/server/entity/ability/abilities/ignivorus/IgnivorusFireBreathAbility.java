@@ -289,6 +289,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
         if (!dragon.isAerial() && horizontalGap <= 2.0D) return stopAiBreath("target-underneath");
         if (active && getTicksInSection() >= aiActiveTicks) return stopAiBreath("burst-complete");
+        if (active && dragon.getCombatAim().flightPassOverextended(target)) return stopAiBreath("pass-overextended");
         DragonCombatAim.Shot shot = dragon.getAiFireBreathShot(target, ExpandingBreathSection.DEFAULT_RANGE);
         if (shot != DragonCombatAim.Shot.ALIGNED) dragon.setAiFireBreathDecision("tracking:" + shot.reason());
         return shotGrace.allows(shot, dragon.tickCount, 20, AI_LOST_SHOT_GRACE_TICKS)
@@ -298,7 +299,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private boolean stopAiBreath(String reason) {
         learningOutcome = switch (reason) {
             case "blocked", "blocked-pass" -> DragonCombatLearning.Outcome.BLOCKED;
-            case "close-melee", "target-underneath", "burst-complete", "passed-target", "pass-complete",
+            case "close-melee", "target-underneath", "burst-complete", "passed-target", "pass-complete", "pass-overextended",
                     "energy-depleted", "aligning", "out_of_arc", "out_of_range"
                     -> learningFiringTicks >= 10 ? DragonCombatLearning.Outcome.COMPLETED
                     : DragonCombatLearning.Outcome.RESPONSE_ONLY;

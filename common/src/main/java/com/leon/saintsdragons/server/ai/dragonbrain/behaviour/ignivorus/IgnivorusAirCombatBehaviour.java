@@ -324,8 +324,11 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         runDirection = horizontal(dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01D
                 ? dragon.getDeltaMovement() : Vec3.directionFromRotation(0, dragon.yBodyRot), dragon);
         Vec3 destination = dragon.getCombatAim().steerFlightPass(predictedFeet(dragon, target, 3), attackSide * 6.0D);
+        double speed = dragon.getCombatAim().flightPassSpeed(target.position(),
+                dragon.getCombatFlightState().targetVelocity(), BREATH_PASS_SPEED,
+                IgnivorusStatProfile.FireBreathAbility.AI_AIR_FIRING_DISTANCE);
         issueRoute(context, attackPosition(dragon, target, destination, 12),
-                BREATH_PASS_SPEED, DragonFlightRequest.Arrival.PASS_THROUGH);
+                speed, DragonFlightRequest.Arrival.PASS_THROUGH);
         lastDecision = "breath:steering-pass";
     }
 
