@@ -14,6 +14,9 @@ import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.model.data.EntityModelData;
 public class RaevyxModel extends DragonGeoModel<Raevyx> {
     private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
+    private static final float HIP_COUNTER_BANK_DEGREES = 60.0F;
+    private static final float HIP_DRAG_WEIGHT = 0.30F;
+    private static final String[] TAIL_COUNTER_BANK_BONES = {"tail1", "tail2", "tail3", "tail4", "tail5"};
     private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
             0.20f, 0.25f, 0.30f, 0.35f
@@ -22,9 +25,9 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
             0.35f, 0.45f, 0.55f, 0.60f
     );
-    private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
-            new String[] {"tail1", "tail2", "tail3", "tail4", "tail5"},
-            0.5f, 0.75f, 1.0f, 1.25f, 1.75f
+    private static final WeightedBoneChain TAIL_DRAG = WeightedBoneChain.of(
+            new String[] {"hip", "tail1", "tail2", "tail3", "tail4", "tail5"},
+            HIP_DRAG_WEIGHT, 0.5f, 0.75f, 1.0f, 1.25f, 1.75f
     );
 
     public  RaevyxModel() {
@@ -68,6 +71,8 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
+            applyHipCounterBank(entity, partialTick);
+            applyTailCounterBank(entity, partialTick);
             applyFlightPitch(entity, animationState);
             applyDiveWingPose(entity, partialTick);
             applyNeckBankingLean(entity, partialTick);
@@ -92,6 +97,20 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
         float bankAngleRad = Mth.clamp(-bankAngleDeg * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI);
         float barrelRollRad = entity.getSmoothedRoll(partialTick);
         body.setRotZ(snap.getRotZ() + bankAngleRad + barrelRollRad);
+    }
+
+    private void applyHipCounterBank(Raevyx entity, float partialTick) {
+        getBone("hip").ifPresent(hip -> {
+            float counterBank = Mth.clamp(entity.getBankAngleDegrees(partialTick) / 90.0F, -1.0F, 1.0F);
+            hip.setRotZ(hip.getRotZ() + counterBank * HIP_COUNTER_BANK_DEGREES * DEG_TO_RAD);
+        });
+    }
+
+    private void applyTailCounterBank(Raevyx entity, float partialTick) {
+        for (int i = 0; i < TAIL_COUNTER_BANK_BONES.length; i++) {
+            float rotation = entity.getTailCounterBankRadians(i, partialTick);
+            getBone(TAIL_COUNTER_BANK_BONES[i]).ifPresent(bone -> bone.setRotZ(bone.getRotZ() + rotation));
+        }
     }
 
     private void applyFlightPitch(Raevyx entity, AnimationState<Raevyx> state) {
@@ -171,6 +190,6 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
     }
 
     private void applyTailDrag(Raevyx entity, float partialTick) {
-        DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL, 30.0);
+        DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL_DRAG, 30.0);
     }
 }

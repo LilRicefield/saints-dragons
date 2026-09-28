@@ -225,6 +225,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public int landingTimer = 0;
     public int landedTimer = 0;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
+    private static final float[] TAIL_COUNTER_BANK_DEGREES = {2.0F, 3.0F, 4.0F, 4.0F, 3.0F};
+    private static final float TAIL_BANK_FOLLOW_BLEND = 0.45F;
+    private final float[] tailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
+    private final float[] previousTailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
     private final DragonForwardMovementComponent dashDodgeNudge = new DragonForwardMovementComponent(
             this,
             new DragonForwardMovementComponent.StateAccess() {
@@ -1679,6 +1683,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         tickControllers();
         tickBankingLogic();
+        tickTailCounterBank();
         tickStandardPitchingLogic();
         tickBarrelRollLogic();
         tickScreenShake();
@@ -2221,6 +2226,21 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         );
     }
     
+    private void tickTailCounterBank() {
+        System.arraycopy(tailBankFollow, 0, previousTailBankFollow, 0, tailBankFollow.length);
+        float bank = Mth.clamp(flightVisualState.bankAngle / 90.0F, -1.0F, 1.0F);
+        for (int i = 0; i < tailBankFollow.length; i++) {
+            // Follow the preceding segment's last tick so the bend travels toward the tip.
+            float target = i == 0 ? bank : previousTailBankFollow[i - 1];
+            tailBankFollow[i] = Mth.lerp(TAIL_BANK_FOLLOW_BLEND, tailBankFollow[i], target);
+        }
+    }
+
+    public float getTailCounterBankRadians(int segment, float partialTick) {
+        return Mth.lerp(partialTick, previousTailBankFollow[segment], tailBankFollow[segment])
+                * TAIL_COUNTER_BANK_DEGREES[segment] * Mth.DEG_TO_RAD;
+    }
+
     private void tickRiderLandingBlendTimer() {
         tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
             @Override

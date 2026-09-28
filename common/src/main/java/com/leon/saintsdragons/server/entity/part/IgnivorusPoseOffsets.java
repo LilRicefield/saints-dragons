@@ -8,6 +8,10 @@ public final class IgnivorusPoseOffsets {
     private static final String[] NECK = {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"};
     private static final String[] TAIL = {"tail1", "tail2", "tail3", "tail4"};
     private static final float[] TAIL_WEIGHTS = {0.5F, 0.75F, 1.0F, 1.25F};
+    private static final float MIDDLEBODY_COUNTER_BANK_DEGREES = 45.0F;
+    private static final float HIP_COUNTER_BANK_DEGREES = 60.0F;
+    private static final float MIDDLEBODY_DRAG_WEIGHT = 0.15F;
+    private static final float HIP_DRAG_WEIGHT = 1.5F;
     private static final String[] WING = {"wing", "wingjoint", "innerphalanges", "phalanges", "middlephalanges", "outerphalanges"};
     private static final float[][] DIVE = {{0,-30,8.5F}, {0,77.5F,-7.5F}, {-1.833F,-60.015F,-2.5F}, {0,0,0}, {0,-12.5F,0}, {2.5F,-12.5F,0}};
 
@@ -30,6 +34,9 @@ public final class IgnivorusPoseOffsets {
         float bank = dragon.getBankAngleDegrees(partialTick);
         editor.rotate("body", 2, Mth.clamp(-bank * Mth.DEG_TO_RAD, -Mth.HALF_PI, Mth.HALF_PI)
                 + dragon.getSmoothedRoll(partialTick), true);
+        float counterBank = Mth.clamp(bank / 90.0F, -1.0F, 1.0F) * Mth.DEG_TO_RAD;
+        editor.rotate("middlebody", 2, counterBank * MIDDLEBODY_COUNTER_BANK_DEGREES, false);
+        editor.rotate("hip", 2, counterBank * HIP_COUNTER_BANK_DEGREES, false);
         editor.rotate("root", 0, Mth.clamp(dragon.getFlightPitchRadians(partialTick), -Mth.HALF_PI, Mth.HALF_PI), true);
         if (!dragon.isInWaterOrBubble()) {
             float dive = Mth.clamp(dragon.getDivePose(partialTick), 0, 1);
@@ -47,6 +54,8 @@ public final class IgnivorusPoseOffsets {
         for (int i = 0; i < NECK.length; i++) editor.rotate(NECK[i], 1, (lean + turn) * (0.40F + i * 0.01F) * lookWeight, false);
         dragon.getBreathPose().apply(dragon, partialTick, editor);
         float tail = dragon.getTickedTailDragVelocity(partialTick) * Mth.DEG_TO_RAD;
+        editor.rotate("middlebody", 1, tail * MIDDLEBODY_DRAG_WEIGHT, false);
+        editor.rotate("hip", 1, tail * HIP_DRAG_WEIGHT, false);
         for (int i = 0; i < TAIL.length; i++) editor.rotate(TAIL[i], 1, tail * TAIL_WEIGHTS[i], false);
     }
 }
