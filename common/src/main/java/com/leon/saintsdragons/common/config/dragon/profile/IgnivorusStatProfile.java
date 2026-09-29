@@ -3,6 +3,9 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.server.flight.DragonFlightBlend;
+import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +53,52 @@ public final class IgnivorusStatProfile {
         public static final double TAMING_STUN_HEALTH = 100.0;
 
         private ForgeDefaults() {
+        }
+    }
+
+    public static final class FlightAnimation {
+        public static final float CRUISE_EFFORT = 0.14F;
+        public static final float SPRINT_EFFORT = 0.90F;
+        public static final float GLIDE_ENTER = 0.18F;
+        public static final float FLAP_ENTER = 0.22F;
+        public static final float SPRINT_ENTER = 0.80F;
+        public static final float SPRINT_EXIT = 0.68F;
+        public static final float EFFORT_RESPONSE = 0.20F;
+        public static final float DIVE_POSE_PRIORITY_THRESHOLD = 0.10F;
+        public static final int MODE_SETTLE_TICKS = 15;
+        public static final float FULL_FLAP_EFFORT = 0.50F;
+        // Fixed glide interval, then a base flapping duration plus a random extension per burst
+        public static final int CRUISE_GLIDE_TICKS = 100;
+        public static final int CRUISE_FLAP_TICKS = 54;
+        public static final int CRUISE_FLAP_EXTRA_TICKS = 40;
+        public static final float POSE_BLEND_RESPONSE = 0.30F;
+        public static final float IDLE_BLEND_RESPONSE = 0.11F;
+        // Idle is one keyed stroke; the Molang wing formulas repeat every 360 / frequency seconds.
+        public static final float IDLE_CYCLE_TICKS = 2.0833F * 20.0F;
+        public static final float FLAP_CYCLE_TICKS = 360.0F / 150.0F * 20.0F;
+        public static final float SPRINT_CYCLE_TICKS = 360.0F / 300.0F * 20.0F;
+        public static final int BLEND_ENTRY_TICKS = 6;
+        public static final float MIN_AUDIBLE_WINGBEAT_WEIGHT = 0.25F;
+        public static final DragonFlightBlend.Profile BLEND_PROFILE = new DragonFlightBlend.Profile(
+                GLIDE_ENTER, FULL_FLAP_EFFORT, SPRINT_EFFORT, POSE_BLEND_RESPONSE,
+                FLAP_CYCLE_TICKS, SPRINT_CYCLE_TICKS, IDLE_BLEND_RESPONSE, IDLE_CYCLE_TICKS);
+        public static final DragonFlightEffort.Profile PROFILE = new DragonFlightEffort.Profile(
+                CRUISE_EFFORT, SPRINT_EFFORT, GLIDE_ENTER, FLAP_ENTER,
+                SPRINT_ENTER, SPRINT_EXIT, EFFORT_RESPONSE, MODE_SETTLE_TICKS,
+                CRUISE_GLIDE_TICKS, CRUISE_FLAP_TICKS, CRUISE_FLAP_EXTRA_TICKS, FULL_FLAP_EFFORT);
+        public static final DragonFlightAnimationProfile ANIMATION_PROFILE = new DragonFlightAnimationProfile(
+                PROFILE, BLEND_PROFILE,
+                new DragonFlightAnimationProfile.Clips("animation.ignivorus.glide",
+                        // sin(t * 150 + 50) and sin(t * 300): start both strokes at the upper wing position.
+                        DragonFlightAnimationProfile.Clip.procedural("animation.ignivorus.flap", 360.0D / 150.0D * 20.0D, 40.0D / 150.0D * 20.0D),
+                        DragonFlightAnimationProfile.Clip.procedural("animation.ignivorus.sprint_flap", 360.0D / 300.0D * 20.0D, 90.0D / 300.0D * 20.0D),
+                        DragonFlightAnimationProfile.Clip.keyframed("animation.ignivorus.fly_idle", 1.0833D / 2.0833D),
+                        "ignivorus_flap"),
+                new DragonFlightAnimationProfile.Speeds(RiderController.BASE_FLIGHT_SPEED_MULT,
+                        RiderController.SPRINT_FLIGHT_SPEED_MULT, 2.25D),
+                DIVE_POSE_PRIORITY_THRESHOLD, BLEND_ENTRY_TICKS, MIN_AUDIBLE_WINGBEAT_WEIGHT);
+
+        private FlightAnimation() {
         }
     }
 

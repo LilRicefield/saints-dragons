@@ -115,7 +115,7 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             return;
         }
 
-        float blend = Mth.clamp(entity.getDivePose(partialTick), 0.0F, 1.0F);
+        float blend = Mth.clamp(entity.getFlightAnimationDivePose(partialTick), 0.0F, 1.0F);
         if (blend <= 0.001F) {
             return;
         }

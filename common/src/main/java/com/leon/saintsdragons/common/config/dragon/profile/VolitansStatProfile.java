@@ -3,12 +3,61 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.server.flight.DragonFlightBlend;
+import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class VolitansStatProfile {
+    public static final class FlightAnimation {
+        public static final float CRUISE_EFFORT = 0.14F;
+        public static final float SPRINT_EFFORT = 0.90F;
+        public static final float GLIDE_ENTER = 0.18F;
+        public static final float FLAP_ENTER = 0.22F;
+        public static final float SPRINT_ENTER = 0.80F;
+        public static final float SPRINT_EXIT = 0.68F;
+        public static final float EFFORT_RESPONSE = 0.20F;
+        public static final float DIVE_POSE_PRIORITY_THRESHOLD = 0.10F;
+        public static final int MODE_SETTLE_TICKS = 10;
+        public static final float FULL_FLAP_EFFORT = 0.50F;
+        // Fixed glide interval, then a base flapping duration plus a random extension per burst
+        public static final int CRUISE_GLIDE_TICKS = 100;
+        public static final int CRUISE_FLAP_TICKS = 54;
+        public static final int CRUISE_FLAP_EXTRA_TICKS = 40;
+        public static final float POSE_BLEND_RESPONSE = 0.30F;
+        public static final float IDLE_BLEND_RESPONSE = 0.13F;
+        // Each Molang wing formula repeats every 360 / frequency seconds, not once per long clip
+        public static final float IDLE_CYCLE_TICKS = 360.0F / 280.0F * 20.0F;
+        public static final float FLAP_CYCLE_TICKS = 360.0F / 260.0F * 20.0F;
+        public static final float SPRINT_CYCLE_TICKS = 360.0F / 300.0F * 20.0F;
+        public static final int BLEND_ENTRY_TICKS = 6;
+        public static final float MIN_AUDIBLE_WINGBEAT_WEIGHT = 0.25F;
+        public static final DragonFlightBlend.Profile BLEND_PROFILE = new DragonFlightBlend.Profile(
+                GLIDE_ENTER, FULL_FLAP_EFFORT, SPRINT_EFFORT, POSE_BLEND_RESPONSE,
+                FLAP_CYCLE_TICKS, SPRINT_CYCLE_TICKS, IDLE_BLEND_RESPONSE, IDLE_CYCLE_TICKS);
+        public static final DragonFlightEffort.Profile PROFILE = new DragonFlightEffort.Profile(
+                CRUISE_EFFORT, SPRINT_EFFORT, GLIDE_ENTER, FLAP_ENTER,
+                SPRINT_ENTER, SPRINT_EXIT, EFFORT_RESPONSE, MODE_SETTLE_TICKS,
+                CRUISE_GLIDE_TICKS, CRUISE_FLAP_TICKS, CRUISE_FLAP_EXTRA_TICKS, FULL_FLAP_EFFORT);
+        public static final DragonFlightAnimationProfile ANIMATION_PROFILE = new DragonFlightAnimationProfile(
+                PROFILE, BLEND_PROFILE,
+                new DragonFlightAnimationProfile.Clips("animation.volitans.fly_glide",
+                        // sin(t * 260) and sin(t * 300 + 20): phase-align individual strokes, not the long clips.
+                        DragonFlightAnimationProfile.Clip.procedural("animation.volitans.flap", 360.0D / 260.0D * 20.0D, 90.0D / 260.0D * 20.0D),
+                        DragonFlightAnimationProfile.Clip.procedural("animation.volitans.sprint_flap", 360.0D / 300.0D * 20.0D, 70.0D / 300.0D * 20.0D),
+                        DragonFlightAnimationProfile.Clip.procedural("animation.volitans.fly_idle", 360.0D / 280.0D * 20.0D, 90.0D / 280.0D * 20.0D),
+                        "volitans_flap"),
+                new DragonFlightAnimationProfile.Speeds(RiderController.BASE_FLIGHT_SPEED_MULT,
+                        RiderController.SPRINT_FLIGHT_SPEED_MULT, 1.65D),
+                DIVE_POSE_PRIORITY_THRESHOLD, BLEND_ENTRY_TICKS, MIN_AUDIBLE_WINGBEAT_WEIGHT);
+
+        private FlightAnimation() {
+        }
+    }
+
     private VolitansStatProfile() {
     }
 

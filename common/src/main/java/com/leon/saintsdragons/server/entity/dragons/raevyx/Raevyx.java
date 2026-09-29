@@ -34,10 +34,12 @@ import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
@@ -541,7 +543,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return animationHandler.raevyxActionPredicate(state);
         });
         this.fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
-        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
         this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
@@ -1166,6 +1168,27 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
         return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
+    }
+
+    @Override
+    public DragonFlightAnimationProfile getFlightAnimationProfile() {
+        return RaevyxStatProfile.FlightAnimation.ANIMATION_PROFILE;
+    }
+
+    @Override
+    public boolean isFlightBlendActive() {
+        return super.isFlightBlendActive() && !isTamingStunned() && !isDodging();
+    }
+
+    @Override
+    protected boolean shouldSuppressPoweredFlightBlend() {
+        return isInvertedFlightGlide(1.0F);
+    }
+
+    public boolean isInvertedFlightGlide(float partialTick) {
+        float roll = getSmoothedRoll(partialTick);
+        float nearestInverted = Math.round((roll - Mth.PI) / Mth.TWO_PI) * Mth.TWO_PI + Mth.PI;
+        return Math.abs((roll - nearestInverted) * Mth.RAD_TO_DEG) <= 45.0F;
     }
 
     @Override

@@ -198,9 +198,12 @@ public class CindervaneAnimationHandler {
         if (amphithere.isTakeoff()) {
             return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
+        if (amphithere.isFlightBlendActive()) {
+            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
+                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
         var visualState = amphithere.getVisualFlightState(state.getPartialTick());
-        if (amphithere.isHoldingRiderDiveMomentum()
-                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
             visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
         }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);

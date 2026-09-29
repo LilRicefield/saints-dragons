@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -28,6 +29,7 @@ import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
@@ -253,6 +255,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Nullable
     private UUID packLeaderUuid;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
+    private static final float[] TAIL_COUNTER_BANK_DEGREES = {2.0F, 3.0F, 4.0F, 3.0F};
+    private static final float TAIL_BANK_FOLLOW_BLEND = 0.45F;
+    private final float[] tailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
+    private final float[] previousTailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
     private final ScreenShakeComponent screenShakeComponent;
     @Override
     public boolean supportsRiderPitchLock() {
@@ -381,7 +387,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
         this.actionController = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
         this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
@@ -542,6 +548,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super.tick();
         tickRiderControlLock();
         tickBankingLogic();
+        tickTailCounterBank();
         tickBarrelRollLogic();
         tickStandardPitchingLogic();
         tickScreenShake();
@@ -717,6 +724,20 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         );
     }
 
+    private void tickTailCounterBank() {
+        System.arraycopy(tailBankFollow, 0, previousTailBankFollow, 0, tailBankFollow.length);
+        float bank = Mth.clamp(flightVisualState.bankAngle / 90.0F, -1.0F, 1.0F);
+        for (int i = 0; i < tailBankFollow.length; i++) {
+            float target = i == 0 ? bank : previousTailBankFollow[i - 1];
+            tailBankFollow[i] = Mth.lerp(TAIL_BANK_FOLLOW_BLEND, tailBankFollow[i], target);
+        }
+    }
+
+    public float getTailCounterBankRadians(int segment, float partialTick) {
+        return Mth.lerp(partialTick, previousTailBankFollow[segment], tailBankFollow[segment])
+                * TAIL_COUNTER_BANK_DEGREES[segment] * Mth.DEG_TO_RAD;
+    }
+
     private void tickRiderLandingBlendTimer() {
         tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
             @Override
@@ -833,6 +854,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     public int getFlightMode() {
         return evaluateStandardFlightMode(false);
+    }
+
+    @Override
+    public DragonFlightAnimationProfile getFlightAnimationProfile() {
+        return CindervaneStatProfile.FlightAnimation.ANIMATION_PROFILE;
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
@@ -1457,7 +1483,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
+        controllers.add(movementController, flightController, vocalController, actionController, fastActionController, interactionController);
     }
 
     private void setupAnimationControllers() {

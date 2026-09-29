@@ -401,6 +401,11 @@ public class AsyncFlightController {
         return this.currentWaypoint;
     }
 
+    public double getRequestedFlightSpeed() {
+        return isIdle() || this.currentWaypoint == null ? 0.0D
+                : FlightMotionPolicy.requestedSpeed(this.flightCapable.getFlightSpeed(), this.speedModifier);
+    }
+
     boolean isGroundTransition() {
         return this.currentGroundTransition;
     }

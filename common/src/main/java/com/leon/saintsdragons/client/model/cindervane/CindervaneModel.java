@@ -15,6 +15,8 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class CindervaneModel extends DragonGeoModel<Cindervane> {
     private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
+    private static final float TAIL_BASE_COUNTER_BANK_DEGREES = 60.0F;
+    private static final String[] TAIL_COUNTER_BANK_BONES = {"tail1", "tail2", "tail3", "tail4"};
     private static final WeightedBoneChain NECK = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"},
             0.15f, 0.30f, 0.45f, 0.60f, 0.75f
@@ -53,6 +55,8 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
+            applyTailBaseCounterBank(entity, partialTick);
+            applyTailCounterBank(entity, partialTick);
             applyFlightPitch(entity, animationState);
             applyDiveWingPose(entity, partialTick);
             applyNeckBankingLean(entity, partialTick);
@@ -95,6 +99,20 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
         body.setRotZ(snap.getRotZ() + bankAngleRad + barrelRollRad);
     }
 
+    private void applyTailBaseCounterBank(Cindervane entity, float partialTick) {
+        getBone("bone").ifPresent(bone -> {
+            float counterBank = Mth.clamp(entity.getBankAngleDegrees(partialTick) / 90.0F, -1.0F, 1.0F);
+            bone.setRotZ(bone.getRotZ() + counterBank * TAIL_BASE_COUNTER_BANK_DEGREES * DEG_TO_RAD);
+        });
+    }
+
+    private void applyTailCounterBank(Cindervane entity, float partialTick) {
+        for (int i = 0; i < TAIL_COUNTER_BANK_BONES.length; i++) {
+            float rotation = entity.getTailCounterBankRadians(i, partialTick);
+            getBone(TAIL_COUNTER_BANK_BONES[i]).ifPresent(bone -> bone.setRotZ(bone.getRotZ() + rotation));
+        }
+    }
+
     private void applyFlightPitch(Cindervane entity, AnimationState<Cindervane> state) {
         var rootOpt = getBone("root");
         if (rootOpt.isEmpty()) {
@@ -116,7 +134,7 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
             return;
         }
 
-        float blend = Mth.clamp(entity.getDivePose(partialTick), 0.0F, 1.0F);
+        float blend = Mth.clamp(entity.getFlightAnimationDivePose(partialTick), 0.0F, 1.0F);
         if (blend <= 0.001F) {
             return;
         }

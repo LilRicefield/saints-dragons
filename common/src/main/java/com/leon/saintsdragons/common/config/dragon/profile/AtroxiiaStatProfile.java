@@ -68,7 +68,7 @@ public final class AtroxiiaStatProfile {
         public static final double RIDER_JUMP_STRENGTH = 1.15D;
         public static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
         public static final double RIDER_WALK_SPEED = 0.12D;
-        public static final double RIDER_RUN_SPEED = 0.28D;
+        public static final double RIDER_RUN_SPEED = 0.43D;
         public static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
         public static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
         public static final double ATTRIBUTE_FOLLOW_RANGE = 32.0D;

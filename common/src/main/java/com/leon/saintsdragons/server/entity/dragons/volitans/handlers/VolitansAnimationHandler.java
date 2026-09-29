@@ -227,6 +227,10 @@ public final class VolitansAnimationHandler {
             return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
 
+        if (dragon.isFlightBlendActive()) {
+            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
+                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
         DragonFlightStateEvaluator.VisualState visualState;
         if (dragon.isLanding()) {
             visualState = DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
@@ -234,8 +238,7 @@ public final class VolitansAnimationHandler {
             float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
             visualState = dragon.evaluateMotionFlightState(animationPitchRad);
         }
-        if (dragon.isHoldingRiderDiveMomentum()
-                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
             visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
         }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);

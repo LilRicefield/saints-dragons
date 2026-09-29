@@ -41,6 +41,8 @@ import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
@@ -477,7 +479,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return animationHandler.actionPredicate(state);
         });
         this.fastActionController = new AnimationController<>(this, IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
         this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
@@ -2380,6 +2382,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return evaluateStandardFlightMode(false);
     }
 
+    @Override
+    public DragonFlightAnimationProfile getFlightAnimationProfile() {
+        return IgnivorusStatProfile.FlightAnimation.ANIMATION_PROFILE;
+    }
+
+    @Override
+    public boolean isFlightBlendActive() {
+        return super.isFlightBlendActive() && !isTamingStunned() && getSkyfallElapsedTicks(1.0F) < 0.0F;
+    }
+
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
         return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
@@ -3236,7 +3248,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
+        // Actions such as roar must retain control of jaw tracks also present in the mixed flight pose.
+        controllers.add(movementController, flightController, vocalController, actionController, fastActionController, interactionController);
     }
 
     private void setupAnimationControllers() {

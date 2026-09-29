@@ -8,8 +8,6 @@ import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 
-import net.minecraft.util.Mth;
-
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "raevyxFastAction";
@@ -18,7 +16,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final String DODGE_AIR_LEFT = "dodge_air_left";
     private static final String DODGE_AIR_RIGHT = "dodge_air_right";
 
-    private static final float INVERTED_GLIDE_ROLL_WINDOW_DEGREES = 45.0f;
     private static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.idle");
     private static final RawAnimation GROUND_WALK = RawAnimation.begin().thenLoop("animation.raevyx.walk");
     private static final RawAnimation GROUND_RUN = RawAnimation.begin().thenLoop("animation.raevyx.run");
@@ -246,22 +243,18 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                     FLIGHT_TRANSITIONS
             );
         }
-        boolean invertedGlide = isInvertedGlideWindow(state.getPartialTick());
+        if (wyvern.isFlightBlendActive()) {
+            // The flight controller samples all three clips; this silent base handles entry/exit.
+            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
+                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+        boolean invertedGlide = wyvern.isInvertedFlightGlide(state.getPartialTick());
         DragonFlightStateEvaluator.VisualState visualState = wyvern.getVisualFlightState(state.getPartialTick());
         if (invertedGlide
-                || wyvern.isHoldingRiderDiveMomentum()
                 || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
             visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
         }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-    }
-
-    private boolean isInvertedGlideWindow(float partialTick) {
-        float roll = wyvern.getSmoothedRoll(partialTick);
-        float nearestInvertedRoll = Math.round((roll - Mth.PI) / Mth.TWO_PI)
-                * Mth.TWO_PI + Mth.PI;
-        float offsetDegrees = Math.abs((roll - nearestInvertedRoll) * Mth.RAD_TO_DEG);
-        return offsetDegrees <= INVERTED_GLIDE_ROLL_WINDOW_DEGREES;
     }
 
     public PlayState raevyxActionPredicate(AnimationState<Raevyx> state) {

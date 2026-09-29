@@ -39,7 +39,7 @@ public final class IgnivorusPoseOffsets {
         editor.rotate("hip", 2, counterBank * HIP_COUNTER_BANK_DEGREES, false);
         editor.rotate("root", 0, Mth.clamp(dragon.getFlightPitchRadians(partialTick), -Mth.HALF_PI, Mth.HALF_PI), true);
         if (!dragon.isInWaterOrBubble()) {
-            float dive = Mth.clamp(dragon.getDivePose(partialTick), 0, 1);
+            float dive = Mth.clamp(dragon.getFlightAnimationDivePose(partialTick), 0, 1);
             if (dive > 0.001F) for (int side = 0; side < 2; side++) {
                 for (int i = 0; i < WING.length; i++) for (int axis = 0; axis < 3; axis++) {
                     float sign = axis < 2 ? -1 : 1;

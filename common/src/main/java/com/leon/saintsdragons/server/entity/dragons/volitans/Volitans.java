@@ -47,6 +47,8 @@ import com.leon.saintsdragons.server.entity.component.DragonForwardMovementCompo
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
@@ -383,7 +385,7 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
                 VolitansAnimationHandler.MOVEMENT_TRIGGER_TRANSITION_TICKS, animationHandler::movementPredicate);
         this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         this.airActionController = new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
         this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
@@ -622,6 +624,21 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     @Override
     protected int getFlightMode() {
         return evaluateStandardFlightMode(false);
+    }
+
+    @Override
+    public DragonFlightAnimationProfile getFlightAnimationProfile() {
+        return VolitansStatProfile.FlightAnimation.ANIMATION_PROFILE;
+    }
+
+    @Override
+    protected boolean usesFlightEffortAnimation() {
+        return super.usesFlightEffortAnimation() && !isInWaterOrBubble() && !isBurrowing() && !isUltimateSlamActive();
+    }
+
+    @Override
+    public boolean isFlightBlendActive() {
+        return super.isFlightBlendActive() && !isTamingStunned();
     }
 
     @Override

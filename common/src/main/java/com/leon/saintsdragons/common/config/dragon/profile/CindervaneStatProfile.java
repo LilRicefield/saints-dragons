@@ -2,10 +2,59 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.server.flight.DragonFlightBlend;
+import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 
 import java.util.Map;
 
 public final class CindervaneStatProfile {
+    public static final class FlightAnimation {
+        public static final float CRUISE_EFFORT = 0.14F;
+        public static final float SPRINT_EFFORT = 0.90F;
+        public static final float GLIDE_ENTER = 0.18F;
+        public static final float FLAP_ENTER = 0.22F;
+        public static final float SPRINT_ENTER = 0.80F;
+        public static final float SPRINT_EXIT = 0.68F;
+        public static final float EFFORT_RESPONSE = 0.20F;
+        public static final float DIVE_POSE_PRIORITY_THRESHOLD = 0.10F;
+        public static final int MODE_SETTLE_TICKS = 6;
+        public static final float FULL_FLAP_EFFORT = 0.50F;
+        // Fixed glide interval, then a base flapping duration plus a random extension per burst
+        public static final int CRUISE_GLIDE_TICKS = 85;
+        public static final int CRUISE_FLAP_TICKS = 60;
+        public static final int CRUISE_FLAP_EXTRA_TICKS = 40;
+        public static final float POSE_BLEND_RESPONSE = 0.30F;
+        public static final float IDLE_BLEND_RESPONSE = 0.15F;
+        // Native Molang stroke periods; idle contains two strokes and sprint contains five
+        public static final float IDLE_CYCLE_TICKS = 360.0F / 120.0F * 20.0F;
+        public static final float FLAP_CYCLE_TICKS = 360.0F / 120.0F * 20.0F;
+        public static final float SPRINT_CYCLE_TICKS = 360.0F / 200.0F * 20.0F;
+        public static final int BLEND_ENTRY_TICKS = 6;
+        public static final float MIN_AUDIBLE_WINGBEAT_WEIGHT = 0.25F;
+        public static final DragonFlightBlend.Profile BLEND_PROFILE = new DragonFlightBlend.Profile(
+                GLIDE_ENTER, FULL_FLAP_EFFORT, SPRINT_EFFORT, POSE_BLEND_RESPONSE,
+                FLAP_CYCLE_TICKS, SPRINT_CYCLE_TICKS, IDLE_BLEND_RESPONSE, IDLE_CYCLE_TICKS);
+        public static final DragonFlightEffort.Profile PROFILE = new DragonFlightEffort.Profile(
+                CRUISE_EFFORT, SPRINT_EFFORT, GLIDE_ENTER, FLAP_ENTER,
+                SPRINT_ENTER, SPRINT_EXIT, EFFORT_RESPONSE, MODE_SETTLE_TICKS,
+                CRUISE_GLIDE_TICKS, CRUISE_FLAP_TICKS, CRUISE_FLAP_EXTRA_TICKS, FULL_FLAP_EFFORT);
+        public static final DragonFlightAnimationProfile ANIMATION_PROFILE = new DragonFlightAnimationProfile(
+                PROFILE, BLEND_PROFILE,
+                new DragonFlightAnimationProfile.Clips("animation.cindervane.glide",
+                        DragonFlightAnimationProfile.Clip.procedural("animation.cindervane.flap", 360.0D / 120.0D * 20.0D, 90.0D / 120.0D * 20.0D),
+                        DragonFlightAnimationProfile.Clip.procedural("animation.cindervane.sprint_flap", 360.0D / 200.0D * 20.0D, 90.0D / 200.0D * 20.0D),
+                        // Idle's arm sine has the opposite sign; shift half a cycle to align the upper wing pose
+                        DragonFlightAnimationProfile.Clip.procedural("animation.cindervane.fly_idle", 360.0D / 120.0D * 20.0D, 270.0D / 120.0D * 20.0D),
+                        "cindervane_flap"),
+                new DragonFlightAnimationProfile.Speeds(RiderController.BASE_FLIGHT_SPEED_MULT,
+                        RiderController.SPRINT_FLIGHT_SPEED_MULT, AutonomousFlightBehaviour.CRUISE_SPEED),
+                DIVE_POSE_PRIORITY_THRESHOLD, BLEND_ENTRY_TICKS, MIN_AUDIBLE_WINGBEAT_WEIGHT);
+
+        private FlightAnimation() {
+        }
+    }
+
     private CindervaneStatProfile() {
     }
 
@@ -107,7 +156,7 @@ public final class CindervaneStatProfile {
         public static final double PACK_SEARCH_RADIUS = 48.0D;
         public static final int FLEX_COOLDOWN_TICKS = 120;
         public static final double RIDER_WALK_SPEED = 0.18D;
-        public static final double RIDER_RUN_SPEED = 0.26D;
+        public static final double RIDER_RUN_SPEED = 0.45D;
         public static final double ATTRIBUTE_FOLLOW_RANGE = 64.0D;
 
         private Entity() {

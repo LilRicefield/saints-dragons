@@ -32,6 +32,10 @@ dependencies {
     // GeckoLib common
     modImplementation "software.bernie.geckolib:geckolib-fabric-1.20.1:${rootProject.geckolib_version}"
 
+    // The animation sampler uses GeckoLib's MCLib math types directly.
+    // GeckoLib provides MCLib at runtime; expose it explicitly for common compilation.
+    compileOnly "com.eliotlash.mclib:mclib:20"
+
     // Optional JEI integration. The API is available to compile against but is never bundled.
     modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}"
 

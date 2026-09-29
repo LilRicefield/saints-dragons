@@ -386,9 +386,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return AnimationHelper.handleTakeoff(state, false,
                     dragon.isPhase2Active() ? PHASE2_FLIGHT_ANIMATIONS : FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
+        if (dragon.isFlightBlendActive()) {
+            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
+                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
         var visualState = dragon.getVisualFlightState(state.getPartialTick());
-        if (dragon.isHoldingRiderDiveMomentum()
-                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
             visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
         }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);

@@ -16,6 +16,9 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
+import com.leon.saintsdragons.server.flight.DragonFlightBlend;
+import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -61,6 +64,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_DIVE_MOMENTUM =
             SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_FLIGHT_EFFORT =
+            SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_WINGBEAT_PHASE =
+            SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.FLOAT);
     protected static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     protected static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     protected static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
@@ -94,6 +101,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightStateEvaluator.AnimationState flightAnimationState = new DragonFlightStateEvaluator.AnimationState();
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
+    private final DragonFlightEffort flightEffort = new DragonFlightEffort();
+    private final DragonFlightBlend flightBlend = new DragonFlightBlend();
+    private Vec3 lastFlightAnimationPosition;
     private Vec3 lastDivePosePosition;
     private final DragonCombatAim combatAim = new DragonCombatAim(this);
     private DragonCombatDecisionSupport combatDecisionSupport;
@@ -766,6 +776,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         super.defineSynchedData();
         this.entityData.define(DATA_DIVE_POSE_TARGET, 0.0F);
         this.entityData.define(DATA_RIDER_DIVE_MOMENTUM, false);
+        this.entityData.define(DATA_FLIGHT_EFFORT, 0.0F);
+        this.entityData.define(DATA_WINGBEAT_PHASE, 0.0F);
     }
 
     @Override
@@ -778,6 +790,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
         tickNearWaterFlightSplash();
+        tickFlightAnimationEffort();
+        tickFlightBlend();
     }
 
     private void tickDivePose() {
@@ -1808,6 +1822,96 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     @Override
     protected abstract int getFlightMode();
 
+    /** Return a species profile to opt into effort-driven flight and the shared pose mixer. */
+    public @Nullable DragonFlightAnimationProfile getFlightAnimationProfile() {
+        return null;
+    }
+
+    protected boolean usesFlightEffortAnimation() {
+        return getFlightAnimationProfile() != null && (isFlying() || isHovering()) && !isTakeoff()
+                && !isLanding() && !isRiderLandingBlendActive();
+    }
+
+    public boolean isFlightBlendActive() {
+        if (!usesFlightEffortAnimation() || isBaby() || isDying()) return false;
+        int mode = getFlightMode();
+        return mode == DragonFlightStateEvaluator.MODE_GLIDE || mode == DragonFlightStateEvaluator.MODE_FLAP
+                || mode == DragonFlightStateEvaluator.MODE_SPRINT_FLAP || mode == DragonFlightStateEvaluator.MODE_FLY_IDLE
+                || mode == DragonFlightStateEvaluator.MODE_HOVER;
+    }
+
+    protected boolean shouldSuppressPoweredFlightBlend() {
+        return false;
+    }
+
+    public float getFlightAnimationEffort() {
+        return this.entityData.get(DATA_FLIGHT_EFFORT);
+    }
+
+    public DragonFlightBlend getFlightBlend() {
+        return flightBlend;
+    }
+
+    /** Fold the wings only as the glide pose gains authority over flapping or idle. */
+    public float getFlightAnimationDivePose(float partialTick) {
+        float dive = getDivePose(partialTick);
+        return isFlightBlendActive() ? dive * flightBlend.glide(partialTick) : dive;
+    }
+
+    private void tickFlightBlend() {
+        DragonFlightAnimationProfile profile = getFlightAnimationProfile();
+        if (profile == null) return;
+        if (!isAerial() || isDeadOrDying()) {
+            flightBlend.reset();
+            if (!level().isClientSide) this.entityData.set(DATA_WINGBEAT_PHASE, 0.0F);
+            return;
+        }
+        boolean active = isFlightBlendActive();
+        boolean diving = getDivePose(1.0F) >= profile.divePosePriorityThreshold();
+        // Use the existing synced rider inputs directly, without waiting for a flight-mode handoff.
+        boolean idleRequested = active && !diving && (getControllingPassenger() instanceof Player
+                ? !hasRiderFlightMovementInput()
+                : isHovering() || getFlightMode() == DragonFlightStateEvaluator.MODE_FLY_IDLE
+                        || getFlightMode() == DragonFlightStateEvaluator.MODE_HOVER);
+        boolean powered = active && !idleRequested && !shouldSuppressPoweredFlightBlend()
+                && !diving;
+        flightBlend.tick(getFlightAnimationEffort(), powered, idleRequested,
+                level().isClientSide ? this.entityData.get(DATA_WINGBEAT_PHASE) : Float.NaN, profile.blend());
+        if (!level().isClientSide && tickCount % 5 == 0) {
+            this.entityData.set(DATA_WINGBEAT_PHASE, flightBlend.syncedPhase());
+        }
+    }
+
+    private boolean hasRiderFlightMovementInput() {
+        return !areRiderControlsLocked() && (Math.abs(getLastRiderForward()) > 0.01F
+                || Math.abs(getLastRiderStrafe()) > 0.01F || isGoingUp() || isGoingDown());
+    }
+
+    private void tickFlightAnimationEffort() {
+        DragonFlightAnimationProfile profile = getFlightAnimationProfile();
+        if (level().isClientSide || profile == null) return;
+        Vec3 currentPosition = position();
+        // Vehicle packets move ridden dragons without preserving their server-side velocity.
+        Vec3 motion = lastFlightAnimationPosition == null ? Vec3.ZERO : currentPosition.subtract(lastFlightAnimationPosition);
+        lastFlightAnimationPosition = currentPosition;
+        if (!usesFlightEffortAnimation()) {
+            flightEffort.reset();
+        } else {
+            boolean ridden = getControllingPassenger() instanceof Player;
+            boolean sprintRequested = ridden ? isAccelerating() : asyncAirController.isSprinting();
+            double cruiseSpeed = getFlightSpeed() * (ridden ? profile.speeds().riderCruise() : profile.speeds().aiCruise());
+            double requestedSpeed = ridden
+                    ? (hasRiderFlightMovementInput() ? getFlightSpeed() * (sprintRequested
+                            ? profile.speeds().riderSprint() : profile.speeds().riderCruise()) : 0.0D)
+                    : asyncAirController.getRequestedFlightSpeed();
+            if (motion.lengthSqr() > Math.pow(Math.max(8.0D, cruiseSpeed * 8.0D), 2.0D)) motion = Vec3.ZERO;
+            flightEffort.tick(motion, cruiseSpeed, requestedSpeed, ridden, sprintRequested,
+                    isHoldingRiderDiveMomentum(), getDivePose(1.0F) >= profile.divePosePriorityThreshold(),
+                    getRandom(), profile.effort());
+        }
+        this.entityData.set(DATA_FLIGHT_EFFORT, Math.round(flightEffort.effort() * 100.0F) / 100.0F);
+    }
+
     protected void syncFlightAnimationState() {
         if (level().isClientSide) {
             return;
@@ -1821,6 +1925,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected int evaluateStandardFlightMode(boolean forceSurfaceGlide) {
+        if (usesFlightEffortAnimation()) {
+            if (isHovering()) return DragonFlightStateEvaluator.MODE_HOVER;
+            return level().isClientSide ? getSyncedFlightMode() : flightEffort.mode();
+        }
         double altitudeAboveTerrain = getHeightmapAltitudeAboveTerrain();
         DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
                 isFlying(),
@@ -1849,6 +1957,17 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected DragonFlightStateEvaluator.VisualState evaluateVisualFlightState(float partialTick, float flightPitchRadians) {
+        if (usesFlightEffortAnimation()) {
+            if (getDivePose(partialTick) >= getFlightAnimationProfile().divePosePriorityThreshold()) {
+                return DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
+            }
+            return switch (getSyncedFlightMode()) {
+                case DragonFlightStateEvaluator.MODE_GLIDE -> DragonFlightStateEvaluator.VisualState.GLIDE;
+                case DragonFlightStateEvaluator.MODE_SPRINT_FLAP -> DragonFlightStateEvaluator.VisualState.SPRINT_FLAP;
+                case DragonFlightStateEvaluator.MODE_FLY_IDLE, DragonFlightStateEvaluator.MODE_HOVER -> DragonFlightStateEvaluator.VisualState.FLY_IDLE;
+                default -> DragonFlightStateEvaluator.VisualState.FLAP;
+            };
+        }
         return DragonFlightStateEvaluator.evaluateAnimationVisualState(
                 flightAnimationState,
                 tickCount,
