@@ -45,6 +45,9 @@ public abstract class CindervaneFireBodyActivationRenderer extends RenderType {
         float fadeIn = Mth.clamp(progress / 0.15F, 0.0F, 1.0F);
         float fadeOut = 1.0F - progress;
         float alpha = 0.45F * fadeIn * fadeOut * fadeOut;
+        boolean blueFire = dragon.isAlbinoVariant();
+        float red = blueFire ? 0.18F : 1.0F;
+        float blue = blueFire ? 1.0F : 0.18F;
         VertexConsumer buffer = buffers.getBuffer(SHELL);
         poses.pushPose();
         poses.translate(0.0D, dragon.getBbHeight() * 0.5D, 0.0D);
@@ -54,10 +57,10 @@ public abstract class CindervaneFireBodyActivationRenderer extends RenderType {
             for (int segment = 0; segment < 32; segment++) {
                 float longitude0 = Mth.TWO_PI * segment / 32.0F;
                 float longitude1 = Mth.TWO_PI * (segment + 1) / 32.0F;
-                vertex(buffer, poses.last(), latitude0, longitude0, radius, alpha, 0, 0);
-                vertex(buffer, poses.last(), latitude1, longitude0, radius, alpha, 0, 1);
-                vertex(buffer, poses.last(), latitude1, longitude1, radius, alpha, 1, 1);
-                vertex(buffer, poses.last(), latitude0, longitude1, radius, alpha, 1, 0);
+                vertex(buffer, poses.last(), latitude0, longitude0, radius, red, blue, alpha, 0, 0);
+                vertex(buffer, poses.last(), latitude1, longitude0, radius, red, blue, alpha, 0, 1);
+                vertex(buffer, poses.last(), latitude1, longitude1, radius, red, blue, alpha, 1, 1);
+                vertex(buffer, poses.last(), latitude0, longitude1, radius, red, blue, alpha, 1, 0);
             }
         }
         poses.popPose();
@@ -65,16 +68,16 @@ public abstract class CindervaneFireBodyActivationRenderer extends RenderType {
         MultiBufferSource circleBuffers = ignored -> buffers.getBuffer(BeamRenderTypes.translucent(texture));
         BillboardFlashRenderer.renderQuad(poses, circleBuffers, texture,
                 0.0F, dragon.getBbHeight() * 0.5F, 0.0F,
-                radius * 1.1F, 0.0F, 1.0F, 0.65F, 0.18F, fadeIn * fadeOut);
+                radius * 1.1F, 0.0F, red, 0.65F, blue, fadeIn * fadeOut);
     }
 
     private static void vertex(VertexConsumer buffer, PoseStack.Pose pose, float latitude, float longitude,
-                               float radius, float alpha, float u, float v) {
+                               float radius, float red, float blue, float alpha, float u, float v) {
         float nx = Mth.cos(latitude) * Mth.cos(longitude);
         float ny = Mth.sin(latitude);
         float nz = Mth.cos(latitude) * Mth.sin(longitude);
         buffer.vertex(pose.pose(), nx * radius, ny * radius, nz * radius)
-                .color(1.0F, 0.65F, 0.18F, alpha).uv(u, v)
+                .color(red, 0.65F, blue, alpha).uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(0xF000F0)
                 .normal(pose.normal(), nx, ny, nz).endVertex();
     }

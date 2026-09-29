@@ -52,20 +52,21 @@ public final class CindervaneFireBodyParticles {
                 Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
                 Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));
         Vec3 motion = dragon.getDeltaMovement().scale(0.7);
+        boolean blueFire = dragon.isAlbinoVariant();
         var random = dragon.getRandom();
         for (int i = 0; i < FLAMES_PER_TICK; i++) {
             double area = (i + random.nextDouble()) * totalArea / FLAMES_PER_TICK;
             Vec3 point = DragonBoneSurfaceSampler.sample(faces, area, random).add(renderOrigin);
-            int layer = Math.floorMod(i + dragon.tickCount, 3);
-            var type = switch (layer) {
-                case 0 -> ModParticles.CINDERVANE_FIRE_TRAIL.get();
-                case 1 -> ModParticles.CINDERVANE_SPEC_TRAIL.get();
-                default -> ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get();
-            };
+            boolean spec = Math.floorMod(i + dragon.tickCount, 2) == 1;
+            var type = spec ? ModParticles.CINDERVANE_SPEC_TRAIL.get()
+                    : ModParticles.CINDERVANE_FIRE_TRAIL.get();
             var particle = Minecraft.getInstance().particleEngine.createParticle(type,
                     point.x, point.y, point.z, motion.x, motion.y + 0.025, motion.z);
             if (particle instanceof CindervaneFireTrailParticle flameParticle) {
                 flameParticle.setBodySizeMultiplier(1.5625F);
+                if (blueFire) {
+                    flameParticle.setColor(spec ? 0.28F : 0.08F, spec ? 0.78F : 0.48F, 1.0F);
+                }
             }
         }
         for (int i = 0; i < DARK_FLAMES_PER_TICK; i++) {
@@ -75,6 +76,9 @@ public final class CindervaneFireBodyParticles {
                     point.x, point.y, point.z, motion.x, motion.y + 0.025, motion.z);
             if (particle instanceof CindervaneFireTrailParticle flameParticle) {
                 flameParticle.setBodySizeMultiplier(1.5625F);
+                if (blueFire) {
+                    flameParticle.setColor(0.035F, 0.25F, 0.75F);
+                }
             }
         }
         for (int i = 0; i < SPARKS_PER_TICK; i++) {
@@ -85,8 +89,12 @@ public final class CindervaneFireBodyParticles {
             var type = i < 4 ? ModParticles.FIRE_BREATH_EMBER.get()
                     : i < 8 ? ModParticles.CINDERVANE_MOUTH_EMITTER.get()
                     : ModParticles.CINDERVANE_FIRE_BODY_STAR.get();
-            Minecraft.getInstance().particleEngine.createParticle(type,
+            var particle = Minecraft.getInstance().particleEngine.createParticle(type,
                     point.x, point.y, point.z, drift.x, drift.y, drift.z);
+            if (blueFire && particle != null) {
+                particle.setColor(i < 4 ? 0.055F : i < 8 ? 0.16F : 0.30F,
+                        i < 4 ? 0.48F : i < 8 ? 0.72F : 0.78F, 1.0F);
+            }
         }
         for (int i = 0; i < SMOKE_PER_TICK; i++) {
             double area = (i + random.nextDouble()) * totalArea / SMOKE_PER_TICK;
