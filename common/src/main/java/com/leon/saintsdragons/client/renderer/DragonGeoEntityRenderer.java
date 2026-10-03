@@ -2,8 +2,6 @@ package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
-import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -11,18 +9,24 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 import org.joml.Vector3d;
 import org.joml.Vector4f;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.GeckoLibCache;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
+import software.bernie.geckolib.core.animation.AnimationState;
+import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.model.data.EntityModelData;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.util.RenderUtils;
@@ -91,7 +95,6 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
                 if (bone.isPresent()) {
                     bone.get().setTrackingMatrices(true);
                 } else if (!isReRender && RenderPassContext.isExtractionAllowed(entity.getId())) {
-                    RiderBullcrap.remove(entity, index);
                     if (seat.locatorName() != null) {
                         entity.clearClientLocatorPosition(seat.locatorName());
                     }
@@ -157,16 +160,6 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         }
 
         this.renderedModelThisPass = true;
-        poseStack.pushPose();
-        try {
-            RenderUtils.translateMatrixToBone(poseStack, bone);
-            RenderUtils.translateToPivotPoint(poseStack, bone);
-            RenderUtils.rotateMatrixAroundBone(poseStack, bone);
-            RenderUtils.scaleMatrixForBone(poseStack, bone);
-            captureRiderCameraIfNeeded(poseStack, animatable, bone);
-        } finally {
-            poseStack.popPose();
-        }
     }
 
     protected float getRenderScale(T entity) {
@@ -243,65 +236,85 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         });
     }
 
-    protected void captureRiderCameraIfNeeded(PoseStack poseStack, T animatable, GeoBone bone) {
-        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(animatable);
-        if (riderSpec == null) {
+    /** Evaluate only animation and attachment ancestors; no geometry, layers, or render events. */
+    public void prepareRiderAttachments(T entity, float partialTick) {
+        RiderConfig.RiderSpec spec = RiderConfig.getSpec(entity);
+        if (spec == null) {
             return;
         }
-
-        int seatIndex = seatIndexForRiderBone(animatable, bone.getName(), riderSpec);
-        if (seatIndex < 0 || !RenderPassContext.isExtractionAllowed(animatable.getId())) {
+        GeoModel<T> geoModel = getGeoModel();
+        ResourceLocation resource = geoModel.getModelResource(entity, this);
+        if (!GeckoLibCache.getBakedModels().containsKey(resource)) {
             return;
         }
-
-        Matrix4f viewMatrix = new Matrix4f((Matrix4fc) poseStack.last().pose());
-        Vector4f boneViewPos4 = new Vector4f(0.0f, 0.0f, 0.0f, 1.0f).mul((Matrix4fc) viewMatrix);
-        double viewSpaceDistance = Math.sqrt(
-                boneViewPos4.x() * boneViewPos4.x()
-                        + boneViewPos4.y() * boneViewPos4.y()
-                        + boneViewPos4.z() * boneViewPos4.z()
-        );
-        if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
-            return;
-        }
-        if (!RiderBullcrap.tryLockForFrame(animatable, seatIndex)) {
-            return;
-        }
-
-        Vector3d boneWorldPosJoml = bone.getWorldPosition();
-        Vec3 cameraWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
-        if (!usesGroundedRawFirstPersonBoneAnchor(animatable) || !riderSpec.rawGroundedCameraAnchor()) {
-            Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
-            Vec3 offsetWorldPos = transformLocator(
-                    bone,
-                    firstPersonOffset.x(),
-                    firstPersonOffset.y(),
-                    firstPersonOffset.z()
-            );
-            if (offsetWorldPos != null) {
-                cameraWorldPos = offsetWorldPos;
+        BakedGeoModel baked = geoModel.getBakedModel(resource);
+        boolean sitting = entity.isPassenger();
+        float bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+        float headYaw = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
+        if (sitting && entity.getVehicle() instanceof LivingEntity vehicle) {
+            bodyYaw = Mth.rotLerp(partialTick, vehicle.yBodyRotO, vehicle.yBodyRot);
+            float relativeYaw = Mth.clamp(Mth.wrapDegrees(headYaw - bodyYaw), -85, 85);
+            bodyYaw = headYaw - relativeYaw;
+            if (relativeYaw * relativeYaw > 2500) {
+                bodyYaw += relativeYaw * 0.2F;
             }
         }
-        RiderBullcrap.store(
-                animatable,
-                seatIndex,
-                viewMatrix,
-                cameraWorldPos.subtract(animatable.position())
-        );
-    }
-
-    private boolean usesGroundedRawFirstPersonBoneAnchor(T animatable) {
-        if (animatable instanceof RideableFlyingDragon) {
-            return !animatable.isFlying()
-                    && !animatable.isTakeoff()
-                    && !animatable.isLanding()
-                    && !animatable.isHovering();
+        float limbAmount = !sitting && entity.isAlive() ? Math.min(entity.walkAnimation.speed(partialTick), 1) : 0;
+        float limbSwing = !sitting && entity.isAlive() ? entity.walkAnimation.position(partialTick) : 0;
+        if (entity.isBaby()) {
+            limbSwing *= 3;
         }
-        return animatable instanceof RideableGroundDragon;
+        Vec3 velocity = entity.getDeltaMovement();
+        float speed = (float) ((Math.abs(velocity.x) + Math.abs(velocity.z)) / 2);
+        AnimationState<T> state = new AnimationState<>(entity, limbSwing, limbAmount, partialTick,
+                speed >= getMotionAnimThreshold(entity) && limbAmount != 0);
+        long instanceId = getInstanceId(entity);
+        state.setData(DataTickets.TICK, entity.getTick(entity));
+        state.setData(DataTickets.ENTITY, entity);
+        state.setData(DataTickets.ENTITY_MODEL_DATA, new EntityModelData(sitting, entity.isBaby(),
+                bodyYaw - headYaw, -Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));
+        T previousAnimatable = this.animatable;
+        this.animatable = entity;
+        try {
+            geoModel.addAdditionalStateData(entity, instanceId, state::setData);
+            geoModel.handleAnimations(entity, instanceId, state);
+            PoseStack root = new PoseStack();
+            Vec3 renderOffset = getRenderOffset(entity, partialTick);
+            root.translate(renderOffset.x, renderOffset.y, renderOffset.z);
+            float scale = getRenderScale(entity);
+            root.scale(scale, scale, scale);
+            scaleModelForRender(scaleWidth, scaleHeight, root, entity, baked, false, partialTick, 0, 0);
+            if (entity.getPose() == Pose.SLEEPING && entity.getBedOrientation() != null) {
+                var direction = entity.getBedOrientation();
+                float eyeOffset = entity.getEyeHeight(Pose.STANDING) - 0.1F;
+                root.translate(-direction.getStepX() * eyeOffset, 0, -direction.getStepZ() * eyeOffset);
+            }
+            applyRotations(entity, root, entity.tickCount + partialTick, bodyYaw, partialTick);
+            root.translate(0, 0.01F, 0);
+            spec.seats().forEach((seatIndex, seat) -> baked.getBone(seat.boneName()).ifPresent(bone -> {
+                root.pushPose();
+                try {
+                    applyAttachmentAncestors(root, bone);
+                    DragonRiderAttachments.storeSeat(entity, seatIndex, partialTick, root.last().pose());
+                } finally {
+                    root.popPose();
+                }
+            }));
+        } finally {
+            this.animatable = previousAnimatable;
+            geoModel.getAnimationProcessor().getRegisteredBones().forEach(CoreGeoBone::resetStateChanges);
+        }
     }
 
-    protected int seatIndexForRiderBone(T animatable, String boneName, RiderConfig.RiderSpec riderSpec) {
-        return riderSpec.seatIndexForBone(boneName);
+    private static void applyAttachmentAncestors(PoseStack poses, GeoBone bone) {
+        if (bone.getParent() != null) {
+            applyAttachmentAncestors(poses, bone.getParent());
+            RenderUtils.translateAwayFromPivotPoint(poses, bone.getParent());
+        }
+        RenderUtils.translateMatrixToBone(poses, bone);
+        RenderUtils.translateToPivotPoint(poses, bone);
+        RenderUtils.rotateMatrixAroundBone(poses, bone);
+        RenderUtils.scaleMatrixForBone(poses, bone);
     }
 
     protected static Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {

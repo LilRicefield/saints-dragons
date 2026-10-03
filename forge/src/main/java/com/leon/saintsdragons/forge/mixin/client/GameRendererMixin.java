@@ -2,7 +2,7 @@ package com.leon.saintsdragons.forge.mixin.client;
 
 import com.leon.saintsdragons.client.camera.IgnivorusSkyfallScreenEffects;
 import com.leon.saintsdragons.client.input.DragonPartInteractionTargeting;
-import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.DragonRiderAttachments;
 import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -41,7 +41,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "render", at = @At("HEAD"), require = 0)
     private void saintsdragons$beginRiderRenderFrame(float partialTick, long nanoTime, boolean renderLevel,
                                                       CallbackInfo ci) {
-        RiderBullcrap.beginRenderFrame(this.minecraft.level);
+        DragonRiderAttachments.beginRenderFrame(this.minecraft.level);
     }
 
     @Inject(

@@ -9,7 +9,7 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 public final class DragonAttachmentReloadListener implements ResourceManagerReloadListener {
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
-        RiderBullcrap.clear();
+        DragonRiderAttachments.clear();
         DragonRideCameraController.reset();
         var level = Minecraft.getInstance().level;
         if (level != null) {

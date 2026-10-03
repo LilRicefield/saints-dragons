@@ -1,18 +1,13 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
-import com.leon.saintsdragons.client.renderer.RiderBullcrap;
-import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.CameraLeanData;
 import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Camera;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -124,14 +119,20 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
-        float rollDegrees = saintsdragons$getBodyRollDegrees(dragon, partialTick);
+        var seat = DragonSeatAnchoredCamera.resolve(dragon, focusedEntity, partialTick);
+        if (seat == null) {
+            DragonCameraState.clearRoll();
+            CameraLeanData.reset();
+            return;
+        }
+        float rollDegrees = seat.cameraRoll(focusedEntity.getViewYRot(partialTick), focusedEntity.getViewXRot(partialTick));
         float pitchDegrees = Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot());
         float yawSpeed = Mth.wrapDegrees(dragon.yBodyRot - dragon.yBodyRotO);
-        CameraLeanData.updateTarget(rollDegrees, pitchDegrees, yawSpeed, 1.0f);
+        CameraLeanData.updateTarget(-rollDegrees, pitchDegrees, yawSpeed, 1.0f);
         CameraLeanData.update();
 
         float cameraTilt = (float) CameraLeanData.getCameraTilt();
-        DragonCameraState.setCurrentRoll(-rollDegrees + cameraTilt);
+        DragonCameraState.setCurrentRoll(rollDegrees + cameraTilt);
     }
 
     @Inject(method = "setup", at = @At("RETURN"), require = 0)
@@ -142,8 +143,8 @@ public abstract class CameraMixin implements CameraAccessor {
             boolean inverseView,
             float partialTick,
             CallbackInfo ci) {
-        FabricClientEventHandler.onComputeCameraBeforeSeatAnchor((Camera) (Object) this, partialTick);
         saintsdragons$applySeatAnchor(focusedEntity, thirdPerson, partialTick);
+        FabricClientEventHandler.onComputeCamera((Camera) (Object) this, partialTick);
         FabricClientEventHandler.onComputeCameraAfterSeatAnchor((Camera) (Object) this, partialTick);
     }
 
@@ -157,21 +158,8 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
-                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
-            return;
-        }
-
-        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
-        if (riderSpec == null) {
-            return;
-        }
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(
-                dragon,
-                DragonSeatAnchoredCamera.getSeatIndex(dragon, focusedEntity),
-                riderSpec.staleMs
-        );
-        if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
+        var seat = DragonSeatAnchoredCamera.resolve(dragon, focusedEntity, partialTick);
+        if (seat == null) {
             return;
         }
 
@@ -181,7 +169,7 @@ public abstract class CameraMixin implements CameraAccessor {
         this.setPosition(DragonSeatAnchoredCamera.computePivot(
                 dragon,
                 focusedEntity,
-                saddleOffset,
+                seat,
                 this.up,
                 this.forwards,
                 this.left,
@@ -192,6 +180,19 @@ public abstract class CameraMixin implements CameraAccessor {
         ));
     }
 
+    // Set the orbit origin before vanilla performs its third-person obstruction checks.
+    @Inject(method = "setup", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/Camera;getMaxZoom(D)D"), require = 0)
+    private void saintsdragons$thirdPersonSeatPivot(BlockGetter level, Entity rider, boolean detached,
+                                                    boolean inverseView, float partialTick, CallbackInfo ci) {
+        if (detached && rider != null && rider.getVehicle() instanceof RideableDragonBase dragon) {
+            var seat = DragonSeatAnchoredCamera.resolve(dragon, rider, partialTick);
+            if (seat != null) {
+                this.setPosition(seat.eyePosition(dragon, rider, partialTick));
+            }
+        }
+    }
+
     private static boolean saintsdragons$usesAerialBankingCamera(RideableDragonBase dragon) {
         return dragon.isFlying()
                 || dragon.isTakeoff()
@@ -199,24 +200,4 @@ public abstract class CameraMixin implements CameraAccessor {
                 || dragon.isHovering();
     }
 
-    private static float saintsdragons$getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {
-        Float registeredAngle = com.leon.saintsdragons.client.camera.DragonRideCameraTuning
-                .getRegisteredBankAngle(dragon, partialTick);
-        if (registeredAngle != null) {
-            return Float.isFinite(registeredAngle) ? registeredAngle : 0.0F;
-        }
-        if (dragon instanceof Raevyx raevyx) {
-            return raevyx.getBankAngleDegrees(partialTick) + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Cindervane cindervane) {
-            return cindervane.getBankAngleDegrees(partialTick) + cindervane.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Ignivorus ignivorus) {
-            return ignivorus.getBankAngleDegrees(partialTick) + ignivorus.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Volitans volitans) {
-            return volitans.getBankAngleDegrees(partialTick) + volitans.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        return 0.0f;
-    }
 }

@@ -5,10 +5,7 @@ import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.CameraType;
@@ -61,7 +58,8 @@ public abstract class GameRendererMixin {
             return;
         }
 
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
             return;
         }
 
@@ -105,9 +103,6 @@ public abstract class GameRendererMixin {
     }
 
     private static boolean saintsdragons$usesFirstPersonDragonRoll(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Volitans;
+        return com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera.supports(dragon);
     }
 }

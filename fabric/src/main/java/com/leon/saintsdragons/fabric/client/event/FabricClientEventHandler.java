@@ -45,10 +45,9 @@ public class FabricClientEventHandler {
     }
 
     /**
-     * Applies rotation and mode-specific movement before the first-person seat
-     * anchor is resolved.
+     * Applies cinematic movement and rotation after resolving the shared seat anchor.
      */
-    public static void onComputeCameraBeforeSeatAnchor(Camera camera, float partialTicks) {
+    public static void onComputeCamera(Camera camera, float partialTicks) {
         DragonCameraState.clearDiveRoll();
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;

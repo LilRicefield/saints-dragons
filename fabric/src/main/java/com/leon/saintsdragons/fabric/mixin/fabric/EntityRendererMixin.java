@@ -2,7 +2,7 @@ package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.camera.DragonFovEffects;
 import com.leon.saintsdragons.client.camera.IgnivorusSkyfallScreenEffects;
-import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.DragonRiderAttachments;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ public class EntityRendererMixin {
 
     @Inject(method = "render", at = @At("HEAD"), require = 0)
     private void saintsdragons$beginRiderRenderFrame(CallbackInfo ci) {
-        RiderBullcrap.beginRenderFrame(Minecraft.getInstance().level);
+        DragonRiderAttachments.beginRenderFrame(Minecraft.getInstance().level);
     }
 
 }

@@ -2,7 +2,12 @@ package com.leon.saintsdragons.client.model;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.client.renderer.DragonRiderAttachments;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import net.minecraft.resources.ResourceLocation;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEntityGeoModel<T> {
@@ -14,6 +19,43 @@ public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEn
     protected final ResourceLocation femaleTexture;
     protected final ResourceLocation babyMaleTexture;
     protected final ResourceLocation babyFemaleTexture;
+
+    private final DragonBonePose displacedPose = new DragonBonePose();
+    private boolean hasDisplacedPose;
+    private BakedGeoModel attachmentModel;
+
+    @Override
+    public BakedGeoModel getBakedModel(ResourceLocation resource) {
+        attachmentModel = super.getBakedModel(resource);
+        return attachmentModel;
+    }
+
+    @Override
+    public void handleAnimations(T entity, long instanceId, AnimationState<T> state) {
+        RideableDragonBase dragon = entity instanceof RideableDragonBase rideable ? rideable : null;
+        boolean cacheable = dragon != null && DragonRiderAttachments.usesPoseCache(dragon);
+        var baked = attachmentModel;
+        if (cacheable && DragonRiderAttachments.hasAnimation(dragon, state.getPartialTick(), baked)) {
+            // GeckoLib tracks the last evaluated instance internally. Restore its original bones
+            // before the next real evaluation, even when several dragons share this model.
+            if (!hasDisplacedPose) {
+                displacedPose.capture(getAnimationProcessor().getRegisteredBones());
+                hasDisplacedPose = true;
+            }
+            DragonRiderAttachments.restoreAnimation(dragon, state.getPartialTick());
+            return;
+        }
+        if (hasDisplacedPose) {
+            displacedPose.restore();
+            displacedPose.resetChanges();
+            hasDisplacedPose = false;
+        }
+        super.handleAnimations(entity, instanceId, state);
+        if (cacheable && !ShaderPassCompatibility.isIrisShadowPass()) {
+            DragonRiderAttachments.captureAnimation(dragon, state.getPartialTick(), baked,
+                    getAnimationProcessor().getRegisteredBones());
+        }
+    }
 
     protected DragonGeoModel(String dragonId) {
         this(dragonId, true);

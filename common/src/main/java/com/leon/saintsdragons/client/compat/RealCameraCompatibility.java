@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.client.compat;
 
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
-import com.leon.saintsdragons.client.renderer.RiderBullcrap;
-import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -76,18 +74,13 @@ public final class RealCameraCompatibility {
             return emptyResult;
         }
 
-        int seatIndex = DragonSeatAnchoredCamera.getSeatIndex(dragon, rider);
-        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
-        if (riderSpec == null) {
-            return emptyResult;
-        }
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon, seatIndex, riderSpec.staleMs);
-        if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
+        float partialTick = partialTickValue == null ? 0.0F : partialTickValue;
+        var seat = DragonSeatAnchoredCamera.resolve(dragon, rider, partialTick);
+        if (seat == null) {
             return emptyResult;
         }
 
         try {
-            float partialTick = partialTickValue == null ? 0.0F : partialTickValue;
             Camera camera = minecraft.gameRenderer.getMainCamera();
             Vector3f forward = camera.getLookVector();
             Vector3f upward = camera.getUpVector();
@@ -95,7 +88,7 @@ public final class RealCameraCompatibility {
             Vec3 cameraPivot = DragonSeatAnchoredCamera.computePivot(
                     dragon,
                     rider,
-                    saddleOffset,
+                    seat,
                     upward,
                     forward,
                     left,
@@ -105,9 +98,9 @@ public final class RealCameraCompatibility {
                     0.0D
             );
             Vec3 interpolatedRiderPosition = new Vec3(
-                    Mth.lerp(partialTick, rider.xo, rider.getX()),
-                    Mth.lerp(partialTick, rider.yo, rider.getY()),
-                    Mth.lerp(partialTick, rider.zo, rider.getZ())
+                    Mth.lerp(partialTick, rider.xOld, rider.getX()),
+                    Mth.lerp(partialTick, rider.yOld, rider.getY()),
+                    Mth.lerp(partialTick, rider.zOld, rider.getZ())
             );
 
             Object result = resultConstructor.newInstance(riderBindingTarget);
