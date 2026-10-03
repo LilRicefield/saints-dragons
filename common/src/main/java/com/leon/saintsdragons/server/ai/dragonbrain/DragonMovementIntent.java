@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -12,9 +13,7 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         DragonMovementIntent.StrictAirPosition,
         DragonMovementIntent.Flight,
         DragonMovementIntent.AutoTarget,
-        DragonMovementIntent.GroundPosition,
-        DragonMovementIntent.ProgressiveGroundPosition,
-        DragonMovementIntent.GroundTarget,
+        DragonMovementIntent.Ground,
         DragonMovementIntent.GroundTransitionPosition,
         DragonMovementIntent.GroundTransitionTarget {
 
@@ -52,23 +51,8 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         return new AutoTarget(target, speed);
     }
 
-    static DragonMovementIntent ground(Vec3 target, double speed, boolean running) {
-        return new GroundPosition(target, speed, running);
-    }
-
-    static DragonMovementIntent progressiveGround(Vec3 target, double speed, boolean running) {
-        return new ProgressiveGroundPosition(target, speed, running, Double.NaN);
-    }
-
-    static DragonMovementIntent progressiveGround(Vec3 target,
-                                                   double speed,
-                                                   boolean running,
-                                                   double arrivalTolerance) {
-        return new ProgressiveGroundPosition(target, speed, running, arrivalTolerance);
-    }
-
-    static DragonMovementIntent ground(LivingEntity target, double speed, boolean running) {
-        return new GroundTarget(target, speed, running);
+    static DragonMovementIntent ground(DragonGroundRequest request) {
+        return new Ground(request);
     }
 
     static DragonMovementIntent transitionToGround(Vec3 target, double speed) {
@@ -135,32 +119,10 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         }
     }
 
-    record GroundPosition(Vec3 target, double speed, boolean running) implements DragonMovementIntent {
+    record Ground(DragonGroundRequest request) implements DragonMovementIntent {
         @Override
         public void apply(RideableDragonBase dragon) {
-            dragon.getAIMovement().moveToGroundPosition(target, speed, running);
-        }
-    }
-
-    record ProgressiveGroundPosition(Vec3 target,
-                                     double speed,
-                                     boolean running,
-                                     double arrivalTolerance) implements DragonMovementIntent {
-        @Override
-        public void apply(RideableDragonBase dragon) {
-            dragon.getAIMovement().moveToProgressiveGroundPosition(
-                    target,
-                    speed,
-                    running,
-                    arrivalTolerance
-            );
-        }
-    }
-
-    record GroundTarget(LivingEntity target, double speed, boolean running) implements DragonMovementIntent {
-        @Override
-        public void apply(RideableDragonBase dragon) {
-            dragon.getAIMovement().moveToGroundTarget(target, speed, running);
+            dragon.getAIMovement().requestGroundMovement(request);
         }
     }
 

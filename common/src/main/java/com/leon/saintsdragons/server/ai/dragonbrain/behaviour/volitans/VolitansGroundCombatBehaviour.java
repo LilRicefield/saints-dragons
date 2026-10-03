@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
@@ -314,7 +315,8 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
                     dragon.requestBurrowExit(false);
                     return true;
                 }
-                dragon.getAIMovement().moveToGroundPosition(destination, BURROW_CHASE_SPEED, true);
+                dragon.getAIMovement().requestGroundMovement(DragonGroundRequest.complete(
+                        destination, BURROW_CHASE_SPEED, true, DragonGroundRequest.Arrival.near(dragon)));
                 long now = dragon.level().getGameTime();
                 if (burrowProgressOrigin == null || dragon.position().distanceToSqr(burrowProgressOrigin) > 2.25D) {
                     burrowProgressOrigin = dragon.position();

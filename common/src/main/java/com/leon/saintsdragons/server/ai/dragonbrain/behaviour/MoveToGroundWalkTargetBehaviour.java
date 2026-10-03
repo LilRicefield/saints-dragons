@@ -8,6 +8,7 @@
  */
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -38,7 +39,6 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
     private Path path;
     @Nullable
     private BlockPos lastTargetPos;
-    private float speedModifier;
     private boolean waterHandoffActive;
     private float originalWaterMalus;
     private float originalWaterBorderMalus;
@@ -52,7 +52,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
     private boolean waterEntryTransitionFailed;
     private int waterEntryTransitionTicks;
     private long rejectedWaterEntriesExpireAt;
-    private long nextPathAttemptAt;
+    private long nextWaterEntryAttemptAt;
 
     public MoveToGroundWalkTargetBehaviour() {
         super(Map.of(
@@ -158,7 +158,6 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         WalkTarget walkTarget = context.memories().get(DragonMemories.WALK_TARGET).orElse(null);
         if (lastTargetPos != null && walkTarget != null
                 && !targetingWaterEntry
-                && walkTarget.getTarget().currentBlockPosition().distSqr(lastTargetPos) > 4.0D
                 && !hasReachedTarget(dragon, walkTarget)
                 && requestPath(context, walkTarget)) {
             lastTargetPos = walkTarget.getTarget().currentBlockPosition();
@@ -169,7 +168,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         } else if (path != null && path.canReach()) {
             context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
         }
-        dragon.getAIMovement().setGroundMoveState(true);
+        syncPathMemory(context);
     }
 
     @Override
@@ -195,13 +194,11 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
 
     @Override
     protected int cooldownForTicks(DragonBrainContext<T> context) {
-        return context.dragon().getAIMovement().hasFailed() || waterEntryTransitionFailed
-                ? 20 + context.dragon().getRandom().nextInt(21)
-                : 0;
+        return waterEntryTransitionFailed ? 20 : 0;
     }
 
     private boolean requestPath(DragonBrainContext<T> context, WalkTarget walkTarget) {
-        if (context.gameTime() < nextPathAttemptAt) {
+        if (context.gameTime() < nextWaterEntryAttemptAt) {
             return false;
         }
         T dragon = context.dragon();
@@ -209,19 +206,15 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         resolvedPathTarget = resolveGroundPathTarget(context, requestedTarget);
         if (resolvedPathTarget == null) {
             markCantReach(context);
-            nextPathAttemptAt = context.gameTime() + 20;
+            nextWaterEntryAttemptAt = context.gameTime() + 20;
             return false;
         }
-        speedModifier = walkTarget.getSpeedModifier();
-        context.memories().erase(DragonMemories.PATH);
-        path = null;
-        boolean requested = targetingWaterEntry
-                ? dragon.getAIMovement().moveToGroundPosition(resolvedPathTarget, speedModifier, true)
-                : dragon.getAIMovement().moveToProgressiveGroundPosition(resolvedPathTarget, speedModifier, true);
-        if (!requested) {
-            nextPathAttemptAt = context.gameTime() + 20;
-        }
-        return requested;
+        DragonGroundRequest request = targetingWaterEntry
+                ? DragonGroundRequest.complete(resolvedPathTarget, walkTarget.getSpeedModifier(), true,
+                        DragonGroundRequest.Arrival.atPosition(0.75D))
+                : DragonGroundRequest.travel(resolvedPathTarget, walkTarget.getSpeedModifier(), true,
+                        DragonGroundRequest.Arrival.within(walkTarget.getCloseEnoughDist()));
+        return dragon.getAIMovement().requestGroundMovement(request);
     }
 
     @Nullable
@@ -284,7 +277,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         waterEntryTransitionFailed = false;
         waterEntryTransitionTicks = 0;
         resolvedPathTarget = null;
-        nextPathAttemptAt = 0L;
+        nextWaterEntryAttemptAt = 0L;
         if (clearRejected) {
             rejectedWaterEntries.clear();
             rejectedWaterEntriesExpireAt = 0L;
@@ -311,9 +304,8 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
     }
 
     private boolean hasReachedTarget(T dragon, WalkTarget walkTarget) {
-        double closeEnough = Math.max(0.0D, walkTarget.getCloseEnoughDist());
-        return dragon.position().distanceToSqr(walkTarget.getTarget().currentPosition())
-                <= closeEnough * closeEnough;
+        return DragonGroundRequest.Arrival.within(walkTarget.getCloseEnoughDist())
+                .reached(dragon.position(), walkTarget.getTarget().currentPosition());
     }
 
     private boolean isGroundMovementContext(DragonBrainContext<T> context) {

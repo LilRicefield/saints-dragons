@@ -72,7 +72,7 @@ public final class DragonSwimWanderBehaviour<T extends RideableDragonBase & Semi
         recalcTimer = 0;
         obstructionCooldown = 0;
         obstructed = false;
-        context.dragon().getNavigation().stop();
+        if (!context.dragon().getAIMovement().beginSwimMovement()) return;
     }
 
     @Override
@@ -81,7 +81,7 @@ public final class DragonSwimWanderBehaviour<T extends RideableDragonBase & Semi
         if (target == null) {
             return;
         }
-        dragon.getNavigation().stop();
+        if (!dragon.getAIMovement().beginSwimMovement()) return;
         if (++recalcTimer > 100) {
             replaceTarget(dragon);
             recalcTimer = 0;

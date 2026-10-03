@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -281,7 +282,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         if (exitingWater) {
             context.memories().erase(DragonMemories.MOVEMENT_INTENT);
             context.memories().erase(DragonMemories.WALK_TARGET);
-            dragon.getNavigation().stop();
+            if (!dragon.getAIMovement().beginSwimMovement()) return;
             AsyncSwimController controller = dragon.getAiSwimController();
             double speed = swimSpeedModifier;
             if (dragon instanceof SemiAquaticDragon swimmer) {
@@ -640,14 +641,11 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
 
         context.memories().erase(DragonMemories.WALK_TARGET);
         beginGroundAttempt(context.dragon(), target);
-        DragonMovementIntent intent = Double.isFinite(arrivalTolerance) && arrivalTolerance > 0.0D
-                ? DragonMovementIntent.progressiveGround(
-                        target,
-                        groundSpeedModifier,
-                        false,
-                        arrivalTolerance
-                )
-                : DragonMovementIntent.progressiveGround(target, groundSpeedModifier, false);
+        DragonGroundRequest.Arrival arrival = Double.isFinite(arrivalTolerance) && arrivalTolerance > 0.0D
+                ? DragonGroundRequest.Arrival.atPosition(arrivalTolerance)
+                : DragonGroundRequest.Arrival.near(context.dragon());
+        DragonMovementIntent intent = DragonMovementIntent.ground(
+                DragonGroundRequest.travel(target, groundSpeedModifier, false, arrival));
         context.memories().set(DragonMemories.MOVEMENT_INTENT, intent);
     }
 
@@ -1129,48 +1127,11 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
     }
 
     private void applyShoreTransition(T dragon, Vec3 landPosition) {
-        Vec3 toLand = landPosition.subtract(dragon.position());
-        Vec3 horizontal = new Vec3(toLand.x, 0.0D, toLand.z);
-        if (horizontal.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-
-        Vec3 direction = horizontal.normalize();
-        Vec3 velocity = dragon.getDeltaMovement();
-        double horizontalBoost = dragon.horizontalCollision ? 0.48D : 0.36D;
-        double upward = dragon.horizontalCollision ? 0.58D : 0.34D;
-        dragon.setDeltaMovement(
-                velocity.x * 0.45D + direction.x * horizontalBoost,
-                Math.max(velocity.y, upward),
-                velocity.z * 0.45D + direction.z * horizontalBoost
-        );
-        dragon.getMoveControl().setWantedPosition(landPosition.x, landPosition.y, landPosition.z, 1.15D);
-        dragon.hasImpulse = true;
+        dragon.getAIMovement().moveOntoShore(landPosition);
     }
 
     private void applyWaterEntryTransition(T dragon, Vec3 waterPosition) {
-        Vec3 toWater = waterPosition.subtract(dragon.position());
-        Vec3 horizontal = new Vec3(toWater.x, 0.0D, toWater.z);
-        if (horizontal.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-
-        Vec3 direction = horizontal.normalize();
-        Vec3 velocity = dragon.getDeltaMovement();
-        double horizontalBoost = dragon.horizontalCollision ? 0.45D : 0.34D;
-        double upward = dragon.onGround() ? 0.20D : velocity.y;
-        dragon.setDeltaMovement(
-                velocity.x * 0.4D + direction.x * horizontalBoost,
-                Math.max(velocity.y, upward),
-                velocity.z * 0.4D + direction.z * horizontalBoost
-        );
-        dragon.getMoveControl().setWantedPosition(
-                waterPosition.x,
-                waterPosition.y - 0.35D,
-                waterPosition.z,
-                1.1D
-        );
-        dragon.hasImpulse = true;
+        dragon.getAIMovement().moveIntoWater(waterPosition);
     }
 
     private void setReturnPhase(DragonBrainContext<T> context,

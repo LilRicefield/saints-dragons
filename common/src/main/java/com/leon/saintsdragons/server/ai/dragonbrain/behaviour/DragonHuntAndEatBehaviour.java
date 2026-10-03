@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -210,8 +211,11 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
     }
 
     private boolean isCloseEnoughToEat(T dragon, ItemEntity food) {
-        double reach = Math.max(1.5D, dragon.getBbWidth() * 0.75D + 0.75D);
-        return dragon.distanceToSqr(food) <= reach * reach;
+        return foodArrival(dragon).reached(dragon.position(), food.position());
+    }
+
+    private DragonGroundRequest.Arrival foodArrival(T dragon) {
+        return DragonGroundRequest.Arrival.within(Math.max(1.5D, dragon.getBbWidth() * 0.75D + 0.75D));
     }
 
     private void requestExistingMovement(DragonBrainContext<T> context, ItemEntity food) {
@@ -228,7 +232,10 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
                 : GROUND_MOVE_SPEED;
         context.memories().set(
                 DragonMemories.MOVEMENT_INTENT,
-                DragonMovementIntent.auto(food.position(), speed)
+                !dragon.isAerial() && !dragon.isInWaterOrBubble()
+                        ? DragonMovementIntent.ground(DragonGroundRequest.travel(
+                                food.position(), speed, false, foodArrival(dragon)))
+                        : DragonMovementIntent.auto(food.position(), speed)
         );
     }
 

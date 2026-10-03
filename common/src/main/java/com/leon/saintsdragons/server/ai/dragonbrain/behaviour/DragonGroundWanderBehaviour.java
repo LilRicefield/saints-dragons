@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
@@ -60,21 +61,13 @@ public final class DragonGroundWanderBehaviour<T extends RideableDragonBase> ext
     @Override
     protected void start(DragonBrainContext<T> context) {
         if (target != null) {
-            context.dragon().setGroundMoveStateFromAI(1);
-            context.dragon().getAIMovement().moveToGroundPosition(target, speed, false);
-        }
-    }
-
-    @Override
-    protected void tick(DragonBrainContext<T> context) {
-        if (context.dragon().getAIMovement().isPathing()) {
-            context.dragon().setGroundMoveStateFromAI(1);
+            context.dragon().getAIMovement().requestGroundMovement(DragonGroundRequest.complete(
+                    target, speed, false, DragonGroundRequest.Arrival.near(context.dragon())));
         }
     }
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
-        context.dragon().setGroundMoveStateFromAI(0);
         if (!context.dragon().isAerial()) {
             context.dragon().getAIMovement().stop();
         }

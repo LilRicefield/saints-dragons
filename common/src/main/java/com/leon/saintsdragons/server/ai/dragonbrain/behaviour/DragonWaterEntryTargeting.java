@@ -78,28 +78,7 @@ public final class DragonWaterEntryTargeting {
     }
 
     public static void moveIntoWater(RideableDragonBase dragon, Target target) {
-        Vec3 toWater = target.waterPosition().subtract(dragon.position());
-        Vec3 horizontal = new Vec3(toWater.x, 0.0D, toWater.z);
-        if (horizontal.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-
-        Vec3 direction = horizontal.normalize();
-        Vec3 velocity = dragon.getDeltaMovement();
-        double horizontalBoost = dragon.horizontalCollision ? 0.45D : 0.34D;
-        double upward = dragon.onGround() ? 0.20D : velocity.y;
-        dragon.setDeltaMovement(
-                velocity.x * 0.4D + direction.x * horizontalBoost,
-                Math.max(velocity.y, upward),
-                velocity.z * 0.4D + direction.z * horizontalBoost
-        );
-        dragon.getMoveControl().setWantedPosition(
-                target.waterPosition().x,
-                target.waterPosition().y - 0.35D,
-                target.waterPosition().z,
-                1.1D
-        );
-        dragon.hasImpulse = true;
+        dragon.getAIMovement().moveIntoWater(target.waterPosition());
     }
 
     @Nullable

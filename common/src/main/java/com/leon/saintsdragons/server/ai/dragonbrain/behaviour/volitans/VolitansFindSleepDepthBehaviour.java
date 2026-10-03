@@ -62,7 +62,7 @@ public final class VolitansFindSleepDepthBehaviour extends DragonBehaviour<Volit
 
     @Override
     protected void start(DragonBrainContext<Volitans> context) {
-        context.dragon().getNavigation().stop();
+        if (!context.dragon().getAIMovement().beginSwimMovement()) return;
     }
 
     @Override
@@ -71,7 +71,7 @@ public final class VolitansFindSleepDepthBehaviour extends DragonBehaviour<Volit
         if (target == null) {
             return;
         }
-        dragon.getNavigation().stop();
+        if (!dragon.getAIMovement().beginSwimMovement()) return;
         AsyncSwimController controller = dragon.getAiSwimController();
         if (!controller.trackTarget(target, dragon.getSwimSpeed() * swimSpeed, turnSpeed)) {
             Vec3 replacement = findSleepDepthTarget(dragon);

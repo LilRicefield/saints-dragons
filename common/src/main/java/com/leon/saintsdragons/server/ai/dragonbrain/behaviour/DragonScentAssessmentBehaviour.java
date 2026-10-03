@@ -121,9 +121,10 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
     }
 
     private void clearExistingMovement(DragonBrainContext<T> context) {
-        context.dragon().getNavigation().stop();
         if (context.dragon() instanceof RideableDragonBase dragon) {
             dragon.getAIMovement().stopAndClearAllMovement();
+        } else {
+            context.dragon().getNavigation().stop();
         }
     }
 

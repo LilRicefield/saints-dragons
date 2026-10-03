@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -12,13 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
+public class DragonFollowParentBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private static final double MAX_DISTANCE_SQ = 576.0D;
     private final Class<T> dragonClass;
     private final double speedModifier;
     @Nullable
     private T parent;
-    private int repathCooldown;
+    private int followDecisionCooldown;
     private int wanderCooldown;
 
     public DragonFollowParentBehaviour(Class<T> dragonClass, double speedModifier) {
@@ -55,7 +56,7 @@ public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonB
 
     @Override
     protected void start(DragonBrainContext<T> context) {
-        repathCooldown = 0;
+        followDecisionCooldown = 0;
         wanderCooldown = 0;
     }
 
@@ -80,8 +81,8 @@ public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonB
             }
             return;
         }
-        if (--repathCooldown <= 0) {
-            repathCooldown = 8;
+        if (--followDecisionCooldown <= 0) {
+            followDecisionCooldown = 8;
             if (distance >= minimum * 1.2D) {
                 moveTo(baby, parent);
             } else {
@@ -103,8 +104,7 @@ public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonB
                 && !baby.isTame()
                 && baby.getOwner() == null
                 && !baby.isVehicle()
-                && (!(baby instanceof RideableDragonBase rideable) || !rideable.isInWaterOrBubble())
-                && (baby.canSwim() || !baby.isInWaterOrBubble());
+                && !baby.isInWaterOrBubble();
     }
 
     @Nullable
@@ -138,19 +138,13 @@ public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonB
     }
 
     protected void moveTo(T baby, T adult) {
-        if (baby instanceof RideableDragonBase rideable) {
-            rideable.getAIMovement().moveToGroundTarget(adult, speedModifier, false);
-        } else {
-            baby.getNavigation().moveTo(adult, speedModifier);
-        }
+        baby.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                adult.position(), speedModifier, false,
+                DragonGroundRequest.Arrival.within(Math.sqrt(minimumDistanceSq(baby, adult)))));
     }
 
     protected void stopMovement(T baby) {
-        if (baby instanceof RideableDragonBase rideable) {
-            rideable.getAIMovement().stop();
-        } else {
-            baby.getNavigation().stop();
-        }
+        baby.getAIMovement().stop();
     }
 
     @Override

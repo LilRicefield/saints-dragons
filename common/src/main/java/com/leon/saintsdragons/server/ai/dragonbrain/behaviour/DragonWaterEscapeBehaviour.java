@@ -109,7 +109,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
 
     @Override
     protected void start(DragonBrainContext<T> context) {
-        context.dragon().getNavigation().stop();
+        if (!context.dragon().getAIMovement().beginSwimMovement()) return;
         shoreRescanTicks = 0;
         roamTicks = 0;
         shoreTransitioning = false;
@@ -122,7 +122,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
             return;
         }
 
-        dragon.getNavigation().stop();
+        if (!dragon.getAIMovement().beginSwimMovement()) return;
         if (shoreTransitioning) {
             if (dragon.isInWaterOrBubble() && target.landPosition() != null) {
                 applyShoreAssist(dragon, target.landPosition());
@@ -425,23 +425,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     }
 
     private void applyShoreAssist(T dragon, Vec3 landPosition) {
-        Vec3 horizontal = new Vec3(
-                landPosition.x - dragon.getX(), 0.0D, landPosition.z - dragon.getZ());
-        if (horizontal.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-        Vec3 direction = horizontal.normalize();
-        Vec3 velocity = dragon.getDeltaMovement();
-        double horizontalBoost = dragon.horizontalCollision ? 0.48D : 0.36D;
-        double upward = dragon.horizontalCollision ? 0.58D : 0.34D;
-        dragon.setDeltaMovement(
-                velocity.x * 0.45D + direction.x * horizontalBoost,
-                Math.max(velocity.y, upward),
-                velocity.z * 0.45D + direction.z * horizontalBoost
-        );
-        dragon.getMoveControl().setWantedPosition(
-                landPosition.x, landPosition.y, landPosition.z, 1.15D);
-        dragon.hasImpulse = true;
+        dragon.getAIMovement().moveOntoShore(landPosition);
     }
 
     private void preserveEscapeAir(T dragon) {

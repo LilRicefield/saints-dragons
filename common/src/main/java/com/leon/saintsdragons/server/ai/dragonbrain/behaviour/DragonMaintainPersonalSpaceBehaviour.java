@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -18,7 +19,7 @@ import java.util.Map;
 public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragonBase>
         extends DragonBehaviour<T> {
     private static final int SCAN_INTERVAL_TICKS = 10;
-    private static final int REPATH_INTERVAL_TICKS = 6;
+    private static final int SEPARATION_RESCAN_TICKS = 6;
     private static final int MAX_MOVE_TICKS = 50;
     private static final double PERSONAL_PADDING = 1.25D;
     private static final double MIN_MOVE_DISTANCE = 2.5D;
@@ -29,7 +30,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
     @Nullable
     private Vec3 target;
     private int moveTicks;
-    private int repathCooldown;
+    private int separationRescanTicks;
     private int crowdedBy;
     private double nearestNeighborDistance = -1.0D;
     private boolean movementIssued;
@@ -54,7 +55,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
     @Override
     protected void start(DragonBrainContext<T> context) {
         moveTicks = 0;
-        repathCooldown = 0;
+        separationRescanTicks = 0;
         movementIssued = false;
         phase = "separating";
         issueMovement(context);
@@ -68,7 +69,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
             phase = "path_failed";
             return;
         }
-        if (repathCooldown-- > 0 && context.dragon().getAIMovement().isPathing()) {
+        if (separationRescanTicks-- > 0 && context.dragon().getAIMovement().isPathing()) {
             return;
         }
         target = findSeparationTarget(context);
@@ -88,7 +89,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
         }
         target = null;
         moveTicks = 0;
-        repathCooldown = 0;
+        separationRescanTicks = 0;
         crowdedBy = 0;
         nearestNeighborDistance = -1.0D;
         movementIssued = false;
@@ -213,13 +214,9 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
         if (target == null) {
             return;
         }
-        movementIssued = context.dragon().getAIMovement().moveToPreciseGroundPosition(
-                target,
-                MOVE_SPEED,
-                false,
-                ARRIVAL_TOLERANCE
-        );
-        repathCooldown = REPATH_INTERVAL_TICKS;
+        movementIssued = context.dragon().getAIMovement().requestGroundMovement(DragonGroundRequest.complete(
+                target, MOVE_SPEED, false, DragonGroundRequest.Arrival.atPosition(ARRIVAL_TOLERANCE)));
+        separationRescanTicks = SEPARATION_RESCAN_TICKS;
         if (!movementIssued) {
             target = null;
             phase = "path_rejected";

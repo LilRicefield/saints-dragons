@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
@@ -28,7 +29,6 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
     private static final double AIR_CATCH_UP_MULTIPLIER = 1.35D;
     private static final double OWNER_AIRBORNE_CLEARANCE = 4.0D;
-    private static final int FAILED_GROUND_PATH_RETRY_TICKS = 10;
     private static final int GROUND_TRIAL_TICKS = 40;
     private static final int GROUND_STALL_TICKS = 80;
     private static final int OUTPACED_TICKS = 80;
@@ -51,8 +51,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private final Config adultConfig;
     private final Consumer<T> takeoffStarter;
     private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
-    private int groundRepathCooldown;
-    private boolean retryingGround;
+    private long lastGroundFailure;
     private int groundFailures;
     private long groundSince;
     private long groundSampleAt;
@@ -284,8 +283,8 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         groundSamplePosition = dragon.position();
         groundSampleOwner = owner == null ? dragon.position() : DragonOwnerFollowTarget.anchorPosition(owner);
         groundSampleGap = dragon.position().distanceTo(groundSampleOwner);
-        groundFailures = stalledTicks = outpacedTicks = groundRepathCooldown = 0;
-        retryingGround = false;
+        groundFailures = stalledTicks = outpacedTicks = 0;
+        lastGroundFailure = dragon.getAIMovement().getGroundFailureSequence();
         lastGroundTarget = null;
     }
 
@@ -458,32 +457,22 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         if (distance <= stopDistance) {
             dragon.setAccelerating(false);
             dragon.getAIMovement().stop();
-            groundRepathCooldown = 0;
             decision = "ground:beside-owner";
             return;
         }
-        if (dragon.getAIMovement().hasFailed() && !retryingGround) {
+        var movement = dragon.getAIMovement();
+        if (movement.hasFailed() && lastGroundFailure != movement.getGroundFailureSequence()) {
             groundFailures++;
-            dragon.getAIMovement().stop();
-            groundRepathCooldown = FAILED_GROUND_PATH_RETRY_TICKS;
-            retryingGround = true;
+            lastGroundFailure = movement.getGroundFailureSequence();
         }
         boolean running = distance > config.runDistance;
         dragon.setAccelerating(running);
         double baseSpeed = running ? config.runSpeed : config.walkSpeed;
         double speed = Math.min(baseSpeed * (1.0D + distance / 50.0D), running ? config.maxRunSpeed : config.maxWalkSpeed);
-        if (groundRepathCooldown > 0) groundRepathCooldown--;
-        if (!retryingGround && dragon.getAIMovement().hasArrived()) groundRepathCooldown = 0;
-        if (groundRepathCooldown <= 0) {
-            boolean accepted = DragonOwnerFollowTarget.isMounted(owner)
-                    ? dragon.getAIMovement().moveToProgressiveGroundPosition(followTarget, speed, running, 1.0D)
-                    : dragon.getAIMovement().moveToProgressiveGroundPosition(followTarget, speed, running);
-            int baseCooldown = (int) Math.ceil(distance * (running ? 0.3D : 0.45D));
-            groundRepathCooldown = accepted ? Mth.clamp(baseCooldown, running ? 4 : 6, running ? 18 : 24)
-                    : FAILED_GROUND_PATH_RETRY_TICKS;
-            retryingGround = !accepted;
-            if (!accepted) groundFailures++;
-        }
+        movement.requestGroundMovement(DragonGroundRequest.travel(followTarget, speed, running,
+                DragonOwnerFollowTarget.isMounted(owner)
+                        ? DragonGroundRequest.Arrival.atPosition(1.0D)
+                        : DragonGroundRequest.Arrival.within(stopDistance)));
     }
 
     private void observeOwner(LivingEntity owner, long now) {
@@ -550,12 +539,13 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     }
 
     private void resetTracking() {
-        groundRepathCooldown = groundFailures = stalledTicks = outpacedTicks = 0;
+        groundFailures = stalledTicks = outpacedTicks = 0;
+        lastGroundFailure = 0;
         lastAirTarget = lastGroundTarget = groundSamplePosition = groundSampleOwner = null;
         ownerAnchorId = null;
         observedOwnerPosition = null;
         ownerHorizontalSpeed = 0;
-        ownerAirborne = finishingOnFoot = retryingGround = false;
+        ownerAirborne = finishingOnFoot = false;
         ownerAirborneSince = ownerGroundedSince = -1;
         nextOwnerObservation = 0;
         clearLandingTracking();
@@ -575,7 +565,6 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         details.put("ground_stalled_ticks", Integer.toString(stalledTicks));
         details.put("outpaced_ticks", Integer.toString(outpacedTicks));
         details.put("ground_failures", Integer.toString(groundFailures));
-        details.put("ground_repath", Integer.toString(groundRepathCooldown));
         details.put("ground_target", lastGroundTarget == null ? "none" : lastGroundTarget.toString());
         details.put("air_target", lastAirTarget == null ? "none" : lastAirTarget.toString());
         details.put("landing_target", landingTarget == null ? "none" : landingTarget.toString());

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -90,7 +91,8 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
 
         LivingEntity target = dragon.getTarget();
         if (target != null && target.isAlive()) {
-            dragon.getAIMovement().moveToGroundTarget(target, 1.0D, false);
+            dragon.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                    target.position(), 1.0D, false, DragonGroundRequest.Arrival.near(dragon)));
             dragon.setGroundMoveStateFromAI(1);
         } else {
             dragon.setGroundMoveStateFromAI(0);

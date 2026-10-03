@@ -1,11 +1,11 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -26,10 +26,6 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
     @Nullable
     private T leader;
     private int leaderRefreshCooldown;
-    private int repathCooldown;
-    private double lastLeaderX = Double.NaN;
-    private double lastLeaderY = Double.NaN;
-    private double lastLeaderZ = Double.NaN;
     private boolean running;
     private boolean movementModeInitialized;
 
@@ -65,7 +61,6 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
 
     @Override
     protected void start(DragonBrainContext<T> context) {
-        repathCooldown = 0;
         resetTracking();
     }
 
@@ -84,26 +79,16 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         if (distance * distance <= stopDistanceSq) {
             member.setAccelerating(false);
             member.getAIMovement().stop();
-            repathCooldown = 0;
             movementModeInitialized = false;
             return;
         }
         boolean shouldRun = distance * distance > runDistanceSq;
-        boolean movementModeChanged = !movementModeInitialized || running != shouldRun;
         member.setAccelerating(shouldRun);
-        if (repathCooldown > 0) repathCooldown--;
-        boolean idle = member.getAIMovement().hasArrived() || !member.getAIMovement().isPathing();
-        if (idle || movementModeChanged || leaderMoved(leader) || repathCooldown <= 0) {
-            member.getAIMovement().moveToGroundTarget(
-                    leader,
-                    shouldRun ? runSpeed : walkSpeed,
-                    shouldRun
-            );
-            running = shouldRun;
-            movementModeInitialized = true;
-            remember(leader);
-            repathCooldown = Mth.clamp((int)Math.ceil(distance * 0.4D), 5, 22);
-        }
+        member.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                leader.position(), shouldRun ? runSpeed : walkSpeed, shouldRun,
+                DragonGroundRequest.Arrival.within(Math.sqrt(stopDistanceSq))));
+        running = shouldRun;
+        movementModeInitialized = true;
     }
 
     @Override
@@ -111,7 +96,6 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         context.dragon().getAIMovement().stop();
         context.dragon().setAccelerating(false);
         leader = null;
-        repathCooldown = 0;
         resetTracking();
     }
 
@@ -189,22 +173,7 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         return most != 0 ? most : Long.compareUnsigned(first.getLeastSignificantBits(), second.getLeastSignificantBits());
     }
 
-    private boolean leaderMoved(T current) {
-        if (Double.isNaN(lastLeaderX)) return true;
-        double dx = current.getX() - lastLeaderX;
-        double dy = current.getY() - lastLeaderY;
-        double dz = current.getZ() - lastLeaderZ;
-        return dx * dx + dy * dy + dz * dz > 1.0D;
-    }
-
-    private void remember(T current) {
-        lastLeaderX = current.getX();
-        lastLeaderY = current.getY();
-        lastLeaderZ = current.getZ();
-    }
-
     private void resetTracking() {
-        lastLeaderX = lastLeaderY = lastLeaderZ = Double.NaN;
         running = false;
         movementModeInitialized = false;
     }

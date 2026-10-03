@@ -1,12 +1,12 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerTeleport;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
-    private static final int FAILED_PATH_RETRY_TICKS = 10;
     private static final Config BABY_CONFIG = new Config(
             DragonBabyOwnerFollowTuning.START_DISTANCE,
             DragonBabyOwnerFollowTuning.STOP_DISTANCE,
@@ -27,7 +26,6 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
 
     private final Config adultConfig;
     private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
-    private int repathCooldown;
     @Nullable
     private Vec3 lastFollowTarget;
     private boolean mountedOwner;
@@ -127,36 +125,13 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         );
         if (distance <= stopDistance) {
             dragon.getAIMovement().stop();
-            repathCooldown = 0;
             return;
         }
-        if (dragon.getAIMovement().hasFailed()) {
-            dragon.getAIMovement().stop();
-            repathCooldown = FAILED_PATH_RETRY_TICKS;
-            return;
-        }
-        if (repathCooldown > 0) repathCooldown--;
-        if (dragon.getAIMovement().hasArrived()) {
-            repathCooldown = 0;
-        }
-        if (repathCooldown <= 0) {
-            double speed = fast ? config.fastSpeed : config.speed;
-            boolean accepted = mountedOwner
-                    ? dragon.getAIMovement().moveToProgressiveGroundPosition(
-                            followTarget,
-                            speed,
-                            fast,
-                            1.0D
-                    )
-                    : dragon.getAIMovement().moveToProgressiveGroundPosition(
-                            followTarget,
-                            speed,
-                            fast
-                    );
-            repathCooldown = accepted
-                    ? Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24)
-                    : FAILED_PATH_RETRY_TICKS;
-        }
+        double speed = fast ? config.fastSpeed : config.speed;
+        dragon.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                followTarget, speed, fast, mountedOwner
+                        ? DragonGroundRequest.Arrival.atPosition(1.0D)
+                        : DragonGroundRequest.Arrival.within(stopDistance)));
     }
 
     @Override
@@ -182,7 +157,6 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     }
 
     private void resetTracking() {
-        repathCooldown = 0;
         lastFollowTarget = null;
         mountedOwner = false;
     }
@@ -190,7 +164,6 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         return Map.of(
-                "repath_cooldown", Integer.toString(repathCooldown),
                 "target", lastFollowTarget == null ? "none" : lastFollowTarget.toString(),
                 "mounted_owner", Boolean.toString(mountedOwner),
                 "water_handoff", Boolean.toString(waterHandoff.isActive())

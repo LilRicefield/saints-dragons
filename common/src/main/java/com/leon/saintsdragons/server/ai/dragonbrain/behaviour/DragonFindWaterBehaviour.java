@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
@@ -128,7 +129,8 @@ public final class DragonFindWaterBehaviour<T extends RideableDragonBase & SemiA
             return;
         }
         Vec3 destination = Vec3.atBottomCenterOf(target);
-        if (!dragon.getAIMovement().moveToGroundPosition(destination, speedModifier, false)) {
+        if (!dragon.getAIMovement().requestGroundMovement(DragonGroundRequest.complete(
+                destination, speedModifier, false, DragonGroundRequest.Arrival.atPosition(0.75D)))) {
             failAttempt(context, "route-rejected");
             return;
         }

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -156,8 +157,12 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
                         && dragon instanceof SemiAquaticDragon swimmer) {
                     speed *= swimmer.getSwimSpeed();
                 }
-                movementIssued = rideable.getAIMovement().setWaypoint(partner, speed, false)
-                        || movementIssued;
+                boolean accepted = dragon.getLocomotionMode() == DragonLocomotionMode.GROUND
+                        ? rideable.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                                partner.position(), speed, false, DragonGroundRequest.Arrival.within(
+                                        Math.sqrt(Math.min(breedDistanceSqr, MAX_CENTER_BREED_DISTANCE_SQR)))))
+                        : rideable.getAIMovement().setWaypoint(partner, speed, false);
+                movementIssued = accepted || movementIssued;
             } else {
                 movementIssued = dragon.getNavigation().moveTo(partner, speed) || movementIssued;
             }

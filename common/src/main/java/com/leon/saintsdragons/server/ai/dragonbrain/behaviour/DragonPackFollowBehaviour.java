@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -7,7 +8,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
@@ -37,11 +37,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     private long nextLeaderRefreshAt;
     @Nullable
     private UUID lastResolvedLeaderUuid;
-    private int groundRepathCooldown;
     private int airRefreshCooldown;
-    private double lastLeaderX = Double.NaN;
-    private double lastLeaderY = Double.NaN;
-    private double lastLeaderZ = Double.NaN;
     @Nullable
     private Vec3 lastAirTarget;
     private double lastAirSpeed = Double.NaN;
@@ -110,16 +106,11 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         double distance = member.distanceTo(leader);
         if (distance * distance <= stopDistanceSq) {
             member.getAIMovement().stop();
-            groundRepathCooldown = 0;
             return;
         }
-        if (groundRepathCooldown > 0) groundRepathCooldown--;
-        boolean idle = member.getAIMovement().hasArrived() || !member.getAIMovement().isPathing();
-        if (idle || leaderMoved(leader) || groundRepathCooldown <= 0) {
-            member.getAIMovement().setGroundWaypoint(leader, followSpeed);
-            remember(leader);
-            groundRepathCooldown = Mth.clamp((int)Math.ceil(distance * 0.4D), 5, 22);
-        }
+        member.getAIMovement().requestGroundMovement(DragonGroundRequest.travel(
+                leader.position(), followSpeed, false,
+                DragonGroundRequest.Arrival.within(Math.sqrt(stopDistanceSq))));
     }
 
     @Override
@@ -184,7 +175,6 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
                         DragonMovementIntent.transitionToGround(currentLeader, airSpeed(member, false))
                 );
             }
-            groundRepathCooldown = 0;
             return true;
         }
 
@@ -204,7 +194,6 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             member.getAIMovement().stop();
             lastAirTarget = null;
         }
-        remember(currentLeader);
         return true;
     }
 
@@ -345,24 +334,8 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         return most != 0 ? most : Long.compareUnsigned(first.getLeastSignificantBits(), second.getLeastSignificantBits());
     }
 
-    private boolean leaderMoved(T current) {
-        if (Double.isNaN(lastLeaderX)) return true;
-        double dx = current.getX() - lastLeaderX;
-        double dy = current.getY() - lastLeaderY;
-        double dz = current.getZ() - lastLeaderZ;
-        return dx * dx + dy * dy + dz * dz > 1.0D;
-    }
-
-    private void remember(T current) {
-        lastLeaderX = current.getX();
-        lastLeaderY = current.getY();
-        lastLeaderZ = current.getZ();
-    }
-
     private void resetTracking() {
-        groundRepathCooldown = 0;
         airRefreshCooldown = 0;
-        lastLeaderX = lastLeaderY = lastLeaderZ = Double.NaN;
         lastAirTarget = null;
         lastAirSpeed = Double.NaN;
     }
@@ -372,7 +345,6 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         return Map.of(
                 "leader", leader == null ? "none" : leader.getName().getString(),
                 "mode", mode,
-                "ground_repath", Integer.toString(groundRepathCooldown),
                 "air_refresh", Integer.toString(airRefreshCooldown)
         );
     }

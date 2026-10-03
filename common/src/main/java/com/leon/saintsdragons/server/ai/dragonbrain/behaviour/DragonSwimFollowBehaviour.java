@@ -93,7 +93,7 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
 
     @Override
     protected void start(DragonBrainContext<T> context) {
-        context.dragon().getNavigation().stop();
+        if (!context.dragon().getAIMovement().beginSwimMovement()) return;
     }
 
     @Override
@@ -102,7 +102,7 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
         if (followTarget == null) {
             return;
         }
-        dragon.getNavigation().stop();
+        if (!dragon.getAIMovement().beginSwimMovement()) return;
         Vec3 position = followPosition(dragon, followTarget);
         double speed = dragon.getSwimSpeed() * speedModifier;
         if (dragon.distanceToSqr(position) > 15.0D * 15.0D) {

@@ -41,8 +41,8 @@ final class GroundRouteProgress {
         minimumProgress = minimum;
     }
 
-    boolean completeSegment(Vec3 position, double arrivalTolerance) {
-        if (segmentStart == null || position.distanceTo(segmentEnd) > arrivalTolerance
+    boolean completeSegment(Vec3 position, DragonGroundRequest.Arrival arrival) {
+        if (segmentStart == null || !arrival.reached(position, segmentEnd)
                 || position.distanceTo(segmentStart) < minimumProgress) {
             return false;
         }

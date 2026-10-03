@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
@@ -198,18 +199,23 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
         double arrivalDistance = canSearchGround(dragon)
                 ? GROUND_PURSUIT_ARRIVAL_DISTANCE : profile.arrivalDistance();
+        boolean groundApproach = !airborneSearch && dragon.isGroundedForAi() && !dragon.isInWaterOrBubble();
+        DragonGroundRequest.Arrival groundArrival = canSearchGround(dragon)
+                ? DragonGroundRequest.Arrival.atPosition(arrivalDistance)
+                : DragonGroundRequest.Arrival.within(arrivalDistance);
         boolean movementArrived = issuedMovement && movement.hasArrived();
-        if (!movementArrived
-                && dragon.position().distanceToSqr(destination) > arrivalDistance * arrivalDistance) {
+        boolean closeEnough = groundApproach ? groundArrival.reached(dragon.position(), destination)
+                : dragon.position().distanceToSqr(destination) <= arrivalDistance * arrivalDistance;
+        if (!movementArrived && !closeEnough) {
             searchTicks = 0;
             if (!issuedMovement) {
                 if (context.gameTime() < nextMovementAttemptAt) return;
                 boolean accepted;
                 if (airborneSearch) {
                     accepted = movement.setAsyncAirWaypoint(destination, Math.max(3.0D, pursuitSpeed));
-                } else if (combatPursuit && dragon.isGroundedForAi() && !dragon.isInWaterOrBubble()) {
-                    accepted = movement.moveToProgressiveGroundPosition(destination, pursuitSpeed, true,
-                            GROUND_PURSUIT_ARRIVAL_DISTANCE);
+                } else if (groundApproach) {
+                    accepted = movement.requestGroundMovement(DragonGroundRequest.travel(
+                            destination, pursuitSpeed, combatPursuit, groundArrival));
                 } else {
                     accepted = movement.setWaypoint(destination, pursuitSpeed, combatPursuit);
                 }
@@ -370,8 +376,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 dragon.getBoundingBox().move(grounded.subtract(dragon.position())).deflate(1.0E-3D))) {
             return;
         }
-        if (movement.moveToProgressiveGroundPosition(grounded, pursuitSpeed, true,
-                GROUND_PURSUIT_ARRIVAL_DISTANCE)) {
+        if (movement.requestGroundMovement(DragonGroundRequest.travel(grounded, pursuitSpeed, true,
+                DragonGroundRequest.Arrival.atPosition(GROUND_PURSUIT_ARRIVAL_DISTANCE)))) {
             searchWaypoint = grounded;
             rememberSearchVisit(grounded);
             movementGeneration = movement.getMovementCommandGeneration();

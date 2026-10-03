@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -189,7 +190,6 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
     }
 
     private void tickApproach(DragonBrainContext<T> context, T dragon) {
-        dragon.setGroundMoveStateFromAI(1);
         if (!dragon.getAIMovement().isMovementCommandCurrent(movementGeneration)) {
             phase = Phase.FAILED;
             decision = "interrupted:movement-replaced";
@@ -376,13 +376,9 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
 
         routeNodes = path.getNodeCount();
         site = reachableSite;
-        if (!dragon.getAIMovement().followGroundPath(
-                path,
-                reachableSite.stance(),
-                config.speedModifier(),
-                false,
-                approachArrivalTolerance(dragon, reachableSite)
-        )) {
+        if (!dragon.getAIMovement().followGroundPath(path, DragonGroundRequest.complete(
+                reachableSite.stance(), config.speedModifier(), false,
+                DragonGroundRequest.Arrival.atPosition(approachArrivalTolerance(dragon, reachableSite))))) {
             decision = "path-rejected:navigation";
             rejectSite(context, candidate.water());
             requestNextPath(context);

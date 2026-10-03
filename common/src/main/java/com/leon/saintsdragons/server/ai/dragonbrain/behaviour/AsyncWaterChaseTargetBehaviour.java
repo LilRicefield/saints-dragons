@@ -85,7 +85,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
     @Override
     protected void start(DragonBrainContext<T> context) {
         resetShoreExit();
-        context.dragon().getNavigation().stop();
+        if (!context.dragon().getAIMovement().beginSwimMovement()) return;
     }
 
     @Override
@@ -262,7 +262,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
         context.memories().erase(DragonMemories.WALK_TARGET);
         context.memories().erase(DragonMemories.PATH);
         context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
-        dragon.getNavigation().stop();
+        if (!dragon.getAIMovement().beginSwimMovement()) return;
         controller.pause();
 
         boolean inWater = dragon.isInWaterOrBubble();
