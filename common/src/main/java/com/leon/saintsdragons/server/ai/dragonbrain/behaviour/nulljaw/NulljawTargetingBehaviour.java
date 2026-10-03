@@ -9,8 +9,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Shulker;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
 
 public final class NulljawTargetingBehaviour extends DragonTargetingBehaviour<Nulljaw> {
     private int shulkerPollCooldown;
@@ -28,17 +26,8 @@ public final class NulljawTargetingBehaviour extends DragonTargetingBehaviour<Nu
             return null;
         }
         shulkerPollCooldown = 10;
-        double range = followRange(dragon);
-        List<Shulker> candidates = context.level().getEntitiesOfClass(
-                Shulker.class,
-                dragon.getBoundingBox().inflate(range),
-                shulker -> isUsableTarget(dragon, shulker)
-                        && dragon.getSensing().hasLineOfSight(shulker)
-        );
-        return candidates.stream()
-                .min(Comparator.comparingDouble(dragon::distanceToSqr))
-                .map(shulker -> targetChoice(shulker, "shulker_hunt", 1))
-                .orElse(null);
+        Shulker shulker = dragon.getVision().nearest(Shulker.class, candidate -> isUsableTarget(dragon, candidate));
+        return shulker == null ? null : targetChoice(shulker, "shulker_hunt", 1);
     }
 
     @Override

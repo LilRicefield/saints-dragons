@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
 import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
@@ -624,6 +625,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return dragonCache;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return VarasuchusStatProfile.Vision.PROFILE;
     }
 
     @Override

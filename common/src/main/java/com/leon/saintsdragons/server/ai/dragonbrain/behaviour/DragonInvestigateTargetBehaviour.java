@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.navigation.DragonGroundRequest;
-import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
-import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
@@ -38,9 +36,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     private static final int FAILED_LOCATION_MEMORY_TICKS = 20 * 5;
     private static final int MAX_RECENT_LOCATIONS = 4;
     private static final double DESTINATION_REFRESH_DISTANCE_SQR = 1.0D;
-    private static final int SOURCE_WAYPOINT_REFRESH_TICKS = 10;
-    private static final double SOURCE_WAYPOINT_REFRESH_DISTANCE_SQR = 2.0D * 2.0D;
-    private static final double SOURCE_WAYPOINT_MIN_ADJUSTMENT_SQR = 0.75D * 0.75D;
     private static final int AIR_SEARCH_TICKS = 20 * 6;
     private static final int AIR_SEARCH_WAYPOINT_TICKS = 20 * 2;
     private static final int GROUND_PURSUIT_SEARCH_TICKS = 20 * 5;
@@ -57,8 +52,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     private long movementGeneration = Long.MIN_VALUE;
     private Vec3 destination;
     private DragonSensoryObservation activeObservation;
-    private long nextSourceWaypointRefreshAt;
-    private boolean trackingProjectileSource;
     private boolean airborneSearch;
     private Vec3 searchWaypoint;
     private double searchAngle;
@@ -94,8 +87,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         movementGeneration = Long.MIN_VALUE;
         destination = null;
         activeObservation = null;
-        nextSourceWaypointRefreshAt = 0L;
-        trackingProjectileSource = false;
         airborneSearch = false;
         searchWaypoint = null;
         searchWaypointTicks = 0;
@@ -138,11 +129,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
         if (!observation.equals(activeObservation)) {
             boolean searching = phase == Phase.TRAVELLING || phase == Phase.SEARCHING;
-            if (searching && isSameProjectileSource(activeObservation, observation)) {
-                activeObservation = observation;
-                trackingProjectileSource = true;
-                outcome = "evidence-refreshed";
-            } else if (searching && (refreshesNearbyPursuit(observation)
+            if (searching && (refreshesNearbyPursuit(observation)
                     || DragonInvestigation.refreshesAmbientSearch(activeObservation, observation, destination,
                     dragon.getTarget() != null || context.memories().has(DragonMemories.ATTACK_TARGET)))) {
                 activeObservation = observation;
@@ -163,9 +150,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
             }
             finish(context, dragon, Phase.COMPLETE, "source-visible", 0);
             return;
-        }
-        if (source != null && activeObservation.kind() == DragonSensoryObservation.Kind.PROJECTILE) {
-            updateProjectileSourceDestination(context, dragon, source);
         }
 
         if (!isDestinationUsable(context, destination)) {
@@ -274,27 +258,24 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         stopOwnedMovement(dragon);
         activeObservation = observation;
         searchVisits.clear();
-        LivingEntity source = resolveLivingSource(context);
-        trackingProjectileSource = observation.kind() == DragonSensoryObservation.Kind.PROJECTILE
-                && source != null;
-        airborneSearch = !trackingProjectileSource
-                && dragon instanceof RideableFlyingDragon flying
+        airborneSearch = dragon instanceof RideableFlyingDragon flying
                 && flying.isAerial() && !flying.onGround() && !flying.isInWaterOrBubble();
         searchWaypoint = null;
         searchWaypointTicks = 0;
         searchAngle = Math.atan2(dragon.getZ() - observation.position().z,
                 dragon.getX() - observation.position().x);
-        destination = trackingProjectileSource
-                ? source.getBoundingBox().getCenter()
-                : observation.position();
+        destination = observation.position();
+        if (!airborneSearch && observation.kind() == DragonSensoryObservation.Kind.PROJECTILE) {
+            Vec3 grounded = dragon.getAIMovement().findGroundWaypointBelow(destination);
+            if (grounded != null) destination = grounded;
+        }
         DragonTargetTrack track = context.memories().get(DragonMemories.TARGET_TRACK).orElse(null);
-        if (!trackingProjectileSource && track != null && observation.sourceUuid() != null
+        if (observation.kind() != DragonSensoryObservation.Kind.PROJECTILE && track != null && observation.sourceUuid() != null
                 && observation.sourceUuid().equals(track.sourceUuid())
                 && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime())) {
             destination = track.lastKnownPosition();
             DragonTargetMemory.beginSearch(dragon.getBrain(), context.gameTime());
         }
-        nextSourceWaypointRefreshAt = context.gameTime();
         investigationKind = observation.kind().name().toLowerCase(Locale.ROOT);
         searchTicks = 0;
         phase = Phase.TRAVELLING;
@@ -302,7 +283,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         movementFailures = 0;
         nextMovementAttemptAt = 0;
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        combatPursuit = target != null && target.getUUID().equals(observation.sourceUuid())
+        combatPursuit = observation.kind() == DragonSensoryObservation.Kind.PROJECTILE
+                || target != null && target.getUUID().equals(observation.sourceUuid())
                 || track != null && observation.sourceUuid() != null
                 && observation.sourceUuid().equals(track.sourceUuid())
                 && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime());
@@ -310,7 +292,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (combatPursuit) {
             var rememberedWalk = context.memories().get(DragonMemories.LAST_SEEN_WALK_TARGET).orElse(null);
             pursuitSpeed = rememberedWalk == null ? Math.max(1.25D, pursuitSpeed) : rememberedWalk.getSpeedModifier();
-            if (!airborneSearch && !trackingProjectileSource
+            if (!airborneSearch
                     && observation.kind() == DragonSensoryObservation.Kind.SIGHT && rememberedWalk != null) {
                 destination = rememberedWalk.getTarget().currentPosition();
             }
@@ -325,8 +307,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         groundSearchAttempts = 0;
 
         double recentRadius = Math.max(2.0D, profile.arrivalDistance());
-        if (!trackingProjectileSource
-                && wasRecentlySearched(destination, context.gameTime(), observation.observedAt(), recentRadius * recentRadius)) {
+        if (wasRecentlySearched(destination, context.gameTime(), observation.observedAt(), recentRadius * recentRadius)) {
             finish(context, dragon, Phase.SKIPPED_RECENT, "recent-location", 0);
         }
     }
@@ -343,7 +324,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     }
 
     private boolean canSearchGround(RideableDragonBase dragon) {
-        return combatPursuit && !trackingProjectileSource && !airborneSearch
+        return combatPursuit && !airborneSearch
                 && dragon.isGroundedForAi() && !dragon.isInWaterOrBubble();
     }
 
@@ -475,73 +456,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         searchVisits.addLast(position);
     }
 
-    private void updateProjectileSourceDestination(DragonBrainContext<T> context,
-                                                   RideableDragonBase dragon,
-                                                   LivingEntity source) {
-        DragonAIMovementController movement = dragon.getAIMovement();
-        Vec3 sourcePosition = source.getBoundingBox().getCenter();
-        boolean useAirDestination = prepareAirInvestigation(dragon, source);
-        Vec3 desiredDestination = useAirDestination
-                ? sourcePosition
-                : movement.findGroundWaypointBelow(sourcePosition);
-        if (desiredDestination == null) {
-            desiredDestination = activeObservation.position();
-        }
-
-        double adjustmentSqr = destination == null
-                ? Double.POSITIVE_INFINITY
-                : destination.distanceToSqr(desiredDestination);
-        boolean sourceMovedFar = adjustmentSqr >= SOURCE_WAYPOINT_REFRESH_DISTANCE_SQR;
-        boolean periodicAdjustment = context.gameTime() >= nextSourceWaypointRefreshAt
-                && adjustmentSqr >= SOURCE_WAYPOINT_MIN_ADJUSTMENT_SQR;
-        if (sourceMovedFar || periodicAdjustment) {
-            stopOwnedMovement(dragon);
-            destination = desiredDestination;
-            phase = Phase.TRAVELLING;
-            outcome = useAirDestination ? "tracking-airborne-source" : "tracking-source";
-            nextSourceWaypointRefreshAt = context.gameTime() + SOURCE_WAYPOINT_REFRESH_TICKS;
-        }
-    }
-
-    private boolean isSameProjectileSource(DragonSensoryObservation current,
-                                           DragonSensoryObservation candidate) {
-        return current != null
-                && current.kind() == DragonSensoryObservation.Kind.PROJECTILE
-                && candidate.kind() == DragonSensoryObservation.Kind.PROJECTILE
-                && current.sourceUuid() != null
-                && current.sourceUuid().equals(candidate.sourceUuid());
-    }
-
-    private boolean prepareAirInvestigation(RideableDragonBase dragon, LivingEntity source) {
-        if (!(dragon instanceof RideableFlyingDragon flyingDragon)
-                || !(dragon instanceof DragonAirCombatSettingsProvider settingsProvider)) {
-            return false;
-        }
-        DragonAirCombatSettings settings = settingsProvider.getAiAirCombatSettings();
-        boolean sourceAirborne = DragonAirCombatHelper.isTargetAirborne(
-                flyingDragon,
-                source,
-                settingsProvider.getAiTargetAirborneHeight(source)
-        );
-        if (!sourceAirborne) {
-            return flyingDragon.isAerial() || flyingDragon.isTakeoff();
-        }
-        if (!flyingDragon.isAerial()
-                && !flyingDragon.isTakeoff()
-                && DragonAirCombatHelper.canTriggerAiFlightForTarget(
-                flyingDragon,
-                source,
-                settings.takeoffTargetMinHeightAboveGround(),
-                settings.takeoffTargetMinHeightAboveDragon()
-        )) {
-            stopOwnedMovement(flyingDragon);
-            DragonAirCombatHelper.startOrResumeFlight(flyingDragon, settings.takeoffAnimationTicks());
-            phase = Phase.TRAVELLING;
-            outcome = "taking-off-for-source";
-        }
-        return flyingDragon.isAerial() || flyingDragon.isTakeoff();
-    }
-
     private boolean isDestinationUsable(DragonBrainContext<T> context, Vec3 target) {
         if (target == null || !Double.isFinite(target.x) || !Double.isFinite(target.y) || !Double.isFinite(target.z)) {
             return false;
@@ -573,7 +487,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (track != null && activeObservation.sourceUuid() != null
                 && activeObservation.sourceUuid().equals(track.sourceUuid())
                 && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime())) {
-            return dragon.hasLineOfSight(source);
+            return dragon.getVision().recognizes(source);
         }
         if (airborneSearch) {
             return context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null) == source
@@ -586,7 +500,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         )) {
             return false;
         }
-        return dragon.hasLineOfSight(source);
+        return dragon.getVision().recognizes(source);
     }
 
     private void finish(DragonBrainContext<T> context,
@@ -666,9 +580,11 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
     private boolean wasRecentlySearched(Vec3 target, long gameTime, long observedAt, double distanceSqr) {
         pruneRecentLocations(gameTime);
-        boolean freshSighting = combatPursuit && activeObservation.kind() == DragonSensoryObservation.Kind.SIGHT;
+        boolean freshThreatEvidence = combatPursuit
+                && (activeObservation.kind() == DragonSensoryObservation.Kind.SIGHT
+                || activeObservation.kind() == DragonSensoryObservation.Kind.PROJECTILE);
         return recentLocations.stream()
-                .anyMatch(location -> (!freshSighting || observedAt <= location.observedAt())
+                .anyMatch(location -> (!freshThreatEvidence || observedAt <= location.observedAt())
                         && location.position().distanceToSqr(target) <= distanceSqr);
     }
 
@@ -710,8 +626,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         actionPaused = false;
         context.dragon().combatManager.recordAiDecision("investigation", "stopped:" + outcome);
         activeObservation = null;
-        nextSourceWaypointRefreshAt = 0L;
-        trackingProjectileSource = false;
         airborneSearch = false;
         searchWaypoint = null;
         searchWaypointTicks = 0;
@@ -759,7 +673,6 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         details.put("kind", investigationKind);
         details.put("search_ticks", Integer.toString(searchTicks));
         details.put("movement_owned", Boolean.toString(issuedMovement));
-        details.put("tracking_source", Boolean.toString(trackingProjectileSource));
         details.put("airborne_search", Boolean.toString(airborneSearch));
         details.put("search_waypoint", searchWaypoint == null ? "none" : searchWaypoint.toString());
         details.put("ground_search_attempts", Integer.toString(groundSearchAttempts));

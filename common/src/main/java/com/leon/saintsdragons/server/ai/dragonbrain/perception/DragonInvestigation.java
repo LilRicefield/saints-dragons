@@ -9,17 +9,12 @@ import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonInvestigation {
     private static final long STRONGER_OBSERVATION_GRACE_TICKS = 20L;
-    private static final double MIN_DIRECTION_LENGTH_SQR = 1.0E-4D;
-    private static final double MIN_PROJECTILE_SEARCH_DISTANCE = 12.0D;
-    private static final double OWNERLESS_SEARCH_RANGE_FACTOR = 0.75D;
-    private static final double MIN_OWNER_TRAJECTORY_ALIGNMENT = 0.25D;
     private static final long SAME_SOURCE_PROJECTILE_COALESCE_TICKS = 20L * 3L;
     private static final long OWNERLESS_PROJECTILE_COALESCE_TICKS = 10L;
     private static final double OWNERLESS_PROJECTILE_COALESCE_DISTANCE_SQR = 4.0D * 4.0D;
@@ -43,6 +38,9 @@ public final class DragonInvestigation {
 
             DragonSensoryObservation observation = brain.getMemory(DragonMemories.INVESTIGATION_TARGET)
                     .orElse(null);
+            if (observation != null && observation.kind() == DragonSensoryObservation.Kind.PROJECTILE) {
+                return true;
+            }
             if (observation == null || observation.sourceUuid() == null
                     || !(dragon.level() instanceof ServerLevel level)) {
                 return false;
@@ -74,7 +72,11 @@ public final class DragonInvestigation {
         DragonSensoryObservation existing = dragon.getBrain()
                 .getMemory(DragonMemories.INVESTIGATION_TARGET)
                 .orElse(null);
+        // Replaying a stored observation is not fresh evidence and must not extend its lifetime.
+        if (observation.equals(existing)) return false;
         DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
+        if (dragon.level().getGameTime() - observation.observedAt()
+                >= profile.investigationMemoryTicks(dragon, observation.position())) return false;
         if (shouldCoalesce(existing, observation)) {
             dragon.getBrain().setMemoryWithExpiry(
                     DragonMemories.INVESTIGATION_TARGET,
@@ -131,55 +133,7 @@ public final class DragonInvestigation {
     }
 
     public static boolean rememberProjectileOrigin(DragonEntity dragon, Projectile projectile) {
-        if (dragon.level().isClientSide
-                || !dragon.getBrain().checkMemory(
-                        DragonMemories.INVESTIGATION_TARGET,
-                        MemoryStatus.REGISTERED
-                )) {
-            return false;
-        }
-
-        Vec3 impactPosition = projectile.position();
-        Entity owner = projectile.getOwner();
-        if (owner == dragon) {
-            return false;
-        }
-        boolean hasUsableOwner = owner != null
-                && owner.isAlive()
-                && owner.level() == dragon.level();
-        Vec3 ownerDirection = hasUsableOwner
-                ? owner.getBoundingBox().getCenter().subtract(impactPosition)
-                : Vec3.ZERO;
-        Vec3 trajectoryDirection = projectile.getDeltaMovement().scale(-1.0D);
-        boolean hasOwnerDirection = ownerDirection.lengthSqr() >= MIN_DIRECTION_LENGTH_SQR;
-        boolean hasTrajectoryDirection = trajectoryDirection.lengthSqr() >= MIN_DIRECTION_LENGTH_SQR;
-        Vec3 sourceDirection = ownerDirection;
-        if (hasTrajectoryDirection && (!hasOwnerDirection
-                || trajectoryDirection.normalize().dot(ownerDirection.normalize())
-                        >= MIN_OWNER_TRAJECTORY_ALIGNMENT)) {
-            sourceDirection = trajectoryDirection;
-        }
-        if (sourceDirection.lengthSqr() < MIN_DIRECTION_LENGTH_SQR) {
-            return false;
-        }
-
-        DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
-        double maxSearchDistance = Math.max(
-                MIN_PROJECTILE_SEARCH_DISTANCE,
-                profile.hearingRange()
-        );
-        double searchDistance = hasOwnerDirection
-                ? Math.min(ownerDirection.length(), maxSearchDistance)
-                : maxSearchDistance * OWNERLESS_SEARCH_RANGE_FACTOR;
-        Vec3 inferredOrigin = impactPosition.add(sourceDirection.normalize().scale(searchDistance));
-        DragonSensoryObservation observation = new DragonSensoryObservation(
-                inferredOrigin,
-                hasUsableOwner ? owner.getUUID() : null,
-                DragonSensoryObservation.Kind.PROJECTILE,
-                hasUsableOwner ? 0.95F : 0.75F,
-                dragon.level().getGameTime()
-        );
-        return remember(dragon, observation);
+        return dragon.getVision().observeProjectileImpact(projectile, true);
     }
 
     public static boolean isMeaningfulSound(DragonSensoryObservation observation) {
@@ -200,7 +154,7 @@ public final class DragonInvestigation {
                 && source != dragon.getTarget()
                 && source != dragon.getLastHurtByMob()
                 && source != dragon.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null)
-                && dragon.hasLineOfSight(source);
+                && dragon.getVision().canSee(source);
     }
 
     public static boolean refreshesAmbientSearch(DragonSensoryObservation current,

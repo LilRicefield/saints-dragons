@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia;
 
 import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
@@ -294,6 +295,11 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return AtroxiiaStatProfile.Vision.PROFILE;
     }
 
     @Override

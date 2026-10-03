@@ -94,7 +94,7 @@ public final class DragonHearingListener implements GameEventListener {
 
         Vec3 approximatePosition = addUncertainty(eventPosition, confidence);
         boolean unresolvedProjectile = stimulus.kind() == DragonSensoryObservation.Kind.PROJECTILE
-                && !(source instanceof LivingEntity);
+                && (!(source instanceof LivingEntity living) || !dragon.getVision().recognizes(living));
         UUID sourceUuid = unresolvedProjectile || source == null ? null : source.getUUID();
         DragonSensoryObservation observation = new DragonSensoryObservation(
                 approximatePosition,
@@ -104,13 +104,12 @@ public final class DragonHearingListener implements GameEventListener {
                 level.getGameTime()
         );
 
-        // A projectile landing beside the dragon contains more useful direction
-        // information than the impact position alone. Preserve the inferred
-        // launch-side observation so it can redirect an existing investigation
-        // instead of leaving the dragon committed to an older sighting.
+        // A heard impact locates the noise. Only a seen projectile contributes a bearing.
+        // Preserve that visual evidence instead of replacing it with the landing sound.
         boolean rememberedProjectileOrigin = event == GameEvent.PROJECTILE_LAND
                 && eventSource instanceof Projectile projectile
-                && DragonInvestigation.rememberProjectileOrigin(dragon, projectile);
+                && isDangerousProjectileImpact(eventPosition)
+                && dragon.getVision().observeProjectileImpact(projectile, false);
 
         int ttl = Math.max(20, Math.round(profile.soundMemoryTicks() * stimulus.memoryMultiplier()));
         DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
@@ -132,11 +131,11 @@ public final class DragonHearingListener implements GameEventListener {
         if (storedAmbient) {
             awareness.rememberSound(observation, threatening, level.getGameTime());
         }
-        boolean storedTarget = target != null
+        boolean storedTarget = !rememberedProjectileOrigin && target != null
                 && sourceUuid != null
                 && sourceUuid.equals(target.getUUID())
                 && storeObservation(DragonMemories.HEARD_TARGET, observation, ttl, level.getGameTime());
-        boolean storedInvestigation = target == null
+        boolean storedInvestigation = !rememberedProjectileOrigin && target == null
                 && stimulus.investigate()
                 && canInvestigate(stimulus, source)
                 && (!(source instanceof LivingEntity living)
@@ -148,7 +147,7 @@ public final class DragonHearingListener implements GameEventListener {
 
     private static boolean canInvestigate(Stimulus stimulus, Entity source) {
         if (stimulus.kind() == DragonSensoryObservation.Kind.PROJECTILE) {
-            return source instanceof LivingEntity;
+            return true;
         }
         return stimulus.kind() != DragonSensoryObservation.Kind.BLOCK || source != null;
     }

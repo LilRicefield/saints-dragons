@@ -105,6 +105,9 @@ public class DragonAIMovementController {
             tickWaterController();
             return;
         }
+        if (deferGroundPathForLandingRecovery()) {
+            return;
+        }
         if (ignoreInheritedGroundNavigationStuck && !dragon.getNavigation().isStuck()) {
             ignoreInheritedGroundNavigationStuck = false;
         }
@@ -858,6 +861,13 @@ public class DragonAIMovementController {
                 completeGroundArrival();
                 return true;
             }
+            if (isLandingRecoveryActive()) {
+                if (groundPathState != GroundPathState.WAITING) invalidateMovementCommand();
+                currentWaypoint = waypoint;
+                deferGroundPathForLandingRecovery();
+                brainMovement.commanded(movementCommandGeneration, dragon.level().getGameTime(), "ground-request", false);
+                return true;
+            }
             if (groundPathFailureRetryTicks > 0) {
                 if (groundPathState != GroundPathState.WAITING) invalidateMovementCommand();
                 currentWaypoint = waypoint;
@@ -951,11 +961,31 @@ public class DragonAIMovementController {
             completeGroundArrival();
             return true;
         }
+        if (deferGroundPathForLandingRecovery()) return true;
         if (!dragon.level().noCollision(dragon, dragon.getBoundingBox().deflate(1.0E-3D))) {
             recordGroundPathFailure(waypoint.target(), "invalid-start-body");
             return false;
         }
         startGroundPathAsync(waypoint);
+        return true;
+    }
+
+    private boolean isLandingRecoveryActive() {
+        return dragon instanceof RideableFlyingDragon flying && flying.isAiLandingRecoveryActive();
+    }
+
+    /** The landing animation deliberately stops navigation; this is a pause, not a failed route. */
+    private boolean deferGroundPathForLandingRecovery() {
+        if (currentWaypoint == null || !currentWaypoint.mode().usesGroundPath() || !isLandingRecoveryActive()) {
+            return false;
+        }
+        if (groundPathState != GroundPathState.WAITING) {
+            resetGroundPathState();
+            dragon.getNavigation().stop();
+        }
+        // Keep the destination and command generation so its owner can resume after recovery.
+        groundPathState = GroundPathState.WAITING;
+        groundPathDebugReason = "waiting-for-landing-recovery";
         return true;
     }
 
@@ -1014,6 +1044,7 @@ public class DragonAIMovementController {
             completeGroundArrival();
             return true;
         }
+        if (deferGroundPathForLandingRecovery()) return true;
         if (path == null || path.getNodeCount() == 0) {
             recordGroundPathFailure(currentWaypoint.target(), "empty-path");
             return false;

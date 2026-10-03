@@ -2,11 +2,27 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import java.util.Map;
 
 public final class StegonautStatProfile {
     private StegonautStatProfile() {
+    }
+
+    public static final class Vision {
+        public static final double RANGE = 24.0D;
+        public static final double NEAR_DISTANCE = 6.0D;
+        public static final double NEAR_HORIZONTAL = 110.0D;
+        public static final double FAR_HORIZONTAL = 45.0D;
+        public static final double NEAR_VERTICAL = 80.0D;
+        public static final double FAR_VERTICAL = 45.0D;
+
+        public static final DragonVisionProfile PROFILE = new DragonVisionProfile(
+                RANGE, NEAR_DISTANCE, NEAR_HORIZONTAL, FAR_HORIZONTAL, NEAR_VERTICAL, FAR_VERTICAL);
+
+        private Vision() {
+        }
     }
 
     public static final class Config {

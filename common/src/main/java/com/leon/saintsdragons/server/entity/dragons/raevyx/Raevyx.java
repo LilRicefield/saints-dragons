@@ -4,6 +4,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.mojang.serialization.Dynamic;
@@ -3128,6 +3129,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return RaevyxStatProfile.Vision.PROFILE;
     }
 
     @Override

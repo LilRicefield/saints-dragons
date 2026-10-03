@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
+import com.leon.saintsdragons.client.debug.DragonVisionDebugClient;
+import com.leon.saintsdragons.client.debug.DragonVisionDebugRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
@@ -39,8 +42,12 @@ public class FabricClientEventHandler {
      */
     public static void init() {
         CommonClientLifecycleEvents.bootstrap();
+        WorldRenderEvents.AFTER_ENTITIES.register(context ->
+                DragonVisionDebugRenderer.render(context.matrixStack(), context.camera().getPosition()));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             CommonClientLifecycleEvents.onEndClientTick(client);
+            if (client.level == null || client.player == null) DragonVisionDebugClient.clear();
+            else DragonVisionDebugClient.tick();
         });
     }
 

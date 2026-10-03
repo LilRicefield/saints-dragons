@@ -21,6 +21,8 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
+import com.leon.saintsdragons.common.network.MessageDragonVisionDebug;
+import com.leon.saintsdragons.client.debug.DragonVisionDebugClient;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonlordFlightBoost;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
@@ -203,6 +205,10 @@ public final class ClientPacketHandlers {
 
     public static void handleDragonPathDebug(MessageDragonPathDebug message) {
         DragonPathDebugClient.apply(message);
+    }
+
+    public static void handleDragonVisionDebug(MessageDragonVisionDebug message) {
+        DragonVisionDebugClient.apply(message);
     }
 
     public static void handleDragonBrainDebug(MessageDragonBrainDebug message) {

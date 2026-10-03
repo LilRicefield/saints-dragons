@@ -15,6 +15,8 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonHearingListener;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVision;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -174,6 +176,17 @@ public abstract class DragonEntity extends TamableAnimal implements TickingGeoEn
     private final DragonRecoveryComponent recoveryComponent;
     @Nullable
     private final DragonBabyComponent babyComponent;
+    private final DragonVision vision = new DragonVision(this);
+
+    public DragonVision getVision() {
+        return vision;
+    }
+
+    /** Species override this with their stat profile's shared sight geometry. */
+    public DragonVisionProfile getVisionProfile() {
+        return DragonVisionProfile.standard(getAttributeValue(Attributes.FOLLOW_RANGE), getBbWidth());
+    }
+
     private final DragonAiCombatPacingComponent aiCombatPacing = new DragonAiCombatPacingComponent();
     private final DynamicGameEventListener<DragonHearingListener> hearingListener =
             new DynamicGameEventListener<>(new DragonHearingListener(this));

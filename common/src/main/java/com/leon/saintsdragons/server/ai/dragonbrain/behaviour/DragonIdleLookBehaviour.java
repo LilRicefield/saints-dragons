@@ -36,15 +36,16 @@ public final class DragonIdleLookBehaviour<T extends DragonEntity> extends Drago
                 || dragon.isVehicle()
                 || dragon.isScentAssessing()
                 || dragon.isOrderedToSit()
+                || dragon.getVision().attentionPosition() != null
                 || DragonAwarenessMemory.get(dragon).hasAttention(context.gameTime())) {
             return;
         }
         if (lookTicks-- <= 0) {
-            player = context.level().getNearestPlayer(dragon, playerRange);
+            player = dragon.getVision().nearestVisible(Player.class, p -> dragon.distanceToSqr(p) <= playerRange * playerRange);
             lookTicks = 40 + dragon.getRandom().nextInt(40);
             randomYaw = dragon.getYRot() + dragon.getRandom().nextFloat() * 180.0F - 90.0F;
         }
-        if (player != null && player.isAlive() && dragon.distanceToSqr(player) <= playerRange * playerRange) {
+        if (player != null && dragon.getVision().canSee(player) && dragon.distanceToSqr(player) <= playerRange * playerRange) {
             dragon.getLookControl().setLookAt(player, 10.0F, dragon.getMaxHeadXRot());
         } else {
             double radians = Math.toRadians(randomYaw);

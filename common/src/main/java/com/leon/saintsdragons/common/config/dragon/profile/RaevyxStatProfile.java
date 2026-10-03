@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 import com.leon.saintsdragons.server.flight.DragonFlightBlend;
@@ -13,6 +14,21 @@ import java.util.Map;
 
 public final class RaevyxStatProfile {
     private RaevyxStatProfile() {
+    }
+
+    public static final class Vision {
+        public static final double RANGE = 84.0D;
+        public static final double NEAR_DISTANCE = 12.0D;
+        public static final double NEAR_HORIZONTAL = 110.0D;
+        public static final double FAR_HORIZONTAL = 50.0D;
+        public static final double NEAR_VERTICAL = 85.0D;
+        public static final double FAR_VERTICAL = 55.0D;
+
+        public static final DragonVisionProfile PROFILE = new DragonVisionProfile(
+                RANGE, NEAR_DISTANCE, NEAR_HORIZONTAL, FAR_HORIZONTAL, NEAR_VERTICAL, FAR_VERTICAL);
+
+        private Vision() {
+        }
     }
 
     public static final class Config {

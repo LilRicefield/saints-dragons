@@ -100,7 +100,7 @@ public final class DragonTargetMemory {
         }
         LivingEntity target = track.resolve(level);
         if (target == null || !dragon.isTargetValid(target) || !dragon.canTarget(target)
-                || !dragon.getSensing().hasLineOfSight(target)) {
+                || !dragon.getVision().recognizes(target)) {
             return null;
         }
         track.markVisible(target.getBoundingBox().getCenter(), gameTime);

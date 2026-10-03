@@ -38,7 +38,7 @@ public final class DragonPerception {
             return null;
         }
 
-        boolean visible = dragon.getSensing().hasLineOfSight(target);
+        boolean visible = dragon.getVision().canSee(target);
         brain.setMemoryWithExpiry(DragonMemories.TARGET_VISIBLE, visible, 3L);
         if (visible) {
             DragonTargetMemory.observeVisible(brain, target, gameTime);

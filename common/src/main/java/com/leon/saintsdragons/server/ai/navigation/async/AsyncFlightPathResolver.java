@@ -217,7 +217,7 @@ class AsyncFlightPathResolver {
             return;
         }
         this.clearPathNodes();
-        this.component.handleStuck(currentWaypoint);
+        this.component.handleStuck(currentWaypoint, "route-unavailable");
     }
 
     public boolean shouldExtendPartialPath() {

@@ -25,6 +25,7 @@ public class AsyncFlightController {
     private WaypointArrivalCallback currentArrivalCallback;
     private boolean currentGroundTransition;
     private boolean currentWaterTouchdown;
+    private String lastLandingFailure = "none";
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
@@ -90,7 +91,7 @@ public class AsyncFlightController {
         }
         if (this.currentGroundTransition && (touchdown || this.host.tickCount % 10 == 0)
                 && !DragonLandingSites.isValid(this.host, this.currentWaypoint)) {
-            this.failLanding();
+            this.failLanding("site-invalid");
             return;
         }
         double arrivalDist = this.calculateArrivalDistance();
@@ -106,7 +107,7 @@ public class AsyncFlightController {
             if (touchdown) {
                 movementTarget = this.pathResolver.calculateSafeDirectLookAhead(this.currentWaypoint, 4.0D);
                 if (movementTarget == null) {
-                    this.failLanding();
+                    this.failLanding("touchdown-corridor-blocked");
                     return;
                 }
             } else {
@@ -147,6 +148,7 @@ public class AsyncFlightController {
     /** The movement controller has already selected and validated this touchdown position. */
     public void setGroundTransitionWaypoint(Vec3 target, double speed) {
         this.clearRoute();
+        this.lastLandingFailure = "none";
         this.currentWaypoint = target;
         this.currentGroundTransition = true;
         this.currentWaterTouchdown = DragonLandingSites.isWaterSurface(this.host, target);
@@ -242,7 +244,9 @@ public class AsyncFlightController {
         }
     }
 
-    private void failLanding() {
+    private void failLanding(String reason) {
+        // Keep the rejection after clearing the route and starting recovery flight.
+        this.lastLandingFailure = reason + "@" + this.host.position() + "->" + this.currentWaypoint;
         this.clearAllWaypoints();
         this.flightCapable.beginAiFlight();
         this.state = PathState.FAILED;
@@ -302,8 +306,12 @@ public class AsyncFlightController {
     }
 
     public void handleStuck(Vec3 currentWaypoint) {
+        this.handleStuck(currentWaypoint, "no-progress");
+    }
+
+    void handleStuck(Vec3 currentWaypoint, String reason) {
         if (this.currentGroundTransition) {
-            this.failLanding();
+            this.failLanding(reason);
             return;
         }
         AsyncFlightStuckDetector.StuckAction action = this.stuckDetector.handleStuck(this.maxRetries);
@@ -417,6 +425,7 @@ public class AsyncFlightController {
     public String getSteeringDebugSummary() {
         return this.movementExecutor.steeringSummary()
                 + ",landing=" + this.currentGroundTransition + ",takeoff=" + this.flightCapable.isTakeoff()
+                + ",lastLandingFailure=" + this.lastLandingFailure
                 + (this.currentFlightRequest == null ? "" : ",purpose=" + this.currentFlightRequest.purpose()
                     + ",arrival=" + this.currentFlightRequest.arrival()) + ",speed=" + this.speedModifier
                 + (this.currentGroundTransition ? ",touchdown=" + this.currentWaypoint

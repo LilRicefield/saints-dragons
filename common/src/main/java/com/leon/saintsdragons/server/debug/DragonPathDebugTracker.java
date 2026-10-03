@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.debug;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
+import com.leon.saintsdragons.common.network.MessageDragonVisionDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
@@ -73,6 +74,7 @@ public final class DragonPathDebugTracker {
             refreshActiveSearchDebug();
             NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
             NetworkHandler.sendToPlayer(player, MessageDragonBrainDebug.clear());
+            NetworkHandler.sendToPlayer(player, MessageDragonVisionDebug.clear());
             player.displayClientMessage(Component.literal("Dragon debug: OFF"), true);
             SaintsDragonsCommon.LOGGER.info(
                     "[Dragon Path Debug] event=unselected player={} id={} uuid={}",
@@ -121,6 +123,7 @@ public final class DragonPathDebugTracker {
             if (!(entity instanceof DragonEntity dragon) || dragon.isRemoved() || !dragon.isAlive()) {
                 NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
                 NetworkHandler.sendToPlayer(player, MessageDragonBrainDebug.clear());
+                NetworkHandler.sendToPlayer(player, MessageDragonVisionDebug.clear());
                 player.displayClientMessage(Component.literal("Dragon debug: target unavailable"), true);
                 iterator.remove();
                 trackingChanged = true;
@@ -141,6 +144,17 @@ public final class DragonPathDebugTracker {
         }
     }
 
+    public static boolean setVisionLayer(ServerPlayer player, int layer, boolean enabled) {
+        TrackingEntry tracking = TRACKED_DRAGONS.get(player.getUUID());
+        if (tracking == null) return false;
+        tracking.visionLayers = enabled ? tracking.visionLayers | layer : tracking.visionLayers & ~layer;
+        Entity entity = player.serverLevel().getEntity(tracking.dragonId);
+        if (entity instanceof DragonEntity dragon) {
+            NetworkHandler.sendToPlayer(player, MessageDragonVisionDebug.capture(dragon, tracking.visionLayers));
+        }
+        return true;
+    }
+
     public static void clearAll() {
         TRACKED_DRAGONS.clear();
         DragonPathSearchDebug.setActiveDragons(List.of());
@@ -153,6 +167,7 @@ public final class DragonPathDebugTracker {
         MessageDragonPathDebug snapshot = capture(dragon);
         NetworkHandler.sendToPlayer(player, snapshot);
         NetworkHandler.sendToPlayer(player, DragonBrainDebugTracker.capture(dragon));
+        NetworkHandler.sendToPlayer(player, MessageDragonVisionDebug.capture(dragon, tracking.visionLayers));
 
         LogState logState = LogState.capture(dragon, snapshot);
         if (!forceLog && logState.equals(tracking.lastLogState)) {
@@ -486,7 +501,8 @@ public final class DragonPathDebugTracker {
                 + ",sightGrace=" + dragon.getBrain().getMemory(DragonMemories.RECENT_TARGET_SIGHT).orElse(false)
                 + ",last=" + lastSeen + ",investigate=" + investigation
                 + ",heard=" + heard + ",targetHeard=" + heardTarget
-                + ",wakeTarget=" + wakeTarget + ",investigationState=" + investigationSummary(dragon);
+                + ",wakeTarget=" + wakeTarget + ",investigationState=" + investigationSummary(dragon)
+                + ",vision={" + dragon.getVision().debugSummary() + "}";
     }
 
     private static String investigationSummary(DragonEntity dragon) {
@@ -525,6 +541,7 @@ public final class DragonPathDebugTracker {
     private static final class TrackingEntry {
         private final UUID dragonId;
         private @Nullable LogState lastLogState;
+        private int visionLayers = MessageDragonVisionDebug.ALL;
 
         private TrackingEntry(UUID dragonId) {
             this.dragonId = dragonId;

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.leon.saintsdragons.server.entity.part.IgnivorusCollisionState;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
@@ -3272,6 +3273,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return IgnivorusStatProfile.Vision.PROFILE;
     }
 
     @Override

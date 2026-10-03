@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
 import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -371,6 +372,11 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return dragonCache;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return NulljawStatProfile.Vision.PROFILE;
     }
 
     @Override

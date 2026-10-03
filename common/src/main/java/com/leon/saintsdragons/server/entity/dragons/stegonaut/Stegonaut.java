@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
 import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -166,6 +167,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
     }
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return StegonautStatProfile.Vision.PROFILE;
+    }
+
     @Override
     public DragonSoundProfile getSoundProfile() {
         return StegonautSoundProfile.INSTANCE;

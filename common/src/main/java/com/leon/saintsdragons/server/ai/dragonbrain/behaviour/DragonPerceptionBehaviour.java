@@ -159,7 +159,15 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
 
     private void lookTowardAttention(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        if (dragon.isVehicle() || dragon.isOrderedToSit() || dragon.isSleepLocked()) {
+        if (dragon.isVehicle() || dragon.isOrderedToSit() || dragon.isSleepLocked()
+                || context.memories().has(DragonMemories.INVESTIGATION_TARGET)) {
+            return;
+        }
+        Vec3 visualAttention = dragon.getVision().attentionPosition();
+        if (visualAttention != null) {
+            dragon.getLookControl().setLookAt(visualAttention.x, visualAttention.y, visualAttention.z,
+                    8.0F, dragon.getMaxHeadXRot());
+            lastObservation = "visual-attention";
             return;
         }
         DragonSensoryObservation heard = DragonAwarenessMemory.get(dragon)

@@ -89,7 +89,7 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
                 : context.level().getEntity(candidate.sourceUuid());
         if (source instanceof LivingEntity living
                 && living.isAlive()
-                && context.dragon().getSensing().hasLineOfSight(living)) {
+                && context.dragon().getVision().recognizes(living)) {
             outcome = "source-visible";
             return;
         }

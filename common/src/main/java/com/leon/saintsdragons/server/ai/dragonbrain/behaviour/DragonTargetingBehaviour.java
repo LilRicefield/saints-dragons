@@ -77,7 +77,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         TargetChoice wakeChoice = null;
         if (wakeTarget != null
                 && dragon.isWildAggressionEnabled()
-                && dragon.getSensing().hasLineOfSight(wakeTarget)
+                && dragon.getVision().recognizes(wakeTarget)
                 && pursuitSafety.canReacquire(dragon, DragonTargetingHelper.combatTarget(wakeTarget), context.gameTime())) {
             wakeChoice = targetChoice(wakeTarget, "heard_intruder", 3);
             context.memories().erase(DragonMemories.WAKE_TARGET);
@@ -233,7 +233,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             return "commitment-window";
         }
         LivingEntity candidate = DragonTargetingHelper.combatTarget(choice.target());
-        if (!dragon.getSensing().hasLineOfSight(candidate)) {
+        if (!dragon.getVision().recognizes(candidate)) {
             return "candidate-unseen";
         }
         if (!context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(true)) {
@@ -298,7 +298,8 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             awareness.consumeProjectileThreat(sourceUuid);
             return null;
         }
-        return targetChoice(source, PROJECTILE_THREAT_SOURCE, PROJECTILE_THREAT_PRIORITY);
+        return context.dragon().getVision().recognizes(source)
+                ? targetChoice(source, PROJECTILE_THREAT_SOURCE, PROJECTILE_THREAT_PRIORITY) : null;
     }
 
     @Nullable
@@ -324,7 +325,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                 dragon.getBoundingBox().inflate(range),
                 candidate -> isUsableTarget(dragon, candidate)
                         && dragon.distanceToSqr(candidate) <= rangeSqr
-                        && dragon.getSensing().hasLineOfSight(candidate)
+                        && dragon.getVision().recognizes(candidate)
         );
         return candidates.stream()
                 .min(Comparator.comparingDouble(dragon::distanceToSqr))

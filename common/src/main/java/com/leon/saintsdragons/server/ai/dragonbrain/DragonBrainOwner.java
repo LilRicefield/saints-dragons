@@ -114,6 +114,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             @SuppressWarnings("unchecked")
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
             dragon.refreshMountedCombatTarget();
+            dragon.getVision().tick();
             var perceivedTarget = DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
             if (usesCombatDecisionSupport() && dragon instanceof RideableFlyingDragon flying) {
                 flying.enableCombatDecisionSupport().observe(perceivedTarget,

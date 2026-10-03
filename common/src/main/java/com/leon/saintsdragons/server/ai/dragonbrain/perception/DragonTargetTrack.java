@@ -123,7 +123,7 @@ public final class DragonTargetTrack {
     }
 
     public void observe(DragonSensoryObservation observation, long gameTime, boolean hostile) {
-        if (!sourceUuid.equals(observation.sourceUuid()) || observation.observedAt() < lastEvidenceAt) {
+        if (!sourceUuid.equals(observation.sourceUuid()) || observation.observedAt() <= lastEvidenceAt) {
             return;
         }
 
@@ -133,7 +133,7 @@ public final class DragonTargetTrack {
         confidence = Math.max(confidence * 0.65F, observation.confidence());
         threat = hostile ? 1.0F : Math.max(threat, observation.confidence() * 0.75F);
         personallyWitnessed |= observation.kind() == DragonSensoryObservation.Kind.SIGHT;
-        expiresAt = Math.max(expiresAt, gameTime + DEFAULT_LOST_CONTACT_TICKS);
+        expiresAt = Math.max(expiresAt, observation.observedAt() + DEFAULT_LOST_CONTACT_TICKS);
 
         if (visible) {
             lastVisibleAt = gameTime;
@@ -141,7 +141,7 @@ public final class DragonTargetTrack {
             searchExpiresAt = Long.MIN_VALUE;
             phase = Phase.VISIBLE_COMBAT;
         } else if (phase == Phase.NONE || phase == Phase.DISENGAGED) {
-            beginLostPursuit(gameTime);
+            beginLostPursuit(observation.observedAt());
         }
     }
 
@@ -172,11 +172,12 @@ public final class DragonTargetTrack {
     }
 
     public void beginSearch(long gameTime) {
+        if (phase == Phase.AGGRESSIVE_SEARCH || phase == Phase.DISENGAGED || phase == Phase.NONE) return;
         visible = false;
         if (lostContactAt == Long.MIN_VALUE) {
             lostContactAt = gameTime;
         }
-        searchExpiresAt = Math.max(searchExpiresAt, gameTime + DEFAULT_SEARCH_TICKS);
+        if (searchExpiresAt == Long.MIN_VALUE) searchExpiresAt = gameTime + DEFAULT_SEARCH_TICKS;
         expiresAt = Math.max(expiresAt, searchExpiresAt);
         phase = Phase.AGGRESSIVE_SEARCH;
     }

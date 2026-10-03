@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.volitans;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
@@ -1889,6 +1890,11 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonVisionProfile getVisionProfile() {
+        return VolitansStatProfile.Vision.PROFILE;
     }
 
     @Override

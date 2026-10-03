@@ -226,6 +226,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageDragonVisionDebug.class,
+                id("dragon_vision_debug"),
+                MessageDragonVisionDebug::encode,
+                MessageDragonVisionDebug::decode,
+                MessageDragonVisionDebug::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonBrainDebug.class,
                 id("dragon_brain_debug"),
                 MessageDragonBrainDebug::encode,

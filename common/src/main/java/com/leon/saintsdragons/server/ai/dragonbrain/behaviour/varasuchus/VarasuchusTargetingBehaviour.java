@@ -11,7 +11,6 @@ import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.raid.Raider;
 import org.jetbrains.annotations.Nullable;
@@ -316,12 +315,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
                                                 Varasuchus dragon,
                                                 Class<E> type,
                                                 Predicate<E> predicate) {
-        double range = Math.max(16.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
-        TargetingConditions conditions = TargetingConditions.forCombat()
-                .range(range)
-                .selector(entity -> predicate.test(type.cast(entity)) && dragon.canTarget(entity));
-        return level.getNearestEntity(type, conditions, dragon,
-                dragon.getX(), dragon.getEyeY(), dragon.getZ(), dragon.getBoundingBox().inflate(range));
+        return dragon.getVision().nearest(type, predicate);
     }
 
     private TargetChoice choice(LivingEntity target, Source source) {
