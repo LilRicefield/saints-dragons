@@ -228,6 +228,14 @@ public final class DragonInvestigation {
 
         int existingPriority = priority(existing.kind());
         int candidatePriority = priority(candidate.kind());
+        // A well-resolved projectile origin is an active threat direction, not
+        // just another sound. Let it redirect a stale sight investigation even
+        // during the short grace window used to suppress noisy evidence.
+        if (existing.kind() == DragonSensoryObservation.Kind.SIGHT
+                && candidate.kind() == DragonSensoryObservation.Kind.PROJECTILE
+                && candidate.confidence() >= 0.65F) {
+            return true;
+        }
         if (existing.observedAt() == candidate.observedAt()) {
             return candidatePriority > existingPriority
                     || (candidatePriority == existingPriority

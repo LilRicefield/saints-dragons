@@ -9,6 +9,7 @@ import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.gameevent.EntityPositionSource;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -103,6 +104,14 @@ public final class DragonHearingListener implements GameEventListener {
                 level.getGameTime()
         );
 
+        // A projectile landing beside the dragon contains more useful direction
+        // information than the impact position alone. Preserve the inferred
+        // launch-side observation so it can redirect an existing investigation
+        // instead of leaving the dragon committed to an older sighting.
+        boolean rememberedProjectileOrigin = event == GameEvent.PROJECTILE_LAND
+                && eventSource instanceof Projectile projectile
+                && DragonInvestigation.rememberProjectileOrigin(dragon, projectile);
+
         int ttl = Math.max(20, Math.round(profile.soundMemoryTicks() * stimulus.memoryMultiplier()));
         DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
         if (event == GameEvent.PROJECTILE_LAND
@@ -134,7 +143,7 @@ public final class DragonHearingListener implements GameEventListener {
                     || !DragonInvestigation.isVisibleAmbientSource(dragon, living, stimulus.kind()))
                 && DragonInvestigation.isMeaningfulSound(observation)
                 && DragonInvestigation.remember(dragon, observation);
-        return storedAmbient || storedTarget || storedInvestigation;
+        return storedAmbient || storedTarget || storedInvestigation || rememberedProjectileOrigin;
     }
 
     private static boolean canInvestigate(Stimulus stimulus, Entity source) {
