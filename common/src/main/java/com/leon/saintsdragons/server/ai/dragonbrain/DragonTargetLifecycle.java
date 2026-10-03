@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import org.jetbrains.annotations.Nullable;
@@ -12,8 +13,15 @@ public final class DragonTargetLifecycle {
 
     public static void combatTargetChanged(DragonEntity dragon, @Nullable LivingEntity target) {
         Brain<?> brain = dragon.getBrain();
-        clearTargetMemories(brain);
+        LivingEntity previousTarget = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
+        clearTargetMemories(brain,
+                target == null
+                        && DragonTargetMemory.hasSearchable(brain, dragon.level().getGameTime())
+                        && (previousTarget == null || dragon.isTargetValid(previousTarget)
+                        && DragonTargetMemory.shouldPreserveCompatibilityTarget(
+                        brain, previousTarget, dragon.level().getGameTime())));
         if (target == null) return;
+        DragonTargetMemory.forget(brain);
         brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
         brain.eraseMemory(DragonMemories.WALK_TARGET);
         brain.eraseMemory(DragonMemories.PATH);
@@ -52,10 +60,33 @@ public final class DragonTargetLifecycle {
         brain.eraseMemory(DragonMemories.ATTACK_TARGET);
         brain.eraseMemory(DragonMemories.TARGET_AIRBORNE);
         clearPerceptionMemories(brain);
+        DragonTargetMemory.forget(brain);
     }
 
     public static void clearTargetMemories(DragonMemoryMap memories) {
         memories.erase(DragonMemories.ATTACK_TARGET);
+        memories.erase(DragonMemories.TARGET_AIRBORNE);
+        clearPerceptionMemories(memories);
+        memories.erase(DragonMemories.TARGET_TRACK);
+    }
+
+    private static void clearTargetMemories(Brain<?> brain, boolean preserveTarget) {
+        // ATTACK_TARGET remains as a compatibility handle only while the
+        // retained track is actively pursuing a lost source.
+        if (!preserveTarget) {
+            brain.eraseMemory(DragonMemories.ATTACK_TARGET);
+            DragonTargetMemory.forget(brain);
+        }
+        brain.eraseMemory(DragonMemories.TARGET_AIRBORNE);
+        clearPerceptionMemories(brain);
+    }
+
+    private static void clearTargetMemories(DragonMemoryMap memories,
+                                            boolean preserveTarget) {
+        if (!preserveTarget) {
+            memories.erase(DragonMemories.ATTACK_TARGET);
+            memories.erase(DragonMemories.TARGET_TRACK);
+        }
         memories.erase(DragonMemories.TARGET_AIRBORNE);
         clearPerceptionMemories(memories);
     }
@@ -63,7 +94,12 @@ public final class DragonTargetLifecycle {
     public static <T extends DragonEntity> void clearCombatTarget(Brain<T> brain,
                                                                    T dragon,
                                                                    boolean clearInvestigation) {
-        clearTargetMemories(brain);
+        LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
+        long gameTime = dragon.level().getGameTime();
+        clearTargetMemories(brain,
+                !clearInvestigation && DragonTargetMemory.hasSearchable(brain, gameTime)
+                        && (target == null || dragon.isTargetValid(target)
+                        && DragonTargetMemory.shouldPreserveCompatibilityTarget(brain, target, gameTime)));
         if (clearInvestigation) {
             brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
         }
@@ -73,7 +109,13 @@ public final class DragonTargetLifecycle {
     public static <T extends DragonEntity> void clearCombatTarget(DragonMemoryMap memories,
                                                                    T dragon,
                                                                    boolean clearInvestigation) {
-        clearTargetMemories(memories);
+        LivingEntity target = memories.get(DragonMemories.ATTACK_TARGET).orElse(null);
+        long gameTime = dragon.level().getGameTime();
+        clearTargetMemories(memories,
+                !clearInvestigation && DragonTargetMemory.hasSearchable(
+                        memories.get(DragonMemories.TARGET_TRACK).orElse(null), gameTime)
+                        && (target == null || dragon.isTargetValid(target)
+                        && DragonTargetMemory.shouldPreserveCompatibilityTarget(memories, target, gameTime)));
         if (clearInvestigation) {
             memories.erase(DragonMemories.INVESTIGATION_TARGET);
         }

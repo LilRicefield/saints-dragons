@@ -3,6 +3,8 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -100,7 +102,7 @@ final class DragonPursuitSafety {
         ) || matchesTarget(
                 context.memories().get(DragonMemories.INVESTIGATION_TARGET).orElse(null),
                 target
-        );
+        ) || remembersTargetTrack(context, target);
         lostTargetTicks = visible || remembered ? 0 : lostTargetTicks + 1;
 
         long noProgressTicks = Math.max(0L, gameTime - lastProgressAt);
@@ -228,6 +230,14 @@ final class DragonPursuitSafety {
             return true;
         }
         return false;
+    }
+
+    private boolean remembersTargetTrack(DragonBrainContext<? extends RideableDragonBase> context,
+                                         LivingEntity target) {
+        DragonTargetTrack track = DragonTargetMemory.get(context.dragon().getBrain());
+        return track != null
+                && track.sourceUuid().equals(target.getUUID())
+                && DragonTargetMemory.hasActive(context.dragon().getBrain(), context.gameTime());
     }
 
     private boolean isFreshThreat(RideableDragonBase dragon, LivingEntity target) {

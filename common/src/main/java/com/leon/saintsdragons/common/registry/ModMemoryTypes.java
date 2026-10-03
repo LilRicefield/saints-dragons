@@ -6,6 +6,7 @@ import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import net.minecraft.core.GlobalPos;
@@ -60,6 +61,8 @@ public final class ModMemoryTypes {
             register("tactical_commitment");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> INVESTIGATION_TARGET =
             register("investigation_target");
+    public static final Supplier<MemoryModuleType<DragonTargetTrack>> TARGET_TRACK =
+            register("target_track");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> SCENT_CANDIDATE =
             register("scent_candidate");
     public static final Supplier<MemoryModuleType<Boolean>> SCENT_COOLDOWN = register("scent_cooldown");

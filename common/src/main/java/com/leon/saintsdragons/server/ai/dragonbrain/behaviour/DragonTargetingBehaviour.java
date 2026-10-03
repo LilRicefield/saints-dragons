@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -113,12 +114,24 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                 && !pursuitSafety.canReacquire(dragon, assignedTarget, context.gameTime())) {
             DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
         }
-        if (current == null && wakeChoice == null
+        TargetChoice rememberedChoice = null;
+        if (current == null) {
+            LivingEntity rememberedTarget = DragonTargetMemory.findVisibleReacquisition(
+                    dragon, dragon.getBrain(), context.gameTime());
+            if (rememberedTarget != null) {
+                rememberedChoice = targetChoice(rememberedTarget, "memory_reacquisition", 0);
+                targetDecision = "reacquired-from-memory";
+            }
+        }
+        if (current == null && wakeChoice == null && rememberedChoice == null
                 && pursuitSafety.shouldThrottleAcquisition(dragon, context.gameTime())) {
             return;
         }
 
         TargetChoice choice = findPriorityTarget(context);
+        if (rememberedChoice != null && (choice == null || rememberedChoice.priority() < choice.priority())) {
+            choice = rememberedChoice;
+        }
         if (wakeChoice != null && (choice == null || wakeChoice.priority() < choice.priority())) {
             choice = wakeChoice;
         }
@@ -133,6 +146,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             choice = projectileThreat;
         }
         if (choice != null
+                && !"memory_reacquisition".equals(choice.source())
                 && !pursuitSafety.canReacquire(dragon, DragonTargetingHelper.combatTarget(choice.target()), context.gameTime())) {
             choice = null;
         }

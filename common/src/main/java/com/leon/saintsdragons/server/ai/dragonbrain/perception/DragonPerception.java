@@ -29,6 +29,11 @@ public final class DragonPerception {
                 if (investigation != null && target.getUUID().equals(investigation.sourceUuid())) {
                     brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
                 }
+                if (target.isAlive()) {
+                    DragonTargetMemory.markLost(brain, gameTime);
+                } else {
+                    DragonTargetMemory.forget(brain);
+                }
             }
             return null;
         }
@@ -36,6 +41,7 @@ public final class DragonPerception {
         boolean visible = dragon.getSensing().hasLineOfSight(target);
         brain.setMemoryWithExpiry(DragonMemories.TARGET_VISIBLE, visible, 3L);
         if (visible) {
+            DragonTargetMemory.observeVisible(brain, target, gameTime);
             brain.setMemoryWithExpiry(DragonMemories.RECENT_TARGET_SIGHT, true, SIGHT_INTERRUPTION_TICKS);
             brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
             DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
@@ -57,7 +63,10 @@ public final class DragonPerception {
                     ),
                     profile.targetMemoryTicks()
             );
-        } else if (isSightInterruption(brain) && brain.getActiveActivities().contains(Activity.FIGHT)
+        } else {
+            DragonTargetMemory.markLost(brain, gameTime);
+        }
+        if (!visible && isSightInterruption(brain) && brain.getActiveActivities().contains(Activity.FIGHT)
                 && !dragon.isAerial() && !dragon.isInWaterOrBubble()
                 && !dragon.isVehicle() && !dragon.isPassenger() && !dragon.isOrderedToSit()
                 && !dragon.isSleepLocked()

@@ -13,6 +13,8 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMe
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatPositioning;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -155,6 +157,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
         LivingEntity source = resolveLivingSource(context);
         if (sourceBecameVisible(context, dragon, source)) {
+            if (source != null && activeObservation.sourceUuid() != null
+                    && activeObservation.sourceUuid().equals(source.getUUID())) {
+                DragonTargetMemory.observeVisible(dragon.getBrain(), source, context.gameTime());
+            }
             finish(context, dragon, Phase.COMPLETE, "source-visible", 0);
             return;
         }
@@ -281,6 +287,13 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         destination = trackingProjectileSource
                 ? source.getBoundingBox().getCenter()
                 : observation.position();
+        DragonTargetTrack track = context.memories().get(DragonMemories.TARGET_TRACK).orElse(null);
+        if (!trackingProjectileSource && track != null && observation.sourceUuid() != null
+                && observation.sourceUuid().equals(track.sourceUuid())
+                && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime())) {
+            destination = track.lastKnownPosition();
+            DragonTargetMemory.beginSearch(dragon.getBrain(), context.gameTime());
+        }
         nextSourceWaypointRefreshAt = context.gameTime();
         investigationKind = observation.kind().name().toLowerCase(Locale.ROOT);
         searchTicks = 0;
@@ -289,7 +302,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         movementFailures = 0;
         nextMovementAttemptAt = 0;
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        combatPursuit = target != null && target.getUUID().equals(observation.sourceUuid());
+        combatPursuit = target != null && target.getUUID().equals(observation.sourceUuid())
+                || track != null && observation.sourceUuid() != null
+                && observation.sourceUuid().equals(track.sourceUuid())
+                && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime());
         pursuitSpeed = profile.investigationSpeed();
         if (combatPursuit) {
             var rememberedWalk = context.memories().get(DragonMemories.LAST_SEEN_WALK_TARGET).orElse(null);
@@ -553,6 +569,12 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (DragonInvestigation.isVisibleAmbientSource(dragon, source, activeObservation.kind())) {
             return true;
         }
+        DragonTargetTrack track = context.memories().get(DragonMemories.TARGET_TRACK).orElse(null);
+        if (track != null && activeObservation.sourceUuid() != null
+                && activeObservation.sourceUuid().equals(track.sourceUuid())
+                && DragonTargetMemory.hasActive(dragon.getBrain(), context.gameTime())) {
+            return dragon.hasLineOfSight(source);
+        }
         if (airborneSearch) {
             return context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null) == source
                     && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
@@ -580,6 +602,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         phase = finalPhase;
         outcome = finalOutcome;
         dragon.combatManager.recordAiDecision("investigation", finalOutcome);
+        if (finalPhase == Phase.FAILED || finalPhase == Phase.SKIPPED_RECENT
+                || (finalPhase == Phase.COMPLETE && "searched".equals(finalOutcome))) {
+            DragonTargetMemory.disengage(dragon.getBrain());
+        }
         if (finalPhase == Phase.FAILED || finalPhase == Phase.SKIPPED_RECENT
                 || (finalPhase == Phase.COMPLETE && "searched".equals(finalOutcome))) {
             landAfterAirSearch(context, dragon);

@@ -7,6 +7,8 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -19,6 +21,10 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
     private boolean targetVisible;
     private String lastObservation = "none";
     private int familiarSources;
+    private String trackPhase = "none";
+    private String trackPosition = "none";
+    private long trackAge;
+    private float trackConfidence;
 
     public DragonPerceptionBehaviour() {
         super(false);
@@ -38,11 +44,36 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
     protected void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        DragonTargetTrack track = context.memories().get(DragonMemories.TARGET_TRACK).orElse(null);
+        if (track == null) {
+            trackPhase = "none";
+            trackPosition = "none";
+            trackAge = 0L;
+            trackConfidence = 0.0F;
+        } else {
+            track.expireIfNeeded(context.gameTime());
+            trackPhase = track.phase().name().toLowerCase(Locale.ROOT);
+            trackPosition = track.lastKnownPosition().toString();
+            trackAge = Math.max(0L, context.gameTime() - track.lastEvidenceAt());
+            trackConfidence = track.confidence();
+        }
         DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
         familiarSources = awareness.familiarSourceCount();
         if (target == null) {
             targetVisible = false;
-            lastObservation = "none";
+            if (track != null && DragonTargetMemory.hasSearchable(dragon.getBrain(), context.gameTime())) {
+                DragonInvestigation.remember(dragon, new DragonSensoryObservation(
+                        track.lastKnownPosition(),
+                        track.sourceUuid(),
+                        track.strongestEvidence(),
+                        track.confidence(),
+                        track.lastEvidenceAt()
+                ));
+                DragonTargetMemory.beginSearch(dragon.getBrain(), context.gameTime());
+                lastObservation = "track_" + track.phase().name().toLowerCase(Locale.ROOT);
+            } else {
+                lastObservation = "none";
+            }
             lookTowardAttention(context);
             return;
         }
@@ -71,6 +102,19 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
             lastObservation = "heard_target_"
                     + heard.kind().name().toLowerCase(Locale.ROOT);
         }
+        if (remembered == null && track != null
+                && DragonTargetMemory.hasSearchable(dragon.getBrain(), context.gameTime())
+                && target.getUUID().equals(track.sourceUuid())) {
+            remembered = new DragonSensoryObservation(
+                    track.lastKnownPosition(),
+                    track.sourceUuid(),
+                    track.strongestEvidence(),
+                    track.confidence(),
+                    track.lastEvidenceAt()
+            );
+            DragonTargetMemory.beginSearch(dragon.getBrain(), context.gameTime());
+            lastObservation = "track_" + track.phase().name().toLowerCase(Locale.ROOT);
+        }
         boolean hasFreshEvidence = remembered != null
                 && target.getUUID().equals(remembered.sourceUuid());
         if (hasFreshEvidence) {
@@ -82,16 +126,21 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
                 .filter(observation -> target.getUUID().equals(observation.sourceUuid()))
                 .orElse(null);
         if (!hasFreshEvidence && investigation == null) {
-            if (dragon.getTarget() == null || dragon.getTarget() == target) {
-                DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
-            } else {
-                DragonTargetLifecycle.clearTargetMemories(context.memories());
+            if (!DragonTargetMemory.hasSearchable(dragon.getBrain(), context.gameTime())) {
+                if (dragon.getTarget() == null || dragon.getTarget() == target) {
+                    DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
+                } else {
+                    DragonTargetLifecycle.clearTargetMemories(context.memories());
+                }
+                lastObservation = "forgotten";
+                return;
             }
-            lastObservation = "forgotten";
-            return;
         }
 
         DragonSensoryObservation focus = hasFreshEvidence ? remembered : investigation;
+        if (focus == null) {
+            return;
+        }
         if (!hasFreshEvidence) {
             lastObservation = "investigating_"
                     + focus.kind().name().toLowerCase(Locale.ROOT);
@@ -135,6 +184,10 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
         details.put("target_visible", Boolean.toString(targetVisible));
         details.put("observation", lastObservation);
         details.put("familiar_sources", Integer.toString(familiarSources));
+        details.put("track_phase", trackPhase);
+        details.put("track_position", trackPosition);
+        details.put("track_age", Long.toString(trackAge));
+        details.put("track_confidence", Float.toString(trackConfidence));
         return Map.copyOf(details);
     }
 }

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModMemoryTypes;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.AgeableMob;
@@ -43,6 +44,7 @@ public final class DragonMemories {
             ModMemoryTypes.LAST_SEEN_TARGET.get();
     public static final MemoryModuleType<DragonSensoryObservation> INVESTIGATION_TARGET =
             ModMemoryTypes.INVESTIGATION_TARGET.get();
+    public static final MemoryModuleType<DragonTargetTrack> TARGET_TRACK = ModMemoryTypes.TARGET_TRACK.get();
     public static final MemoryModuleType<DragonSensoryObservation> SCENT_CANDIDATE =
             ModMemoryTypes.SCENT_CANDIDATE.get();
     public static final MemoryModuleType<Boolean> SCENT_COOLDOWN = ModMemoryTypes.SCENT_COOLDOWN.get();
@@ -87,6 +89,7 @@ public final class DragonMemories {
                 LAST_SEEN_WALK_TARGET,
                 LAST_SEEN_TARGET,
                 INVESTIGATION_TARGET,
+                TARGET_TRACK,
                 SCENT_CANDIDATE,
                 SCENT_COOLDOWN,
                 HEARD_STIMULUS,

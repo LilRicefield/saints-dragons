@@ -58,12 +58,16 @@ public final class DragonInvestigation {
                 || (brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true) && withinCombatRange)) {
             return false;
         }
+        DragonTargetTrack targetTrack = DragonTargetMemory.get(brain);
         return brain.getMemory(DragonMemories.INVESTIGATION_TARGET)
                 .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent()
                 || brain.getMemory(DragonMemories.LAST_SEEN_TARGET)
                 .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent()
                 || brain.getMemory(DragonMemories.HEARD_TARGET)
-                .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent();
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent()
+                || targetTrack != null
+                && targetTrack.sourceUuid().equals(target.getUUID())
+                && DragonTargetMemory.hasActive(brain, dragon.level().getGameTime());
     }
 
     public static boolean remember(DragonEntity dragon, DragonSensoryObservation observation) {
@@ -88,6 +92,22 @@ public final class DragonInvestigation {
                 observation,
                 profile.investigationMemoryTicks(dragon, observation.position())
         );
+        if (observation.sourceUuid() != null) {
+            LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
+            LivingEntity hurtBy = dragon.getLastHurtByMob();
+            boolean hostile = target != null && observation.sourceUuid().equals(target.getUUID())
+                    || hurtBy != null && observation.sourceUuid().equals(hurtBy.getUUID())
+                    || observation.kind() == DragonSensoryObservation.Kind.COMBAT
+                    || observation.kind() == DragonSensoryObservation.Kind.PROJECTILE;
+            DragonTargetTrack currentTrack = DragonTargetMemory.get(dragon.getBrain());
+            long gameTime = dragon.level().getGameTime();
+            if (hostile && (currentTrack == null
+                    || !currentTrack.isActive(gameTime)
+                    || currentTrack.sourceUuid().equals(observation.sourceUuid()))) {
+                DragonTargetMemory.observe(
+                        dragon.getBrain(), observation, true, gameTime);
+            }
+        }
         return true;
     }
 
