@@ -52,6 +52,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.leon.saintsdragons.util.math.SmoothValue;
+import com.leon.saintsdragons.util.animation.TickingGeoEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -101,7 +102,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
@@ -109,7 +109,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.EnumSet;
 
-public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable, DancingEntity {
+public abstract class DragonEntity extends TamableAnimal implements TickingGeoEntity, SoundHandledDragon, DragonMovementCapable, DancingEntity {
     private DragonBrainUtilities brainUtilities;
 
     public final DragonBrainUtilities getBrainUtilities() {

@@ -22,6 +22,8 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
+import com.leon.saintsdragons.util.animation.TickingGeoEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -124,7 +126,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nullable;
 
-public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity, OwnableEntity, DancingEntity {
+public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeoEntity, OwnableEntity, DancingEntity {
     static final int RECOVERY_NONE = 0;
     static final int RECOVERY_DRINK = 1;
     static final int RECOVERY_EAT = 2;
@@ -1360,23 +1362,23 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<IvyTheDragonMerchant> movementController =
-                new AnimationController<>(this, "movement", 3, this::animationPredicate)
+                new EntityAnimationController<>(this, "movement", 3, this::animationPredicate)
                         .receiveTriggeredAnimations();
         movementController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         movementController.setParticleKeyframeHandler(this::handleParticleKeyframe);
         setupMovementController(movementController);
 
         AnimationController<IvyTheDragonMerchant> downedController =
-                new AnimationController<>(this, DOWNED_CONTROLLER, 1, this::downedAnimationPredicate);
+                new EntityAnimationController<>(this, DOWNED_CONTROLLER, 1, this::downedAnimationPredicate);
         downedController.setSoundKeyframeHandler(this::handleSoundKeyframe);
 
         AnimationController<IvyTheDragonMerchant> passiveUseController =
-                new AnimationController<>(this, PASSIVE_USE_CONTROLLER, 1, state -> PlayState.STOP);
+                new EntityAnimationController<>(this, PASSIVE_USE_CONTROLLER, 1, state -> PlayState.STOP);
         passiveUseController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         setupPassiveUseController(passiveUseController);
 
         AnimationController<IvyTheDragonMerchant> instantController =
-                new AnimationController<>(this, INSTANT_CONTROLLER, 1, this::instantAnimationPredicate)
+                new EntityAnimationController<>(this, INSTANT_CONTROLLER, 1, this::instantAnimationPredicate)
                         .receiveTriggeredAnimations();
         instantController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         setupInstantController(instantController);

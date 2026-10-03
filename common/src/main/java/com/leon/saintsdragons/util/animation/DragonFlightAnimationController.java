@@ -9,7 +9,6 @@ import org.joml.Vector3f;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoModel;
 import software.bernie.geckolib.core.animation.Animation;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.keyframe.BoneAnimation;
 import software.bernie.geckolib.core.keyframe.BoneAnimationQueue;
@@ -21,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /** Blends only the flight layer, before the model's procedural neck, tail and dive offsets */
-public final class DragonFlightAnimationController<T extends RideableFlyingDragon> extends AnimationController<T> {
+public final class DragonFlightAnimationController<T extends RideableFlyingDragon> extends EntityAnimationController<T> {
     private static final int ROTATION = 1;
     private static final int POSITION = 2;
     private static final int SCALE = 4;
@@ -66,23 +65,12 @@ public final class DragonFlightAnimationController<T extends RideableFlyingDrago
                         Map<String, CoreGeoBone> bones, Map<String, BoneSnapshot> snapshots,
                         double seekTime, boolean crashWhenCantFindBone) {
         super.process(model, state, bones, snapshots, seekTime, crashWhenCantFindBone);
-        DragonFlightAnimationProfile nextProfile = animatable.getFlightAnimationProfile();
-        if (nextProfile != profile) {
-            profile = nextProfile;
-            glide = null; // Rebuild clip timing too, even when the animation resources are unchanged.
-            entryTime = Double.NaN;
-        }
-        if (profile == null || !animatable.isFlightBlendActive() || isPlayingTriggeredAnimation()
-                || getAnimationState() == State.STOPPED || !loadClips(model)) {
-            entryTime = lastSeekTime = lastSoundPhase = Double.NaN;
-            entryPose.clear();
+        if (!prepareBlend(model)) {
             return;
         }
         if (Double.isNaN(entryTime) || seekTime < lastSeekTime || seekTime - lastSeekTime > 10.0D) {
             entryTime = seekTime;
             captureEntryPose(bones, snapshots);
-            lastSoundPhase = Double.NaN;
-            lastSoundCycle = Long.MIN_VALUE;
         }
         lastSeekTime = seekTime;
         float entryWeight = profile.entryTicks() <= 0 ? 1.0F
@@ -123,6 +111,42 @@ public final class DragonFlightAnimationController<T extends RideableFlyingDrago
             BoneAnimationQueue queue = getBoneAnimationQueues().computeIfAbsent(name, ignored -> new BoneAnimationQueue(bone));
             writePose(queue, mixedPose, flightChannels.get(name));
         }
+        playBlendedWingbeat(partialTick, entryWeight);
+    }
+
+    @Override
+    protected void onPlaybackTick(CoreGeoModel<T> model, AnimationState<T> state) {
+        if (prepareBlend(model)) {
+            // Uses the existing tick-driven stroke phase, without sampling any wing bones.
+            playBlendedWingbeat(state.getPartialTick(), 1);
+        }
+    }
+
+    private boolean prepareBlend(CoreGeoModel<T> model) {
+        DragonFlightAnimationProfile nextProfile = animatable.getFlightAnimationProfile();
+        if (nextProfile != profile) {
+            profile = nextProfile;
+            glide = null; // Rebuild clip timing too, even when the animation resources are unchanged.
+            entryTime = Double.NaN;
+        }
+        if (profile == null || !animatable.isFlightBlendActive() || isPlayingTriggeredAnimation()
+                || getAnimationState() == State.STOPPED || !loadClips(model)) {
+            entryTime = lastSeekTime = lastSoundPhase = Double.NaN;
+            lastSoundCycle = Long.MIN_VALUE;
+            entryPose.clear();
+            return false;
+        }
+        return true;
+    }
+
+    private void playBlendedWingbeat(float partialTick, float entryWeight) {
+        DragonFlightBlend blend = animatable.getFlightBlend();
+        float flapWeight = blend.flap(partialTick);
+        float sprintWeight = blend.sprint(partialTick);
+        float idleWeight = blend.idle(partialTick);
+        float poweredWeight = Mth.clamp(flapWeight + sprintWeight, 0.0F, 1.0F);
+        float sprintShare = poweredWeight > 0.0001F ? sprintWeight / poweredWeight : 0.0F;
+        double phase = blend.phase(partialTick);
         float audibleWeight = poweredWeight * (1.0F - idleWeight) + idleWeight;
         float idleSoundShare = audibleWeight > 0.0001F ? idleWeight / audibleWeight : 0.0F;
         playWingbeat(phase, audibleWeight * entryWeight, sprintShare, idleSoundShare);
@@ -149,6 +173,8 @@ public final class DragonFlightAnimationController<T extends RideableFlyingDrago
             sprintSoundPhase = soundPhase(sprint, profile.clips().sprint(), profile.clips().wingbeatSound());
             idleSoundPhase = soundPhase(idle, profile.clips().idle(), profile.clips().wingbeatSound());
             entryTime = Double.NaN;
+            lastSoundPhase = Double.NaN;
+            lastSoundCycle = Long.MIN_VALUE;
         }
         return true;
     }

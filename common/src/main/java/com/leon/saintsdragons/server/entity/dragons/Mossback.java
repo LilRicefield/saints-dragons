@@ -8,6 +8,8 @@ import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
+import com.leon.saintsdragons.util.animation.TickingGeoEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -49,15 +51,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Mossback extends Animal implements GeoEntity {
+public class Mossback extends Animal implements TickingGeoEntity {
     private static final double ADULT_MAX_HEALTH = 10.0D;
     private static final double BABY_MAX_HEALTH = 1.0D;
     private static final double MOSSBACK_ARMOR = 0.0D;
@@ -359,7 +359,7 @@ public class Mossback extends Animal implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        var thrownController = new AnimationController<>(this, "thrown", 1, state -> {
+        var thrownController = new EntityAnimationController<>(this, "thrown", 1, state -> {
             if (isThrown() || isThrownAirborne()) {
                 state.setAndContinue(isBaby() ? BABY_THROWN : THROWN);
                 return PlayState.CONTINUE;
@@ -367,7 +367,7 @@ public class Mossback extends Animal implements GeoEntity {
             return PlayState.STOP;
         });
 
-        var landedController = new AnimationController<>(this, "landed", 1, state -> {
+        var landedController = new EntityAnimationController<>(this, "landed", 1, state -> {
             if (getLandedTicks() > 0) {
                 state.setAndContinue(isBaby() ? BABY_LANDED : LANDED);
                 return PlayState.CONTINUE;
@@ -375,7 +375,7 @@ public class Mossback extends Animal implements GeoEntity {
             return PlayState.STOP;
         });
 
-        var movementController = new AnimationController<>(this, "movement", 2, state -> {
+        var movementController = new EntityAnimationController<>(this, "movement", 2, state -> {
             if (isThrown() || isThrownAirborne()) {
                 return PlayState.STOP;
             }

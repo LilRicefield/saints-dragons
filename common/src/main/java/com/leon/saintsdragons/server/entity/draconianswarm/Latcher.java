@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.draconianswarm;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.LatcherBiteGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.LatcherPursuitGoal;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -11,7 +12,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -102,11 +102,11 @@ public class Latcher extends AbstractDraconianSwarmEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
+        controllers.add(new EntityAnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
             state.setAndContinue(isMovingForAnimation() ? MOVE : IDLE);
             return PlayState.CONTINUE;
         }));
-        controllers.add(new AnimationController<>(this, ACTION_CONTROLLER, 1, state -> PlayState.STOP)
+        controllers.add(new EntityAnimationController<>(this, ACTION_CONTROLLER, 1, state -> PlayState.STOP)
                 .triggerableAnim(BITE_TRIGGER, BITE)
                 .triggerableAnim(BITE_MOVE_TRIGGER, BITE_MOVE)
                 .triggerableAnim(SPAWN_TRIGGER, SPAWN)

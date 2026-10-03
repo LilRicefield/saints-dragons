@@ -34,6 +34,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManage
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.ListTag;
@@ -72,7 +73,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
@@ -274,13 +274,13 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        var movementController = new AnimationController<>(this, AnimationHelper.MOVEMENT_CONTROLLER, MOVEMENT_TRANSITION_TICKS,
+        var movementController = new EntityAnimationController<>(this, AnimationHelper.MOVEMENT_CONTROLLER, MOVEMENT_TRANSITION_TICKS,
                 animationHandler::movementPredicate);
-        var interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1,
+        var interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1,
                 AnimationHelper::interactionIdle);
-        var fastActionController = new AnimationController<>(this, AtroxiiaAnimationHandler.FAST_ACTION_CONTROLLER, 1,
+        var fastActionController = new EntityAnimationController<>(this, AtroxiiaAnimationHandler.FAST_ACTION_CONTROLLER, 1,
                 animationHandler::fastActionPredicate);
-        var vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2,
+        var vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2,
                 AnimationHelper::vocalIdle);
         AnimationHelper.registerStepKeyframes(this, movementController);
         AnimationHelper.registerSoundKeyframes(this, movementController, vocalController, interactionController);

@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.explicit.AsyncSwarmFlig
 import com.leon.saintsdragons.server.ai.navigation.async.explicit.AsyncSwarmFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
+import com.leon.saintsdragons.util.animation.TickingGeoEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -47,13 +48,12 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.UUID;
 
-public abstract class AbstractDraconianSwarmEntity extends Monster implements GeoEntity {
+public abstract class AbstractDraconianSwarmEntity extends Monster implements TickingGeoEntity {
     private static final double VISUAL_PITCH_MIN_SPEED_SQ = 0.0025D;
     private static final double VISUAL_PITCH_VERTICAL_DEADZONE = 0.015D;
     private static final float VISUAL_PITCH_LERP = 0.28F;

@@ -12,7 +12,7 @@ final class IvyMovementVisualState {
     private static final double SWIM_FAST_SPEED_SQR = 0.06D * 0.06D;
     private static final double WATER_MOVE_SPEED_SQR = 0.015D * 0.015D;
 
-    private int airborneTicks;
+    private int airborneStartTick = -1;
     private double highestAirY;
     private double maxAirDrop;
 
@@ -72,11 +72,13 @@ final class IvyMovementVisualState {
         }
 
         if (!grounded) {
-            if (airborneTicks == 0) {
+            if (airborneStartTick < 0) {
+                airborneStartTick = ivy.tickCount;
                 highestAirY = ivy.getY();
                 maxAirDrop = 0.0D;
             }
-            airborneTicks++;
+            // The predicate runs on both playback ticks and render frames.
+            int airborneTicks = ivy.tickCount - airborneStartTick + 1;
             highestAirY = Math.max(highestAirY, ivy.getY());
             maxAirDrop = Math.max(maxAirDrop, highestAirY - ivy.getY());
             if (!inFluid && airborneTicks >= MIN_AIRBORNE_TICKS) {
@@ -87,7 +89,7 @@ final class IvyMovementVisualState {
             return normalGroundState(state, ivy);
         }
 
-        if (airborneTicks > 0) {
+        if (airborneStartTick >= 0) {
             resetAirborne(ivy);
         }
 
@@ -113,7 +115,7 @@ final class IvyMovementVisualState {
     }
 
     private void resetAirborne(IvyTheDragonMerchant ivy) {
-        airborneTicks = 0;
+        airborneStartTick = -1;
         highestAirY = ivy.getY();
         maxAirDrop = 0.0D;
     }

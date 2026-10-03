@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.model;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.client.animation.EntityAnimationPlayback;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.client.renderer.DragonRiderAttachments;
@@ -50,6 +51,8 @@ public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEn
             displacedPose.resetChanges();
             hasDisplacedPose = false;
         }
+        var manager = entity.getAnimatableInstanceCache().getManagerForId(instanceId);
+        EntityAnimationPlayback.ageLastPose(manager, entity.getTick(entity));
         super.handleAnimations(entity, instanceId, state);
         if (cacheable && !ShaderPassCompatibility.isIrisShadowPass()) {
             DragonRiderAttachments.captureAnimation(dragon, state.getPartialTick(), baked,

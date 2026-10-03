@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.draconianswarm;
 
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.WingedDiveBombGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.WingedPullAttackGoal;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
@@ -10,7 +11,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -108,13 +108,13 @@ public class Winged extends AbstractDraconianSwarmEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
+        controllers.add(new EntityAnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
             state.setAndContinue(isMovingForAnimation() ? MOVE : IDLE);
             return PlayState.CONTINUE;
         }).triggerableAnim(ATTACK_TRIGGER, ATTACK)
                 .triggerableAnim(SWOOP_TRIGGER, SWOOP));
 
-        controllers.add(new AnimationController<>(this, ACTION_CONTROLLER, 4, state -> PlayState.STOP)
+        controllers.add(new EntityAnimationController<>(this, ACTION_CONTROLLER, 4, state -> PlayState.STOP)
                 .triggerableAnim(SPAWN_TRIGGER, SPAWN)
                 .triggerableAnim(DIE_TRIGGER, DIE));
     }

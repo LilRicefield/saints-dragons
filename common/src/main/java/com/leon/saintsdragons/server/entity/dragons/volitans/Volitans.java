@@ -56,6 +56,7 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansIn
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansTamingHandler;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
@@ -381,14 +382,14 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         this.riderController = new VolitansRiderController(this);
         this.swimSteering = new GenericSwimSteeringController(this);
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
-        this.movementController = new AnimationController<>(this, "movement",
+        this.movementController = new EntityAnimationController<>(this, "movement",
                 VolitansAnimationHandler.MOVEMENT_TRIGGER_TRANSITION_TICKS, animationHandler::movementPredicate);
-        this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
-        this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.actionController = new EntityAnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
+        this.fastActionController = new EntityAnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.airActionController = new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        this.airActionController = new EntityAnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
+        this.vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
 
         if (!level.isClientSide) {

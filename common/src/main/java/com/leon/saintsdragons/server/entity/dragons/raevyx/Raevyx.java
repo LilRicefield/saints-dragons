@@ -58,6 +58,7 @@ import com.leon.saintsdragons.common.network.DragonRiderAction;
 import java.util.Map;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -535,17 +536,17 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         this.animationHandler = new RaevyxAnimationHandler(this);
         this.riderController = new RaevyxRiderController(this);
         this.diveImpactAbility = new RaevyxDiveImpactAbility(this);
-        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
+        this.movementController = new EntityAnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.actionController = new EntityAnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
             if (isTamingStunned()) {
                 return PlayState.STOP;
             }
             return animationHandler.raevyxActionPredicate(state);
         });
-        this.fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
+        this.fastActionController = new EntityAnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
         this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        this.vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
 

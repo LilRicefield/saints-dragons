@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
@@ -384,12 +385,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.12F);
         this.setMaxUpStep(1.1F);
         this.riderController = new CindervaneRiderController(this);
-        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.actionController = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
-        this.fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.movementController = new EntityAnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.actionController = new EntityAnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
+        this.fastActionController = new EntityAnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         this.flightController = new DragonFlightAnimationController<>(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        this.vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);

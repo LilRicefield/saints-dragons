@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.WhettledHornChargeGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.WhettledClawAttackGoal;
 import com.leon.saintsdragons.server.entity.controller.CombatBodyFacingLock;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -16,7 +17,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -165,15 +165,15 @@ public class Whettled extends AbstractDraconianSwarmEntity implements CombatBody
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
+        controllers.add(new EntityAnimationController<>(this, MOVEMENT_CONTROLLER, 4, state -> {
             state.setAndContinue(IDLE_MOVE);
             return PlayState.CONTINUE;
         }).triggerableAnim(CLAW_TRIGGER, CLAW)
                 .triggerableAnim(HORN_TRIGGER, HORN));
-        controllers.add(new AnimationController<>(this, ACTION_CONTROLLER, 1, state -> PlayState.STOP)
+        controllers.add(new EntityAnimationController<>(this, ACTION_CONTROLLER, 1, state -> PlayState.STOP)
                 .triggerableAnim(SPAWN_TRIGGER, SPAWN)
                 .triggerableAnim(DIE_TRIGGER, DIE));
-        controllers.add(new AnimationController<>(this, EYE_CONTROLLER, 1, state -> {
+        controllers.add(new EntityAnimationController<>(this, EYE_CONTROLLER, 1, state -> {
             state.setAndContinue(IDLE_EYE);
             return PlayState.CONTINUE;
         }));

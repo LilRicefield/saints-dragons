@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.StegonautBrain;
@@ -137,10 +138,10 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
         this.setMaxUpStep(MAX_UP_STEP);
-        this.movementController = new AnimationController<>(this, "movement", 2, animationController::handleMovementAnimation);
-        this.actionController = new AnimationController<>(this, StegonautAnimationHandler.ACTION_CONTROLLER, 5, animationController::actionPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        this.movementController = new EntityAnimationController<>(this, "movement", 2, animationController::handleMovementAnimation);
+        this.actionController = new EntityAnimationController<>(this, StegonautAnimationHandler.ACTION_CONTROLLER, 5, animationController::actionPredicate);
+        this.vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
         setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);

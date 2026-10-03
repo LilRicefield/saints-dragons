@@ -227,7 +227,7 @@ public final class AnimationHelper {
                                                                                         int transitionTicks,
                                                                                         Function<AnimationState<T>, PlayState> predicate) {
         int safeTransitionTicks = Math.max(0, transitionTicks);
-        return new AnimationController<>(dragon, FLIGHT_CONTROLLER, safeTransitionTicks, state -> {
+        return new EntityAnimationController<>(dragon, FLIGHT_CONTROLLER, safeTransitionTicks, state -> {
             state.getController().transitionLength(safeTransitionTicks);
             return predicate.apply(state);
         });

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.init;
 
+import com.leon.saintsdragons.client.animation.EntityAnimationPlayback;
 import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
@@ -31,6 +32,7 @@ public final class CommonClientLifecycleEvents {
     }
 
     public static void onEndClientTick(Minecraft minecraft) {
+        EntityAnimationPlayback.tick(minecraft);
         DragonSoundRuntime.tick(minecraft);
         SwarmBattleMusicController.tick(minecraft);
         SwarmWaveBarOverlay.tick();

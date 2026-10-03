@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import com.leon.saintsdragons.util.animation.EntityAnimationController;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -168,12 +169,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private UUID cloakedRiderUuid;
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
-        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.actionController = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
-        this.mountedController = new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
-        this.instantController = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        this.movementController = new EntityAnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.actionController = new EntityAnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
+        this.mountedController = new EntityAnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
+        this.instantController = new EntityAnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
+        this.vocalController = new EntityAnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new EntityAnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         this.setFlying(true);
         this.setHovering(false);
