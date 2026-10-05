@@ -237,12 +237,25 @@ public final class CindervaneStatProfile {
     }
 
     public static final class PackFlightCoordinator {
-        public static final double NEIGHBOR_RADIUS = 42.0D;
-        public static final double SEPARATION_RANGE = 30.0D;
-        public static final double FOLLOW_FORMATION_WEIGHT = 1.20D;
-        public static final double FOLLOW_COHESION_WEIGHT = 0.25D;
-        public static final double FOLLOW_ALIGNMENT_WEIGHT = 0.35D;
-        public static final double FOLLOW_SEPARATION_WEIGHT = 1.55D;
+        public static final int UPDATE_INTERVAL_TICKS = 4;
+        public static final int SLOT_CLEANUP_INTERVAL_TICKS = 20;
+        public static final double SLOT_LATERAL_SPACING = 7.0D;
+        public static final double SLOT_TRAILING_DISTANCE = 10.0D;
+        public static final double SLOT_ROW_SPACING = 8.0D;
+        public static final double SLOT_HEIGHT = 1.5D;
+        public static final double SLOT_DEADBAND = 1.5D;
+        public static final double SLOT_CORRECTION_GAIN = 0.065D;
+        public static final double MAX_SLOT_CORRECTION_SPEED = 0.75D; // fraction of flight speed
+        public static final double MAX_SPEED_MODIFIER = 1.65D;
+        public static final double MIN_FORWARD_SPEED_FRACTION = 0.2D;
+        public static final double CATCH_UP_START_DISTANCE = 18.0D;
+        public static final double CATCH_UP_END_DISTANCE = 10.0D;
+        public static final float HEADING_TURN_DEGREES_PER_TICK = 3.0F;
+        public static final double LEADER_VELOCITY_BLEND = 0.2D;
+        public static final double LOOK_AHEAD_TICKS = 20.0D;
+        public static final double SEPARATION_RANGE = 8.0D;
+        public static final double SEPARATION_PADDING = 2.0D;
+        public static final double MAX_SEPARATION_SPEED = 0.5D; // fraction of flight speed
 
         private PackFlightCoordinator() {
         }

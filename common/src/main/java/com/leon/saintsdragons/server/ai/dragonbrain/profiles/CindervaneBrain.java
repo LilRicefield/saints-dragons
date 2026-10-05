@@ -16,7 +16,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerB
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPackFollowBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
@@ -27,6 +26,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAtt
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneAirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneAutonomousFlightBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneGroundCombatBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervanePackFollowBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -116,7 +116,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                                 Cindervane.BREED_PARTNER_RANGE,
                                                 Cindervane.BREED_DISTANCE_SQR
                                         ),
-                                        new DragonPackFollowBehaviour<>(Cindervane.class, 1.0D, 20.0D, 10.0D),
+                                        new CindervanePackFollowBehaviour(),
                                         new DragonFollowParentBehaviour<>(Cindervane.class, CindervaneStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.cindervane(),

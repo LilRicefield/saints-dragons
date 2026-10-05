@@ -806,6 +806,12 @@ public final class DragonPathDebugTracker {
                     && idle.runningBehaviour() instanceof IgnivorusAutonomousFlightBehaviour) {
                 summary.append(",idle_decision=").append(idle.getDragonBrainDebugDetails().get("decision"));
             }
+            var activeBehaviour = registered.behaviour() instanceof FirstApplicableDragonBehaviour<?> idle
+                    ? idle.runningBehaviour() : registered.behaviour();
+            if (activeBehaviour instanceof DragonPackFollowBehaviour<?> packFollow) {
+                String formation = packFollow.getDragonBrainDebugDetails().get("formation");
+                if (formation != null) summary.append(",pack={").append(formation).append('}');
+            }
             if (registered.behaviour() instanceof AirCombatMovementBehaviour<?>
                     || registered.behaviour() instanceof AirToGroundTransitionBehaviour<?>
                     || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>

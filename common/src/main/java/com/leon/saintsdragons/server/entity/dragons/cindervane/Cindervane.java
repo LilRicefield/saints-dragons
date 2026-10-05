@@ -257,6 +257,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private UUID slashGrabPassengerUuid;
     @Nullable
     private UUID packLeaderUuid;
+    private final CindervanePackFlightCoordinator packFlightCoordinator = new CindervanePackFlightCoordinator();
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private static final float[] TAIL_COUNTER_BANK_DEGREES = {2.0F, 3.0F, 4.0F, 3.0F};
     private static final float TAIL_BANK_FOLLOW_BLEND = 0.45F;
@@ -1870,22 +1871,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return AI_AIR_COMBAT_SETTINGS;
     }
 
-    @Override
-    public boolean handleDirectAirPackFollow(Vec3 target, double speed) {
-        if (!isAerial() || isLanding()) {
-            return false;
-        }
-        UUID leaderUuid = getPackLeaderUuid();
-        if (leaderUuid == null || level().isClientSide) {
-            return false;
-        }
-        var leaderEntity = ((ServerLevel) level()).getEntity(leaderUuid);
-        if (!(leaderEntity instanceof Cindervane leader) || leader == this || !leader.isAerial()) {
-            return false;
-        }
-        Vec3 coordinatedTarget = CindervanePackFlightCoordinator.followFormationTarget(this, leader);
-        getAIMovement().setWaypoint(coordinatedTarget, speed);
-        return true;
+    public CindervanePackFlightCoordinator getPackFlightCoordinator() {
+        return packFlightCoordinator;
     }
 
     @Override

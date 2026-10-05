@@ -60,7 +60,8 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         T member = context.dragon();
         if (!canFollow(member)) return false;
         refreshLeader(context);
-        return leader != null && member.distanceToSqr(leader) > startDistanceSq;
+        return leader != null && (maintainsAirFormation(member, leader)
+                || member.distanceToSqr(leader) > startDistanceSq);
     }
 
     @Override
@@ -81,7 +82,17 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         }
         if (member.isLanding()) return !member.onGround();
         refreshLeader(context);
-        return leader != null && member.distanceToSqr(leader) > stopDistanceSq;
+        return leader != null && (maintainsAirFormation(member, leader)
+                || member.distanceToSqr(leader) > stopDistanceSq);
+    }
+
+    protected boolean maintainsAirFormation(T member, T currentLeader) {
+        return false;
+    }
+
+    /** Species formation control owns both the destination and speed when it handles this tick. */
+    protected boolean followAirFormation(DragonBrainContext<T> context, T member, T currentLeader) {
+        return false;
     }
 
     protected boolean shouldLandWhenFollowEnds(T member) {
@@ -163,6 +174,11 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             member.setLanding(false);
             member.setHovering(false);
             resetTracking();
+        }
+
+        if (leaderAirborne && followAirFormation(context, member, currentLeader)) {
+            mode = "formation";
+            return true;
         }
 
         Vec3 target = airTarget(member, currentLeader);
@@ -288,7 +304,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         return best;
     }
 
-    private boolean usableLeader(T member, @Nullable T candidate) {
+    protected boolean usableLeader(T member, @Nullable T candidate) {
         return candidate != null && candidate != member && candidate.isAlive() && !candidate.isRemoved()
                 && candidate.canLeadPack() && candidate.canParticipateInPack()
                 && member.isTame() == candidate.isTame()

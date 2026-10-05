@@ -1,186 +1,183 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
-import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
-
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile.PackFlightCoordinator;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import java.util.List;
 
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+
+/** Leader-owned, transient formation state. No global cache or retained entity references. */
 public final class CindervanePackFlightCoordinator {
-    private static final double NEIGHBOR_RADIUS = CindervaneStatProfile.PackFlightCoordinator.NEIGHBOR_RADIUS;
-    private static final double SEPARATION_RANGE = CindervaneStatProfile.PackFlightCoordinator.SEPARATION_RANGE;
-    private static final double FORMATION_MIN_DISTANCE = 32.0D;
-    private static final double FORMATION_MAX_DISTANCE = 90.0D;
-    private static final double CRUISE_COHESION_WEIGHT = 0.50D;
-    private static final double CRUISE_ALIGNMENT_WEIGHT = 0.45D;
-    private static final double CRUISE_SEPARATION_WEIGHT = 1.35D;
-    private static final double FOLLOW_FORMATION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_FORMATION_WEIGHT;
-    private static final double FOLLOW_COHESION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_COHESION_WEIGHT;
-    private static final double FOLLOW_ALIGNMENT_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_ALIGNMENT_WEIGHT;
-    private static final double FOLLOW_SEPARATION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_SEPARATION_WEIGHT;
+    private final Map<UUID, Slot> slots = new HashMap<>();
+    private long nextCleanup;
+    private long lastLeaderUpdate = Long.MIN_VALUE;
+    private float headingYaw;
+    private Vec3 leaderVelocity = Vec3.ZERO;
+    private boolean leaderMoving;
 
-    private CindervanePackFlightCoordinator() {
+    public FollowPlan plan(ServerLevel level, Cindervane leader, Cindervane member) {
+        long now = level.getGameTime();
+        updateLeader(leader, now);
+        if (now >= nextCleanup) {
+            // Keep surviving members in their slots when another member leaves or joins.
+            slots.keySet().removeIf(id -> !(level.getEntity(id) instanceof Cindervane other)
+                    || !other.canParticipateInPack()
+                    || !leader.getUUID().equals(other.getPackLeaderUuid())
+                    || leader.distanceToSqr(other) > Math.pow(leader.getPackSearchRadius() * 2.0D, 2));
+            nextCleanup = now + PackFlightCoordinator.SLOT_CLEANUP_INTERVAL_TICKS;
+        }
+        Slot slot = slots.computeIfAbsent(member.getUUID(), id -> new Slot(firstFreeSlot()));
+        Vec3 position = slotPosition(leader, slot.index);
+        Vec3 error = position.subtract(member.position());
+        double distance = error.length();
+        slot.catchUp = distance > (slot.catchUp
+                ? PackFlightCoordinator.CATCH_UP_END_DISTANCE : PackFlightCoordinator.CATCH_UP_START_DISTANCE);
+
+        double flightSpeed = Math.max(0.01D, member.getFlightSpeed());
+        Vec3 correction = distance > PackFlightCoordinator.SLOT_DEADBAND
+                ? error.scale(Math.min(
+                        (distance - PackFlightCoordinator.SLOT_DEADBAND) * PackFlightCoordinator.SLOT_CORRECTION_GAIN,
+                        flightSpeed * PackFlightCoordinator.MAX_SLOT_CORRECTION_SPEED) / distance)
+                : Vec3.ZERO;
+        Vec3 separation = separation(level, member, flightSpeed);
+        Vec3 formationVelocity = leaderVelocity.add(correction);
+        if (leaderMoving && leaderVelocity.horizontalDistanceSqr() > 0.0025D) {
+            // An overtaking follower slows down instead of turning back across the pack.
+            Vec3 forward = leaderVelocity.multiply(1.0D, 0.0D, 1.0D).normalize();
+            double minForward = leaderVelocity.horizontalDistance()
+                    * PackFlightCoordinator.MIN_FORWARD_SPEED_FRACTION;
+            double forwardSpeed = formationVelocity.dot(forward);
+            if (forwardSpeed < minForward) {
+                formationVelocity = formationVelocity.add(forward.scale(minForward - forwardSpeed));
+            }
+        }
+        Vec3 desiredVelocity = limit(formationVelocity.add(separation),
+                flightSpeed * PackFlightCoordinator.MAX_SPEED_MODIFIER);
+
+        boolean settled = !leaderMoving && distance <= PackFlightCoordinator.SLOT_DEADBAND
+                && separation.lengthSqr() < 1.0E-4D;
+        Vec3 target;
+        DragonFlightRequest request;
+        String phase;
+        if (!leaderMoving) {
+            // A hovering leader has a real arrival point; a cruising leader never does.
+            target = position.add(separation.scale(PackFlightCoordinator.LOOK_AHEAD_TICKS));
+            double speed = Mth.clamp(desiredVelocity.length() / flightSpeed, 0.25D,
+                    PackFlightCoordinator.MAX_SPEED_MODIFIER);
+            request = DragonFlightRequest.track(target, speed, PackFlightCoordinator.SLOT_DEADBAND);
+            phase = settled ? "holding" : "joining-hover";
+        } else {
+            double speed = desiredVelocity.length();
+            Vec3 direction = speed > 1.0E-4D ? desiredVelocity.scale(1.0D / speed)
+                    : Vec3.directionFromRotation(0.0F, headingYaw);
+            double lookAhead = Mth.clamp(speed * PackFlightCoordinator.LOOK_AHEAD_TICKS, 8.0D, 28.0D);
+            target = member.position().add(direction.scale(lookAhead));
+            request = new DragonFlightRequest(target, speed / flightSpeed,
+                    slot.catchUp ? DragonFlightRequest.Purpose.TRACK : DragonFlightRequest.Purpose.CRUISE,
+                    1.0D, DragonFlightRequest.Arrival.PASS_THROUGH);
+            phase = slot.catchUp ? "catching-up" : "formation";
+        }
+        return new FollowPlan(leader.getUUID(), slot.index, position, distance, separation.length(),
+                slot.catchUp, settled, phase, request);
     }
 
-    public static Vec3 biasCruiseTarget(Cindervane dragon, Vec3 cruiseTarget) {
-        if (cruiseTarget == null
-                || !dragon.canParticipateInPack()
-                || !(dragon.level() instanceof ServerLevel serverLevel)
-                || !dragon.isFlying()
-                || dragon.isLanding()
-                || dragon.getTarget() != null) {
-            return cruiseTarget;
-        }
-
-        List<Cindervane> neighbors = findAirbornePackmates(serverLevel, dragon);
-        if (neighbors.isEmpty()) {
-            return cruiseTarget;
-        }
-
-        Vec3 cruiseDirection = cruiseTarget.subtract(dragon.position());
-        if (cruiseDirection.lengthSqr() < 1.0D) {
-            return cruiseTarget;
-        }
-
-        BoidVectors boids = calculateBoids(dragon, neighbors);
-        Vec3 heading = normalizeOrZero(cruiseDirection).scale(1.0D)
-                .add(normalizeOrZero(boids.cohesion()).scale(CRUISE_COHESION_WEIGHT))
-                .add(normalizeOrZero(boids.alignment()).scale(CRUISE_ALIGNMENT_WEIGHT))
-                .add(normalizeOrZero(boids.separation()).scale(CRUISE_SEPARATION_WEIGHT));
-        if (heading.lengthSqr() < 1.0E-4D) {
-            return cruiseTarget;
-        }
-
-        double distance = clamp(cruiseDirection.length(), FORMATION_MIN_DISTANCE, FORMATION_MAX_DISTANCE);
-        Vec3 biasedTarget = dragon.position().add(heading.normalize().scale(distance));
-        biasedTarget = new Vec3(biasedTarget.x, cruiseTarget.y, biasedTarget.z);
-        return dragon.isValidStandardFlightTarget(biasedTarget) ? biasedTarget : cruiseTarget;
+    private int firstFreeSlot() {
+        int index = 0;
+        while (slotOccupied(index)) index++;
+        return index;
     }
 
-    public static Vec3 followFormationTarget(Cindervane dragon, Cindervane leader) {
-        Vec3 formation = formationSlot(dragon, leader);
-        if (!(dragon.level() instanceof ServerLevel serverLevel)) {
-            return formation;
+    private boolean slotOccupied(int index) {
+        for (Slot slot : slots.values()) {
+            if (slot.index == index) return true;
         }
-
-        List<Cindervane> neighbors = findAirbornePackmates(serverLevel, dragon);
-        if (neighbors.isEmpty()) {
-            return formation;
-        }
-
-        BoidVectors boids = calculateBoids(dragon, neighbors);
-        Vec3 formationDirection = formation.subtract(dragon.position());
-        Vec3 heading = normalizeOrZero(formationDirection).scale(FOLLOW_FORMATION_WEIGHT)
-                .add(normalizeOrZero(boids.cohesion()).scale(FOLLOW_COHESION_WEIGHT))
-                .add(normalizeOrZero(boids.alignment()).scale(FOLLOW_ALIGNMENT_WEIGHT))
-                .add(normalizeOrZero(boids.separation()).scale(FOLLOW_SEPARATION_WEIGHT));
-        if (heading.lengthSqr() < 1.0E-4D) {
-            return formation;
-        }
-
-        double distance = clamp(formationDirection.length(), 6.0D, 28.0D);
-        Vec3 coordinated = dragon.position().add(heading.normalize().scale(distance));
-        return new Vec3(coordinated.x, formation.y, coordinated.z);
+        return false;
     }
 
-    private static Vec3 formationSlot(Cindervane dragon, Cindervane leader) {
-        Vec3 leaderLook = horizontalOrFallback(leader.getLookAngle());
-        Vec3 lateral = new Vec3(-leaderLook.z, 0.0D, leaderLook.x).normalize();
-
-        int slot = Math.floorMod(dragon.getUUID().hashCode(), 5);
-        double lateralOffset = switch (slot) {
-            case 0 -> -7.0D;
-            case 1 -> 7.0D;
-            case 2 -> -13.0D;
-            case 3 -> 13.0D;
-            default -> 0.0D;
-        };
-        double trailingOffset = switch (slot) {
-            case 2, 3 -> 14.0D;
-            case 4 -> 18.0D;
-            default -> 9.0D;
-        };
-        double heightOffset = switch (slot) {
-            case 2, 3 -> 2.5D;
-            case 4 -> 4.0D;
-            default -> 1.5D;
-        };
-
-        return leader.position()
-                .subtract(leaderLook.scale(trailingOffset))
-                .add(lateral.scale(lateralOffset))
-                .add(0.0D, leader.getBbHeight() + heightOffset, 0.0D);
+    private void updateLeader(Cindervane leader, long now) {
+        if (lastLeaderUpdate == now) return;
+        Vec3 velocity = leader.getDeltaMovement();
+        boolean reset = lastLeaderUpdate == Long.MIN_VALUE || now - lastLeaderUpdate > 20L;
+        int elapsed = reset ? 1 : (int) Math.max(1L, now - lastLeaderUpdate);
+        float desiredYaw = velocity.horizontalDistanceSqr() > 0.01D
+                ? (float) Math.toDegrees(Math.atan2(-velocity.x, velocity.z))
+                : reset ? leader.getYRot() : headingYaw;
+        if (reset) {
+            headingYaw = desiredYaw;
+            leaderVelocity = velocity;
+        } else {
+            float turn = PackFlightCoordinator.HEADING_TURN_DEGREES_PER_TICK * elapsed;
+            headingYaw += Mth.clamp(Mth.wrapDegrees(desiredYaw - headingYaw), -turn, turn);
+            double blend = 1.0D - Math.pow(1.0D - PackFlightCoordinator.LEADER_VELOCITY_BLEND, elapsed);
+            leaderVelocity = leaderVelocity.lerp(velocity, blend);
+        }
+        leaderMoving = leaderVelocity.lengthSqr() > (leaderMoving ? 0.0025D : 0.01D);
+        lastLeaderUpdate = now;
     }
 
-    private static List<Cindervane> findAirbornePackmates(ServerLevel level, Cindervane dragon) {
-        AABB searchBox = dragon.getBoundingBox().inflate(NEIGHBOR_RADIUS);
-        return level.getEntitiesOfClass(Cindervane.class, searchBox, other ->
-                other != dragon
-                        && other.isAlive()
-                        && !other.isRemoved()
-                        && other.canParticipateInPack()
-                        && other.isAerial()
-                        && dragon.distanceToSqr(other) <= NEIGHBOR_RADIUS * NEIGHBOR_RADIUS
-                        && isPackCompatible(dragon, other));
+    private Vec3 slotPosition(Cindervane leader, int index) {
+        // Two wing positions and a rear position; additional rows also remain unique.
+        int row = index / 3;
+        int side = index % 3;
+        double lateral = side == 2 ? 0.0D : (side == 0 ? -1.0D : 1.0D)
+                * PackFlightCoordinator.SLOT_LATERAL_SPACING * (row + 1);
+        double trailing = PackFlightCoordinator.SLOT_TRAILING_DISTANCE
+                + (row * 2 + (side == 2 ? 1 : 0)) * PackFlightCoordinator.SLOT_ROW_SPACING;
+        Vec3 forward = Vec3.directionFromRotation(0.0F, headingYaw);
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        return leader.position().subtract(forward.scale(trailing)).add(right.scale(lateral))
+                .add(0.0D, leader.getBbHeight() + PackFlightCoordinator.SLOT_HEIGHT + row, 0.0D);
     }
 
-    private static BoidVectors calculateBoids(Cindervane dragon, List<Cindervane> neighbors) {
+    private Vec3 separation(ServerLevel level, Cindervane member, double flightSpeed) {
+        double range = PackFlightCoordinator.SEPARATION_RANGE;
         Vec3 separation = Vec3.ZERO;
-        Vec3 alignment = Vec3.ZERO;
-        Vec3 cohesion = Vec3.ZERO;
-        int alignmentCount = 0;
-
-        for (Cindervane other : neighbors) {
-            Vec3 offset = other.position().subtract(dragon.position());
-            double distance = Math.max(0.001D, offset.length());
-            if (distance < SEPARATION_RANGE) {
-                separation = separation.subtract(offset.normalize().scale((SEPARATION_RANGE - distance) / SEPARATION_RANGE));
-            }
-            Vec3 velocity = other.getDeltaMovement();
-            if (velocity.lengthSqr() > 1.0E-4D) {
-                alignment = alignment.add(velocity.normalize());
-                alignmentCount++;
-            }
-            cohesion = cohesion.add(other.position());
+        // Nearby packs may need collision clearance, but never contribute cohesion or alignment.
+        for (Cindervane other : level.getEntitiesOfClass(Cindervane.class,
+                member.getBoundingBox().inflate(range), other -> other != member
+                        && other.isAlive() && !other.isRemoved() && other.isAerial())) {
+            Vec3 away = member.position().subtract(other.position());
+            double distance = away.length();
+            double clearance = Math.min(range, (member.getBbWidth() + other.getBbWidth()) * 0.5D
+                    + PackFlightCoordinator.SEPARATION_PADDING);
+            if (distance >= clearance) continue;
+            Vec3 direction = distance > 1.0E-4D ? away.scale(1.0D / distance)
+                    : new Vec3(member.getUUID().compareTo(other.getUUID()) < 0 ? -1.0D : 1.0D, 0.0D, 0.0D);
+            double strength = 1.0D - distance / clearance;
+            separation = separation.add(direction.scale(strength * strength));
         }
-
-        if (alignmentCount > 0) {
-            alignment = alignment.scale(1.0D / alignmentCount);
-        }
-        cohesion = cohesion.scale(1.0D / neighbors.size()).subtract(dragon.position());
-        return new BoidVectors(separation, alignment, cohesion);
+        // Preserve the falloff instead of normalizing every small concern to full strength.
+        return limit(separation, 1.0D).scale(flightSpeed * PackFlightCoordinator.MAX_SEPARATION_SPEED);
     }
 
-    private static boolean isPackCompatible(Cindervane dragon, Cindervane other) {
-        if (dragon.isTame() != other.isTame()) {
-            return false;
+    private static Vec3 limit(Vec3 vector, double maxLength) {
+        double length = vector.length();
+        return length > maxLength ? vector.scale(maxLength / length) : vector;
+    }
+
+    private static final class Slot {
+        private final int index;
+        private boolean catchUp;
+
+        private Slot(int index) {
+            this.index = index;
         }
-        if (!dragon.isTame()) {
-            return true;
+    }
+
+    public record FollowPlan(UUID leader, int slot, Vec3 slotPosition, double slotError,
+                             double separation, boolean catchUp, boolean settled,
+                             String phase, DragonFlightRequest request) {
+        public String debugSummary() {
+            return String.format(Locale.ROOT,
+                    "phase=%s,leader=%s,slot=%d,slotPos=(%.1f,%.1f,%.1f),error=%.2f,separation=%.3f,catchUp=%s,speed=%.2f,target=(%.1f,%.1f,%.1f)",
+                    phase, leader, slot, slotPosition.x, slotPosition.y, slotPosition.z, slotError, separation,
+                    catchUp, request.speedModifier(), request.target().x, request.target().y, request.target().z);
         }
-        LivingEntity owner = dragon.getOwner();
-        return owner != null && other.isOwnedBy(owner);
-    }
-
-    private static Vec3 horizontalOrFallback(Vec3 vector) {
-        Vec3 horizontal = new Vec3(vector.x, 0.0D, vector.z);
-        if (horizontal.lengthSqr() < 1.0E-4D) {
-            return new Vec3(1.0D, 0.0D, 0.0D);
-        }
-        return horizontal.normalize();
-    }
-
-    private static Vec3 normalizeOrZero(Vec3 vector) {
-        return vector.lengthSqr() > 1.0E-4D ? vector.normalize() : Vec3.ZERO;
-    }
-
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
-    }
-
-    private record BoidVectors(Vec3 separation, Vec3 alignment, Vec3 cohesion) {
     }
 }

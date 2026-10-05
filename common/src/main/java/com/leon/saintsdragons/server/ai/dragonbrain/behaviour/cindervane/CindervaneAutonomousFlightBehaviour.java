@@ -6,7 +6,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBe
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
@@ -139,11 +138,6 @@ public class CindervaneAutonomousFlightBehaviour extends AutonomousFlightBehavio
             return 30.0D;
         }
         return 80.0D;
-    }
-
-    @Override
-    protected Vec3 adjustCruiseTarget(Cindervane dragon, Vec3 cruiseTarget) {
-        return isCurrentCruiseDive() ? cruiseTarget : CindervanePackFlightCoordinator.biasCruiseTarget(dragon, cruiseTarget);
     }
 
     @Override
