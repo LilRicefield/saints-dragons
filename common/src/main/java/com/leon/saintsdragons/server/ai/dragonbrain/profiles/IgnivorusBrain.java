@@ -54,6 +54,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                 DragonBehaviourGroup.<Ignivorus>activity(Activity.CORE)
                         .behaviours(
                                 new IgnivorusTargetingBehaviour(),
+                                new DragonWaterEscapeBehaviour<>(IgnivorusStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, IgnivorusStatProfile.Brain.WATER_ESCAPE_SPEED),
                                 new DragonIdleLookBehaviour<>(8.0D),
                                 new DragonHuntAndEatBehaviour<>(),
                                 new ApplyMovementIntentBehaviour<>(),
@@ -92,7 +93,6 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                 DragonBehaviourGroup.<Ignivorus>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(IgnivorusStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, IgnivorusStatProfile.Brain.WATER_ESCAPE_SPEED),
                                         new DragonBreedBehaviour<>(
                                                 IgnivorusStatProfile.Brain.BREED_SPEED,
                                                 Ignivorus.class,

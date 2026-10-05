@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,10 @@ public final class DragonFlightEligibility {
         if (combatFlight != null) {
             if (!combatFlight.wantsFlight()) return "combat-plan-not-airborne";
             return dragon.isAerial() ? null : "awaiting-planned-takeoff";
+        }
+        if (DragonWaterCombatProfile.prefersFlight(dragon, target)) {
+            return dragon.isAerial() || dragon.canTakeoff() && DragonAirCombatHelper.canTriggerAiFlight(dragon)
+                    ? null : "surface-takeoff-unavailable";
         }
         if (landingReserved) return "landing-reserved";
         if (abandonedGroundRoute) {

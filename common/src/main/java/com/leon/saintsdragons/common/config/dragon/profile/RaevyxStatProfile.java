@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import com.leon.saintsdragons.server.flight.DragonFlightEffort;
 import com.leon.saintsdragons.server.flight.DragonFlightBlend;
@@ -28,6 +29,28 @@ public final class RaevyxStatProfile {
                 RANGE, NEAR_DISTANCE, NEAR_HORIZONTAL, FAR_HORIZONTAL, NEAR_VERTICAL, FAR_VERTICAL);
 
         private Vision() {
+        }
+    }
+
+    public static final class WaterSurfaceCombat {
+        public static final boolean AQUATIC = false;
+        public static final boolean FAVORS_RANGED = true;
+        public static final double ATTACK_RADIUS = 24.0D;
+        public static final double ATTACK_HEIGHT = 10.0D;
+        public static final double BITE_RANGE = 7.0D;
+        public static final double PASS_LENGTH = 18.0D;
+        public static final int BITE_INTERVAL_TICKS = 200;
+        public static final double SURFACE_CLEARANCE = 0.75D;
+        public static final double BEAM_PASS_SIDE_OFFSET = 12.0D;
+        public static final int BEAM_FIRING_WINDOW_TICKS = 12;
+        public static final int BEAM_SETUP_TIMEOUT_TICKS = 100;
+        public static final int BEAM_SETUP_RETRY_TICKS = 40;
+        public static final int BITE_PULL_OUT_LEAD_TICKS = 6;
+        public static final int SURFACE_RECHECK_TICKS = 10;
+        public static final DragonWaterCombatProfile PROFILE = new DragonWaterCombatProfile(
+                AQUATIC, FAVORS_RANGED, ATTACK_RADIUS, ATTACK_HEIGHT, BITE_RANGE, PASS_LENGTH, BITE_INTERVAL_TICKS);
+
+        private WaterSurfaceCombat() {
         }
     }
 

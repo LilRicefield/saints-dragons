@@ -169,6 +169,34 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         }
     }
 
+    @Override
+    protected boolean trySurfaceRangedAttack(DragonBrainContext<Volitans> context, LivingEntity target) {
+        Volitans dragon = context.dragon();
+        if (attackCooldown > 0) attackCooldown--;
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) return true;
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
+            if (--poisonHoldTicks <= 0 || dragon.distanceTo(target) < 8 || dragon.distanceTo(target) > 36) {
+                dragon.requestPoisonBallRelease();
+            }
+            return true;
+        }
+        if (dragon.getBreathCombat().tryStart(target)) return true;
+        if (!DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                && attackCooldown <= 0 && dragon.distanceTo(target) >= 12
+                && dragon.distanceTo(target) <= POISON_MAX_RANGE
+                && startAiAbility(dragon, ModAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
+            poisonHoldTicks = 20 + dragon.getRandom().nextInt(8);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean trySurfaceBite(DragonBrainContext<Volitans> context, LivingEntity target) {
+        return startAiAbility(context.dragon(), ModAbilities.VOLITANS_BITE,
+                false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+    }
+
     private void tryMelee(Volitans dragon, LivingEntity target) {
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
             if (canUseAiAbility(dragon, ModAbilities.VOLITANS_BITE, false)) {

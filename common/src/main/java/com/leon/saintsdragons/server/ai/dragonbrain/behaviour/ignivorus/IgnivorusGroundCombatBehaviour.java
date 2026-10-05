@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
@@ -183,6 +184,8 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
 
     @Override
     protected void tick(DragonBrainContext<Ignivorus> context) {
+        if (context.dragon().isInWaterOrBubble()
+                && DragonWaterCombatProfile.avoidsSwimming(context.dragon())) return;
         this.currentContext = context;
 
         if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()

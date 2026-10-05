@@ -11,6 +11,8 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonSurfaceAttackFlight;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +25,7 @@ import java.util.Map;
 public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon & DragonAirCombatSettingsProvider>
         extends DragonBehaviour<T> {
     private int lostSightTicks;
+    private final DragonSurfaceAttackFlight surfaceCombat = new DragonSurfaceAttackFlight();
     private String blockedReason = "not-evaluated";
 
     protected AirCombatMovementBehaviour() {
@@ -73,6 +76,8 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             return;
         }
 
+        if (dragon.isTakeoff() && dragon.isInWaterOrBubble()) return;
+
         if (dragon.isTakeoff() && dragon.isFlying() && !dragon.onGround()) {
             dragon.beginAiFlight();
         }
@@ -97,6 +102,14 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             }
         }
 
+        if (usesSharedSurfaceCombat() && !dragon.isTakeoff() && !dragon.isInWaterOrBubble()
+                && DragonWaterCombatProfile.prefersFlight(dragon, target)) {
+            surfaceCombat.tick(context, target, dragon.getWaterCombatProfile(),
+                    () -> trySurfaceRangedAttack(context, target),
+                    () -> trySurfaceBite(context, target));
+            return;
+        }
+        if (surfaceCombat.reset()) startAirCombat(context);
         tickAirCombat(context, target, hasLineOfSight);
     }
 
@@ -106,10 +119,13 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
         DragonAirCombatSettings settings = settings(dragon);
         lostSightTicks = 0;
         stopAirCombat(context);
+        surfaceCombat.reset();
         if (dragon.getCombatFlightState() != null) return;
         if (DragonInvestigation.shouldPreserveAirbornePursuit(dragon)) {
             return;
         }
+        LivingEntity surfaceTarget = dragon.getTarget();
+        if (surfaceTarget != null && DragonWaterCombatProfile.prefersFlight(dragon, surfaceTarget)) return;
         if (isGroundRouteAbandoned(context)) {
             // The shared transition behaviour owns accepting/rejecting the landing.
             return;
@@ -130,6 +146,18 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
     protected abstract void tickAirCombat(DragonBrainContext<T> context,
                                           LivingEntity target,
                                           boolean hasLineOfSight);
+
+    protected boolean usesSharedSurfaceCombat() {
+        return true;
+    }
+
+    protected boolean trySurfaceRangedAttack(DragonBrainContext<T> context, LivingEntity target) {
+        return false;
+    }
+
+    protected boolean trySurfaceBite(DragonBrainContext<T> context, LivingEntity target) {
+        return false;
+    }
 
     protected void startAirCombat(DragonBrainContext<T> context) {
     }
@@ -250,7 +278,8 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        return Map.of("flight_block", blockedReason == null ? "none" : blockedReason);
+        return Map.of("flight_block", blockedReason == null ? "none" : blockedReason,
+                "surface_combat", surfaceCombat.summary());
     }
 
     private boolean isGroundRouteAbandoned(DragonBrainContext<T> context) {

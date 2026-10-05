@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
 import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
@@ -86,6 +87,8 @@ public final class CindervaneGroundCombatBehaviour extends DragonBehaviour<Cinde
 
     @Override
     protected void tick(DragonBrainContext<Cindervane> context) {
+        if (context.dragon().isInWaterOrBubble()
+                && DragonWaterCombatProfile.avoidsSwimming(context.dragon())) return;
         Cindervane dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (!dragon.isTargetValid(target)) {

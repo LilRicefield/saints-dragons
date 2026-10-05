@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonLandingSites;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.LivingEntity;
@@ -52,6 +53,7 @@ public final class DragonCombatFlightState {
     private boolean targetSettled;
     private boolean openingAvailable;
     private Vec3 landingPosition;
+    private boolean waterLanding;
     private Vec3 observedTargetPosition;
     private Vec3 observedTargetVelocity = Vec3.ZERO;
     private long observedTargetTick;
@@ -90,6 +92,7 @@ public final class DragonCombatFlightState {
             airborneSince = groundedSince = -1;
             targetNeedsFlight = targetSettled = false;
             landingPosition = null;
+            waterLanding = false;
             observedTargetPosition = null;
             observedTargetVelocity = Vec3.ZERO;
             nextObservation = nextLandingSearch = nextSpaceCheck = 0;
@@ -108,6 +111,7 @@ public final class DragonCombatFlightState {
             if (!wasAerial) {
                 landingProgressPosition = null;
                 landingPosition = null;
+                waterLanding = false;
                 dragon.getBrain().eraseMemory(DragonMemories.TACTICAL_LANDING_POSITION);
                 dragon.getBrain().eraseMemory(DragonMemories.GROUND_ROUTE_ABANDONED);
                 handoff = dragon.isInWaterOrBubble() ? "water:combat-plan" : "grounded:combat-plan";
@@ -208,10 +212,39 @@ public final class DragonCombatFlightState {
         boolean highGround = separation.y >= landing.highGroundMinVerticalSeparation()
                 && separation.horizontalDistance() <= landing.highGroundMaxHorizontalDistance();
         boolean needsPursuit = targetNeedsFlight || routeFailed || highGround;
-        if (dragon.canSwim() && !aerial
+        if (dragon.canSwim() && !aerial && !DragonWaterCombatProfile.avoidsSwimming(dragon)
                 && (dragon.isInWaterOrBubble() || DragonTargetingHelper.isMovementAnchorInWater(target))) {
             options.add(new Option(DragonTactic.WATER_PURSUIT, 110, focus, "water-contact"));
             return options;
+        }
+        if (!aerial && DragonWaterCombatProfile.avoidsSwimming(dragon) && dragon.isInWaterOrBubble()) {
+            options.add(new Option(DragonTactic.NONE, 110, focus, "water-exit"));
+            return options;
+        }
+        if (!aerial && DragonWaterCombatProfile.prefersFlight(dragon, target)) {
+            boolean opening = canLaunch && hasFlightOpening(target, now);
+            options.add(new Option(opening ? DragonTactic.AERIAL_PURSUIT : DragonTactic.NONE,
+                    140, focus, opening ? "surface-attack" : "surface-awaiting-flight-opening"));
+            return options;
+        }
+        if (aerial && DragonWaterCombatProfile.prefersSwimming(dragon, target)
+                && DragonLandingSites.canLandOnWater(dragon)
+                && flightAllowed && !locked && !dragon.isTakeoff() && now >= landingRetryAt) {
+            if (now >= nextLandingSearch && !hasLandingReservation()) {
+                nextLandingSearch = now + landing.landingSearchIntervalTicks();
+                if (!waterLanding || !validLanding(target)) {
+                    Entity anchor = DragonTargetingHelper.movementAnchor(target);
+                    double separationFromTarget = Math.max(5.0D, (dragon.getBbWidth() + anchor.getBbWidth()) * 0.5D + 2.0D);
+                    landingPosition = DragonLandingSites.findWaterNear(dragon, anchor.position(),
+                            landing.landingSearchRadius(), separationFromTarget);
+                    waterLanding = landingPosition != null;
+                }
+            }
+            if (waterLanding && landingPosition != null) {
+                options.add(new Option(DragonTactic.LANDING_APPROACH, 140, landingPosition, "enter-water-for-combat"));
+                return options;
+            }
+            // Remain airborne and retry the bounded search if the water is too shallow or covered.
         }
         Vec3 escapeDirection = targetNeedsFlight ? separation : separation.multiply(1, 0, 1);
         boolean escaping = escapeDirection.length() >= 18.0D
@@ -255,6 +288,7 @@ public final class DragonCombatFlightState {
         if (now >= nextLandingSearch && !hasLandingReservation()) {
             nextLandingSearch = now + landing.landingSearchIntervalTicks();
             if (landingPosition == null || !validLanding(target)) {
+                waterLanding = false;
                 landingPosition = dragon.getAIMovement().findTacticalGroundTransitionTarget(
                         DragonTargetingHelper.livingMovementAnchor(target), landing.landingSearchRadius(),
                         landing.landingMaxVerticalDelta());
@@ -280,8 +314,14 @@ public final class DragonCombatFlightState {
         Vec3 lift = dragon.position().add(0, profile.approachHeight(), 0);
         var space = dragon.getAIMovement().flightSpace();
         if (!space.canTakeoff(profile.approachHeight())) return false;
+        Vec3 approachBase = target.position();
+        if (DragonWaterCombatProfile.prefersFlight(dragon, target)) {
+            Entity anchor = DragonTargetingHelper.movementAnchor(target);
+            double surface = DragonSurfaceAttackFlight.surfaceHeight(dragon.level(), anchor.blockPosition());
+            approachBase = new Vec3(anchor.getX(), Double.isFinite(surface) ? surface : dragon.getY(), anchor.getZ());
+        }
         for (int side : new int[]{1, -1}) {
-            Vec3 candidate = target.position().add(radial.scale(profile.approachRadius() * 0.7D))
+            Vec3 candidate = approachBase.add(radial.scale(profile.approachRadius() * 0.7D))
                     .add(tangent.scale(side * profile.approachRadius() * 0.7D))
                     .add(0, profile.approachHeight(), 0);
             Vec3 fitted = space.fitDestination(candidate);
@@ -317,7 +357,7 @@ public final class DragonCombatFlightState {
                 handoff = "takeoff:combat-plan";
             }
         } else if (wantsLanding() && dragon.isAerial() && !dragon.isTakeoff()) {
-            if (targetNeedsFlight || landingPosition == null) {
+            if ((targetNeedsFlight && !waterLanding) || landingPosition == null) {
                 rejectLanding(now, targetNeedsFlight ? "target-airborne" : "missing-site");
                 return;
             }
@@ -349,9 +389,9 @@ public final class DragonCombatFlightState {
                 Vec3 accepted = dragon.getAIMovement().getActiveLandingTarget();
                 if (accepted == null) {
                     // The transition may complete immediately if contact occurred this tick.
-                    if (!dragon.isAerial() && dragon.onGround()) {
+                    if (!dragon.isAerial() && (dragon.onGround() || dragon.isInWaterOrBubble())) {
                         landingProgressPosition = null;
-                        handoff = "grounded:combat-plan";
+                        handoff = dragon.isInWaterOrBubble() ? "water:combat-plan" : "grounded:combat-plan";
                     } else {
                         rejectLanding(now, "route-failed-on-start");
                     }
@@ -362,7 +402,7 @@ public final class DragonCombatFlightState {
                 nextLandingValidation = now + 10;
                 landingProgressAt = now;
                 landingProgressPosition = dragon.position();
-                handoff = "landing:combat-plan";
+                handoff = waterLanding ? "water-entry:combat-plan" : "landing:combat-plan";
             } else {
                 rejectLanding(now, "no-approach-route");
             }
@@ -374,6 +414,14 @@ public final class DragonCombatFlightState {
 
     private boolean validLanding(LivingEntity target) {
         double retainedRadius = landing.landingSearchRadius() * (hasLandingReservation() ? 1.5D : 1.0D);
+        if (waterLanding) {
+            // A submerged opponent's depth is unrelated to the height of its water surface.
+            return landingPosition != null && DragonWaterCombatProfile.prefersSwimming(dragon, target)
+                    && landingPosition.subtract(DragonTargetingHelper.movementAnchor(target).position())
+                            .horizontalDistanceSqr() <= retainedRadius * retainedRadius
+                    && DragonLandingSites.isWaterSurface(dragon, landingPosition)
+                    && DragonLandingSites.isValid(dragon, landingPosition);
+        }
         return landingPosition != null && dragon.getAIMovement().isTacticalGroundTransitionTargetValid(
                 landingPosition, DragonTargetingHelper.livingMovementAnchor(target),
                 retainedRadius, landing.landingMaxVerticalDelta());
@@ -389,6 +437,7 @@ public final class DragonCombatFlightState {
         dragon.setLanding(false);
         if (!dragon.onGround()) dragon.beginAiFlight();
         landingPosition = null;
+        waterLanding = false;
         lastLandingFailure = reason;
         nextLandingValidation = 0;
         landingRetryAt = now + 80;

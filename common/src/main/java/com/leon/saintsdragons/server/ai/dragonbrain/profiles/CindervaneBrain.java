@@ -67,6 +67,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                 DragonBehaviourGroup.<Cindervane>activity(Activity.CORE)
                         .behaviours(
                                 new CindervaneTargetingBehaviour(),
+                                new DragonWaterEscapeBehaviour<>(CindervaneStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, CindervaneStatProfile.Brain.WATER_ESCAPE_SPEED),
                                 new DragonIdleLookBehaviour<>(8.0D),
                                 new DragonHuntAndEatBehaviour<>(),
                                 new ApplyMovementIntentBehaviour<>(),
@@ -109,7 +110,6 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                 DragonBehaviourGroup.<Cindervane>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(CindervaneStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, CindervaneStatProfile.Brain.WATER_ESCAPE_SPEED),
                                         new DragonBreedBehaviour<>(
                                                 CindervaneStatProfile.Brain.BREED_SPEED,
                                                 Cindervane.class,

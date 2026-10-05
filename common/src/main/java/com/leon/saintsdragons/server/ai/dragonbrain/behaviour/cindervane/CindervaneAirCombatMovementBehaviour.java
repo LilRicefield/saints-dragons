@@ -55,6 +55,7 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
 
     @Override
     protected void startAirCombat(DragonBrainContext<Cindervane> context) {
+        nextSurfaceBomb = context.gameTime() + 160;
         decisionCooldown = 0;
         chaseCommitTicks = 0;
         fireBodyTicks = 0;
@@ -163,6 +164,36 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
         wasAbilityActive = false;
         state = AirState.CHASE;
         lastDecision = "stopped";
+    }
+
+    private long nextSurfaceBomb;
+
+    @Override
+    protected boolean trySurfaceRangedAttack(DragonBrainContext<Cindervane> context, LivingEntity target) {
+        Cindervane dragon = context.dragon();
+        updateFireBody(dragon, gapToTarget(dragon, target), true);
+        if (dragon.isAbilityActive(ModAbilities.CINDERVANE_MAGMA_VOLLEY)) return true;
+        if (context.gameTime() < nextSurfaceBomb) return false;
+        nextSurfaceBomb = context.gameTime() + 100;
+        Vec3 toward = target.position().subtract(dragon.position());
+        // This is a downward volley: use a passing opportunity, never seek a distant firing position.
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                || toward.y > -4 || toward.y < -18 || toward.horizontalDistanceSqr() > 144
+                || !isFacingTarget(dragon, target, 0.35D)) return false;
+        boolean started = startAbility(dragon, ModAbilities.CINDERVANE_MAGMA_VOLLEY,
+                true, 55, 400, 140, 180);
+        if (started) lastDecision = "surface:opportunistic-bomb";
+        return started;
+    }
+
+    @Override
+    protected boolean trySurfaceBite(DragonBrainContext<Cindervane> context, LivingEntity target) {
+        boolean started = startAction(context.dragon(), CombatAction.BITE);
+        if (started) {
+            rememberAction(CombatAction.BITE);
+            lastDecision = "surface:bite";
+        }
+        return started;
     }
 
     private CombatAction selectAction(Cindervane dragon,

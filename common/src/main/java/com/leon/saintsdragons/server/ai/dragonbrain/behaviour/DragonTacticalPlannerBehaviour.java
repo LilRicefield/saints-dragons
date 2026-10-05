@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObse
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTactic;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfile;
@@ -220,6 +221,19 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         }
 
         if (!targetVisible) {
+            return;
+        }
+
+        if (DragonWaterCombatProfile.prefersFlight(dragon, target)
+                && dragon instanceof RideableFlyingDragon flying) {
+            boolean available = DragonFlightEligibility.pursuitBlockReason(
+                    flying, target, targetAirborne, groundRouteAbandoned, false) == null;
+            evaluation.add(available ? DragonTactic.AERIAL_PURSUIT : DragonTactic.NONE,
+                    140, targetUuid, focus, available ? "surface-attack" : "surface-awaiting-flight-opening");
+            return;
+        }
+        if (DragonWaterCombatProfile.avoidsSwimming(dragon) && dragon.isInWaterOrBubble()) {
+            evaluation.add(DragonTactic.NONE, 140, targetUuid, focus, "water-exit");
             return;
         }
 

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.config.dragon.profile;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
 import com.leon.saintsdragons.server.flight.DragonFlightBlend;
@@ -74,6 +75,21 @@ public final class VolitansStatProfile {
                 RANGE, NEAR_DISTANCE, NEAR_HORIZONTAL, FAR_HORIZONTAL, NEAR_VERTICAL, FAR_VERTICAL);
 
         private Vision() {
+        }
+    }
+
+    public static final class WaterSurfaceCombat {
+        public static final boolean AQUATIC = true;
+        public static final boolean FAVORS_RANGED = true;
+        public static final double ATTACK_RADIUS = 24.0D;
+        public static final double ATTACK_HEIGHT = 10.0D;
+        public static final double BITE_RANGE = 6.0D;
+        public static final double PASS_LENGTH = 18.0D;
+        public static final int BITE_INTERVAL_TICKS = 200;
+        public static final DragonWaterCombatProfile PROFILE = new DragonWaterCombatProfile(
+                AQUATIC, FAVORS_RANGED, ATTACK_RADIUS, ATTACK_HEIGHT, BITE_RANGE, PASS_LENGTH, BITE_INTERVAL_TICKS);
+
+        private WaterSurfaceCombat() {
         }
     }
 

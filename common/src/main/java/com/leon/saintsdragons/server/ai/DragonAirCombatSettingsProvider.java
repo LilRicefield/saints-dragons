@@ -1,11 +1,16 @@
 package com.leon.saintsdragons.server.ai;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
 public interface DragonAirCombatSettingsProvider {
     DragonAirCombatSettings getAiAirCombatSettings();
+
+    default @Nullable DragonWaterCombatProfile getWaterCombatProfile() {
+        return null;
+    }
 
     default @Nullable DragonCombatFlightState getCombatFlightState() {
         return null;

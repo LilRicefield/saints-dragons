@@ -9,6 +9,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourUtils;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -54,6 +55,7 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         return target != null
+                && !DragonWaterCombatProfile.prefersFlight(dragon, target)
                 && DragonTargetLifecycle.isValidTarget(dragon, target)
                 && !dragon.isAerial()
                 && !dragon.isInWaterOrBubble()

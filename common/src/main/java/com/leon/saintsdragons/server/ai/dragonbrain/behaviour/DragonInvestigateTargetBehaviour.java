@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonTargetTrack;
@@ -108,6 +109,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (!(context.dragon() instanceof RideableDragonBase dragon)) {
             return;
         }
+        if (dragon.isInWaterOrBubble() && DragonWaterCombatProfile.avoidsSwimming(dragon)) return;
         if (hasCommittedAction(dragon)) {
             if (!actionPaused) {
                 dragon.combatManager.recordAiDecision("investigation", "paused:committed-action");

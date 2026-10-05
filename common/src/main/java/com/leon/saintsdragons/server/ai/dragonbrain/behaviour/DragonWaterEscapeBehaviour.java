@@ -4,9 +4,14 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonSurfaceAttackFlight;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
@@ -40,12 +45,13 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     private int shoreRescanTicks;
     private int roamTicks;
     private boolean shoreTransitioning;
+    private Vec3 breachTarget;
     private long interruptionRequestedAt = Long.MIN_VALUE;
 
     public DragonWaterEscapeBehaviour(float turnSpeed, double swimSpeed) {
         this(turnSpeed, swimSpeed,
-                dragon -> !dragon.canSwim(),
-                dragon -> !dragon.canSwim());
+                dragon -> !dragon.canSwim() || DragonWaterCombatProfile.avoidsSwimming(dragon),
+                dragon -> !dragon.canSwim() || DragonWaterCombatProfile.avoidsSwimming(dragon));
     }
 
     public DragonWaterEscapeBehaviour(float turnSpeed,
@@ -109,6 +115,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
 
     @Override
     protected void start(DragonBrainContext<T> context) {
+        if (tryBreach(context)) return;
         if (!context.dragon().getAIMovement().beginSwimMovement()) return;
         shoreRescanTicks = 0;
         roamTicks = 0;
@@ -122,6 +129,8 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
             return;
         }
 
+        if (tryBreach(context)) return;
+        if (target == null) return;
         if (!dragon.getAIMovement().beginSwimMovement()) return;
         if (shoreTransitioning) {
             if (dragon.isInWaterOrBubble() && target.landPosition() != null) {
@@ -165,8 +174,13 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     @Override
     protected void stop(DragonBrainContext<T> context) {
         target = null;
+        breachTarget = null;
         shoreTransitioning = false;
-        context.dragon().getAiSwimController().stop();
+        if (context.dragon().isAerial()) {
+            context.dragon().getAiSwimController().clear();
+        } else {
+            context.dragon().getAiSwimController().stop();
+        }
     }
 
     @Override
@@ -183,6 +197,10 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
 
     @Nullable
     private EscapeTarget findEscapeTarget(T dragon) {
+        breachTarget = findBreachTarget(dragon);
+        if (breachTarget != null) {
+            return EscapeTarget.roam(breachTarget.add(0, -1.5D, 0));
+        }
         EscapeTarget ownerSideShore = findOwnerSideShoreTarget(dragon);
         if (ownerSideShore != null) {
             return ownerSideShore;
@@ -235,6 +253,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     }
 
     private void updateShoreLock(T dragon) {
+        if (breachTarget != null) return;
         if (target != null && target.isShoreTarget()) {
             return;
         }
@@ -435,11 +454,45 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
         }
     }
 
+    private @Nullable Vec3 findBreachTarget(T dragon) {
+        if (!DragonWaterCombatProfile.avoidsSwimming(dragon)
+                || !(dragon instanceof RideableFlyingDragon flying)) return null;
+        double surface = DragonSurfaceAttackFlight.surfaceHeight(dragon.level(), dragon.blockPosition());
+        if (!Double.isFinite(surface)) return null;
+        Vec3 dry = new Vec3(dragon.getX(), surface + 0.75D, dragon.getZ());
+        var space = flying.getAIMovement().flightSpace();
+        return space.fits(dry) && space.takeoffHeadroomClear(dry.y - dragon.getY() + 3)
+                ? dry : null;
+    }
+
+    private boolean tryBreach(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        if (breachTarget == null || !(dragon instanceof RideableFlyingDragon flying)
+                || !(dragon instanceof DragonAirCombatSettingsProvider settings)
+                || !flying.canStartAiWaterBreachTakeoffSequence()) return false;
+        String blocked = settings.getAiAirCombatBlockReason();
+        if (blocked != null && !"fluid".equals(blocked)) return false;
+        if (dragon.getBoundingBox().maxY < breachTarget.y - 1.25D) return false;
+        double lift = Math.max(3, breachTarget.y - dragon.getY() + 3);
+        if (!flying.getAIMovement().flightSpace().takeoffHeadroomClear(lift)) {
+            breachTarget = null;
+            target = findEscapeTarget(dragon);
+            return false;
+        }
+        dragon.getAiSwimController().stop();
+        dragon.getAIMovement().stop();
+        context.memories().eraseAll(java.util.List.of(DragonMemories.MOVEMENT_INTENT,
+                DragonMemories.WALK_TARGET, DragonMemories.PATH, DragonMemories.TACTICAL_LANDING_POSITION));
+        int ticks = Math.max(settings.getAiAirCombatSettings().takeoffAnimationTicks(), Mth.ceil(lift / 0.28D) + 10);
+        flying.startAiWaterBreachTakeoffSequence(0.28D, ticks);
+        return flying.isTakeoff() || flying.isFlying();
+    }
+
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         return Map.of(
                 "target_type", target == null ? "none" : target.isShoreTarget() ? "shore" : "surface_roam",
-                "phase", shoreTransitioning ? "shore_transition" : "swim_route",
+                "phase", breachTarget != null ? "surface_takeoff" : shoreTransitioning ? "shore_transition" : "swim_route",
                 "water_target", target == null ? "none" : target.waterPosition().toString(),
                 "land_target", target == null || target.landPosition() == null
                         ? "none" : target.landPosition().toString()

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
@@ -77,6 +78,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
 
     @Override
     protected void tick(DragonBrainContext<Raevyx> context) {
+        if (context.dragon().isInWaterOrBubble()
+                && DragonWaterCombatProfile.avoidsSwimming(context.dragon())) return;
         tickCooldowns();
 
         Raevyx dragon = context.dragon();

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.mojang.serialization.Dynamic;
@@ -506,6 +507,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     @Override
+    public DragonWaterCombatProfile getWaterCombatProfile() {
+        return RaevyxStatProfile.WaterSurfaceCombat.PROFILE;
+    }
+
+    @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
     }
@@ -841,6 +847,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
                 && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target);
     }
 
+    public boolean usesAiAirBeamPacing() {
+        LivingEntity target = getTarget();
+        return isAerial() && target != null
+                && (combatFlightState.targetNeedsFlight() || DragonWaterCombatProfile.prefersFlight(this, target));
+    }
+
     public int getAiBeamCooldownTicks() {
         return (int) Math.max(0L, nextAiBeamGameTime - level().getGameTime());
     }
@@ -853,15 +865,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return aiBeamDecision + (aiBeamNeedsFollowup ? ":awaiting-followup" : "");
     }
 
-    public void finishAiBeam(boolean airborneTarget, boolean fired) {
-        int minCooldown = airborneTarget ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MIN_TICKS
+    public void finishAiBeam(boolean airCombatPacing, boolean fired) {
+        int minCooldown = airCombatPacing ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MIN_TICKS
                 : RaevyxStatProfile.BeamAbility.AI_POST_BEAM_COOLDOWN_MIN_TICKS;
-        int maxCooldown = airborneTarget ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MAX_TICKS
+        int maxCooldown = airCombatPacing ? RaevyxStatProfile.BeamAbility.AI_AIR_TARGET_COOLDOWN_MAX_TICKS
                 : RaevyxStatProfile.BeamAbility.AI_POST_BEAM_COOLDOWN_MAX_TICKS;
         int cooldown = fired ? minCooldown + getRandom().nextInt(maxCooldown - minCooldown + 1)
                 : RaevyxStatProfile.BeamAbility.AI_ABORTED_START_COOLDOWN_TICKS;
         nextAiBeamGameTime = level().getGameTime() + cooldown;
-        aiBeamNeedsFollowup = fired && !airborneTarget;
+        aiBeamNeedsFollowup = fired && !airCombatPacing;
         aiBeamPursuitTicks = 0;
         getAiCombatPacing().setCadenceCooldownMin(10);
         clearAiBeamRetreat();
@@ -874,7 +886,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     private void tickAiBeamPursuit() {
         if (!aiBeamNeedsFollowup) return;
-        if (isAerial() && combatFlightState.targetNeedsFlight()) {
+        if (usesAiAirBeamPacing()) {
             recordAiBeamFollowup();
             return;
         }

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.component.DragonBreathPose;
 
 import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
@@ -1162,6 +1163,11 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         if (isInWaterOrBubble() || isInLava()) return "fluid";
         if (isAiSpecialCombatActive()) return "special-combat";
         return isAiSpecialCombatReserved() ? "special-combat-reserved" : null;
+    }
+
+    @Override
+    public DragonWaterCombatProfile getWaterCombatProfile() {
+        return VolitansStatProfile.WaterSurfaceCombat.PROFILE;
     }
 
     @Override

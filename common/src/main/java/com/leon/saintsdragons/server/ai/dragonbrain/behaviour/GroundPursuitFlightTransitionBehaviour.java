@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -258,6 +259,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target == null
+                || DragonWaterCombatProfile.prefersFlight(dragon, target)
                 || !DragonAirCombatHelper.isValidCombatTarget(dragon, target)
                 || dragon.isBaby()
                 || dragon.isVehicle()

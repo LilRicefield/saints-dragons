@@ -38,8 +38,18 @@ public final class DragonLandingSites {
                         && Math.abs(position.y - owner.y) <= maxVerticalDelta);
     }
 
+    public static @Nullable Vec3 findWaterNear(Mob dragon, Vec3 anchor, int radius, double separation) {
+        if (!canLandOnWater(dragon)) return null;
+        return findNear(dragon, anchor, radius, separation, position -> true, true);
+    }
+
     private static @Nullable Vec3 findNear(Mob dragon, Vec3 anchor, int radius,
                                            double separation, Predicate<Vec3> allowed) {
+        return findNear(dragon, anchor, radius, separation, allowed, false);
+    }
+
+    private static @Nullable Vec3 findNear(Mob dragon, Vec3 anchor, int radius,
+                                           double separation, Predicate<Vec3> allowed, boolean waterOnly) {
         if (dragon.level().isClientSide) return null;
         DragonFlightSpace space = space(dragon);
         Set<Long> columns = new HashSet<>();
@@ -55,9 +65,9 @@ public final class DragonLandingSites {
                 BlockPos column = BlockPos.containing(anchor.x + Math.cos(angle) * ring,
                         Math.max(anchor.y, dragon.getY()), anchor.z + Math.sin(angle) * ring);
                 if (!columns.add(BlockPos.asLong(column.getX(), 0, column.getZ()))) continue;
-                BlockPos ground = DragonFlightSpace.findLandingGround(dragon, column, column.getY());
+                BlockPos ground = waterOnly ? null : DragonFlightSpace.findLandingGround(dragon, column, column.getY());
                 if (ground == null) {
-                    // Water is a fallback only: finish checking the bounded area for dry land first.
+                    // Ordinary landing prefers dry land; an explicit water entry searches only water.
                     if (!allowWater || best != null) continue;
                     Vec3 water = findWaterSurface(dragon, column);
                     if (water == null || !allowed.test(water)) continue;
@@ -112,8 +122,7 @@ public final class DragonLandingSites {
                 && dragon instanceof SemiAquaticDragon
                 && dragon instanceof RideableDragonBase rideable && rideable.canSwim();
     }
-
-    /** The flight endpoint is just above the water block; only the final descent enters the fluid. */
+    
     private static @Nullable Vec3 findWaterSurface(Mob dragon, BlockPos column) {
         if (!dragon.level().hasChunkAt(column)) return null;
         int top = Math.min(column.getY(), dragon.level().getHeight(

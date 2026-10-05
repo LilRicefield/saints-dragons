@@ -528,13 +528,22 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 && canFly()
                 && !isVehicle()
                 && !isFlying()
+                && !isTakeoff()
+                && !takeoffComponent.isActive()
                 && !isPassenger()
                 && getActiveAbility() == null
                 && (isInWaterOrBubble() || isInLava());
     }
 
     protected boolean isAiWaterBreachTakeoffActive() {
-        return this.aiWaterBreachTakeoff;
+        return this.aiWaterBreachTakeoff && this.takeoffComponent.isActive()
+                && !isVehicle() && !isPassenger();
+    }
+
+    private void clearAiWaterBreachTakeoff() {
+        if (!this.aiWaterBreachTakeoff) return;
+        this.aiWaterBreachTakeoff = false;
+        if (!isVehicle() && !isPassenger()) setGoingUp(false);
     }
 
     protected boolean canStartRiderWaterBreachTakeoffSequence() {
@@ -658,7 +667,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void onFlyingStopped() {
-        this.aiWaterBreachTakeoff = false;
+        clearAiWaterBreachTakeoff();
         takeoffComponent.clear();
         if (!isLanding()) {
             switchToGroundNavigation();
@@ -691,7 +700,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     public void completeAiWaterHandoff() {
-        if (level().isClientSide || isVehicle()) {
+        if (level().isClientSide || isVehicle() || isAiWaterBreachTakeoffActive()) {
             return;
         }
         this.asyncAirController.clearAllWaypoints();
@@ -1094,6 +1103,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             setDeltaMovement(getDeltaMovement().x, Math.min(0.0D, getDeltaMovement().y), getDeltaMovement().z);
         }
         takeoffComponent.tick();
+        if (!takeoffComponent.isActive()) clearAiWaterBreachTakeoff();
         tickStandardLandedRecovery();
         if (completeLandingOnGroundContact()) {
             groundedAerialRecoveryTicks = 0;
@@ -1362,6 +1372,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected boolean shouldClearRiderFlightStateInWater() {
+        // Travel also calls this for unmounted dragons. A timed AI breach still owns the lift
+        // while its body intersects water; ordinary water entry resumes after takeoff ends.
+        if (isAiWaterBreachTakeoffActive()) return false;
         if (isRiderWaterFlightTransitionActive()) {
             if (isTakeoff() || riderTakeoffTicks > 0) {
                 return false;
@@ -1988,7 +2001,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     public String getFlightSteeringDebugSummary() {
-        return this.asyncAirController.getSteeringDebugSummary();
+        return this.asyncAirController.getSteeringDebugSummary()
+                + ",waterBreach=" + isAiWaterBreachTakeoffActive()
+                + ",takeoffTicks=" + this.takeoffComponent.getTicksRemaining();
     }
 
     protected void tickStandardPitchingLogic() {

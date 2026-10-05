@@ -67,6 +67,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                 DragonBehaviourGroup.<Raevyx>activity(Activity.CORE)
                         .behaviours(
                                 new RaevyxTargetingBehaviour(),
+                                new DragonWaterEscapeBehaviour<>(RaevyxStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, RaevyxStatProfile.Brain.WATER_ESCAPE_SPEED),
                                 new DragonIdleLookBehaviour<>(8.0D),
                                 new DragonHuntAndEatBehaviour<>(),
                                 new ApplyMovementIntentBehaviour<>(),
@@ -110,7 +111,6 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                 DragonBehaviourGroup.<Raevyx>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(RaevyxStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, RaevyxStatProfile.Brain.WATER_ESCAPE_SPEED),
                                         new DragonFollowParentBehaviour<>(Raevyx.class, RaevyxStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonBreedBehaviour<>(
                                                 RaevyxStatProfile.Brain.BREED_SPEED,

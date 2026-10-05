@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
 import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonVisionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -1857,6 +1858,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     public String getAiAirCombatBlockReason() {
         return isInWaterOrBubble() || isInLava() ? "fluid" : null;
+    }
+
+    @Override
+    public DragonWaterCombatProfile getWaterCombatProfile() {
+        return CindervaneStatProfile.WaterSurfaceCombat.PROFILE;
     }
 
     @Override

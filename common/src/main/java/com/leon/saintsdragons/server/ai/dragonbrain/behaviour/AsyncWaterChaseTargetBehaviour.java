@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonWaterCombatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -135,6 +136,8 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         return dragon.isInWaterOrBubble()
+                && !dragon.isAerial()
+                && !DragonWaterCombatProfile.avoidsSwimming(dragon)
                 && !dragon.isVehicle()
                 && target != null
                 && dragon.isTargetValid(target);

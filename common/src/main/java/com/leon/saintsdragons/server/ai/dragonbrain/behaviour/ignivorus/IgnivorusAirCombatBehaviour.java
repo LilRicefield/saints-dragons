@@ -451,6 +451,33 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         dragon.getCombatFlightState().deferRangedFlightFor(120);
     }
 
+    private int surfaceBreathTicks;
+
+    @Override
+    protected boolean trySurfaceRangedAttack(DragonBrainContext<Ignivorus> context, LivingEntity target) {
+        Ignivorus dragon = context.dragon();
+        DragonAbility<?> active = dragon.getActiveAbility();
+        if (active instanceof IgnivorusFireBreathAbility breath) {
+            if (++surfaceBreathTicks >= 170 || dragon.getAIMovement().hasFailed()) {
+                breath.finishAiPass("surface-pass-complete");
+            }
+            return true;
+        }
+        surfaceBreathTicks = 0;
+        if (active instanceof IgnivorusFireballAbility fireball) {
+            fireball.updateAiAim();
+            return true;
+        }
+        return rangedReady(dragon, target)
+                && tryRangedOpening(context, target, dragon.getAiFireBreathShot(target, FIRING_RANGE));
+    }
+
+    @Override
+    protected boolean trySurfaceBite(DragonBrainContext<Ignivorus> context, LivingEntity target) {
+        return context.dragon().combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_BITE,
+                false, 30, 30, 0, 24);
+    }
+
     private boolean rangedReady(Ignivorus dragon, LivingEntity target) {
         return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
                 && (dragon.isAiAirBreathReady()

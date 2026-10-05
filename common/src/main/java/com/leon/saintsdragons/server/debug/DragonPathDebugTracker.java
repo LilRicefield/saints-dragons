@@ -813,7 +813,7 @@ public final class DragonPathDebugTracker {
                 var details = ((DragonBrainDebugDetails)
                         registered.behaviour()).getDragonBrainDebugDetails();
                 for (String key : List.of("flight_block", "handoff", "flight_execution", "missing_ticks", "recoveries",
-                        "air_phase", "air_decision", "air_attack_height", "air_route_y", "air_phase_ticks",
+                        "air_phase", "air_decision", "air_attack_height", "air_route_y", "air_phase_ticks", "surface_combat",
                         "air_beam_availability", "air_beam_cooldown", "air_beam_alignment_ticks", "air_roar_cooldown",
                         "phase2_landing_recovery", "phase2_landing_attempts", "phase2_reposition_attempts")) {
                     if (details.containsKey(key)) summary.append(',').append(key).append('=').append(details.get(key));

@@ -49,7 +49,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean beamStartPlayed = false;
     private boolean beamLoopActive = false;
     private boolean aiControlled;
-    private boolean aiAirTarget;
+    private boolean aiAirCombatPacing;
     private boolean groundAiBeam;
     private int aiBurstTicks;
     private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
@@ -70,7 +70,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.STARTUP) {
             Raevyx wyvern = getUser();
             aiControlled = wyvern.getControllingPassenger() == null;
-            aiAirTarget = aiControlled && wyvern.isAerial() && wyvern.getCombatFlightState().targetNeedsFlight();
+            aiAirCombatPacing = aiControlled && wyvern.usesAiAirBeamPacing();
             groundAiBeam = aiControlled && !wyvern.isAerial();
             aiBurstTicks = 40 + wyvern.getRandom().nextInt(41);
             shotGrace.reset();
@@ -156,7 +156,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
         wyvern.getCombatAim().clear();
         if (isUsing() && aiControlled && !wyvern.level().isClientSide) {
-            wyvern.finishAiBeam(aiAirTarget, learningFiringTicks > 0);
+            wyvern.finishAiBeam(aiAirCombatPacing, learningFiringTicks > 0);
         }
         super.end();
     }

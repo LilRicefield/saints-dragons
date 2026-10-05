@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonSurfaceAttackFlight;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<Raevyx> {
     private static final double MELEE_RANGE = RaevyxStatProfile.AirCombatBehaviour.MELEE_RANGE;
@@ -87,6 +89,17 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private long flightHandoff;
     private double attackHeight = GROUND_ATTACK_MIN_HEIGHT;
     private double airPassHeight;
+    private boolean waterCombat;
+    private double waterSurface = Double.NaN;
+    private int nextWaterObservationTick;
+    private int waterContactUntil;
+    private int nextWaterBiteTick;
+    private int nextWaterRouteTick;
+    private boolean waterRouteBlocked;
+    private boolean waterPassEntered;
+    private double waterBeamPassSpeed = BEAM_PASS_SPEED;
+    @Nullable
+    private UUID combatTargetId;
 
     @Nullable
     private Vec3 takeoffTarget;
@@ -109,11 +122,29 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private Vec3 breakawayTarget;
 
     @Override
+    protected boolean usesSharedSurfaceCombat() {
+        return false;
+    }
+
+    @Override
     protected void startAirCombat(DragonBrainContext<Raevyx> context) {
         flightHandoff = context.dragon().getCombatFlightState().handoffRevision();
         attackHeight = GROUND_ATTACK_MIN_HEIGHT + context.dragon().getRandom().nextDouble() * GROUND_ATTACK_EXTRA_HEIGHT;
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        combatTargetId = target == null ? null : target.getUUID();
+        waterCombat = target != null && DragonTargetingHelper.isMovementAnchorInWater(target);
+        waterSurface = Double.NaN;
+        nextWaterObservationTick = 0;
+        waterContactUntil = context.dragon().tickCount + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS;
+        nextWaterBiteTick = Math.max(nextWaterBiteTick,
+                context.dragon().tickCount + RaevyxStatProfile.WaterSurfaceCombat.BITE_INTERVAL_TICKS);
+        waterRouteBlocked = false;
+        nextWaterRouteTick = 0;
+        if (waterCombat && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+            observeWaterSurface(context.dragon(), target);
+        }
         phase = !context.dragon().isTakeoff() && target != null && !context.dragon().getCombatFlightState().targetNeedsFlight()
+                && !waterCombat
                 && !isTargetFleeing(context.dragon(), target) ? AirPhase.ORBIT : AirPhase.CHASE;
         phaseTicks = 0;
         chaseCaptureTicks = 0;
@@ -137,7 +168,20 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                                  boolean hasLineOfSight) {
         tickCooldowns(context.dragon());
         Raevyx dragon = context.dragon();
-        if (flightHandoff != dragon.getCombatFlightState().handoffRevision()) startAirCombat(context);
+        boolean visible = context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
+        if (!visible && (waterCombat || DragonTargetingHelper.isMovementAnchorInWater(target))) return;
+        boolean targetInWater = DragonTargetingHelper.isMovementAnchorInWater(target);
+        if (targetInWater) {
+            waterContactUntil = dragon.tickCount + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS;
+        }
+        boolean wantsWaterCombat = targetInWater
+                || waterCombat && dragon.tickCount < waterContactUntil;
+        if (flightHandoff != dragon.getCombatFlightState().handoffRevision()
+                || !target.getUUID().equals(combatTargetId) || waterCombat != wantsWaterCombat) startAirCombat(context);
+        if (waterCombat) {
+            observeWaterSurface(dragon, target);
+            if (waterRouteBlocked && dragon.tickCount < nextWaterRouteTick) return;
+        }
         rangedCooldown = dragon.getAiBeamCooldownTicks();
         beamAvailability = beamBlockReason(dragon, target, hasLineOfSight);
         dragon.getLookControl().setLookAt(target, 100.0F, 100.0F);
@@ -158,6 +202,11 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             }
             return;
         }
+
+        if (waterCombat && routeTarget != null && !waterRouteClear(dragon)) {
+            enterBreakaway(context, target, "surface:route-obstructed");
+            return;
+        }
         if (phase == AirPhase.EVADE) {
             if (dragon.distanceTo(target) > CHASE_CONTAIN_RANGE || isTargetFleeing(dragon, target)) {
                 enterChase(context, target, "chase:post-dodge-gap");
@@ -175,7 +224,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         phaseTicks++;
         if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)
                 && phase != AirPhase.BEAM_PASS
-                && phase != AirPhase.CHASE) {
+                && phase != AirPhase.CHASE
+                && !(waterCombat && phase == AirPhase.BREAK_AWAY)) {
             enterBeamPass(context, target, "beam:resume-pass");
             return;
         }
@@ -204,6 +254,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
         if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
             chaseCaptureTicks = 0;
+            if (waterCombat) {
+                enterBeamPass(context, target, "surface:resume-beam-pass");
+                return;
+            }
             commandBeamApproach(context, target);
             if (dragon.distanceTo(target) <= ORBIT_ABORT_RANGE) {
                 enterBeamPass(context, target, "beam:pursuit-caught-up");
@@ -218,15 +272,16 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             beamEscape = true;
             return;
         }
-        if (phaseTicks >= BEAM_OPENING_TICKS) {
-            if (dragon.getCombatFlightState().targetNeedsFlight()
+        if (waterCombat || phaseTicks >= BEAM_OPENING_TICKS) {
+            if ((waterCombat || dragon.getCombatFlightState().targetNeedsFlight())
                     && tryBeamOpening(context, target, hasLineOfSight)) return;
             if (tryRoarOpening(context, target, hasLineOfSight)) return;
-            if (!dragon.getCombatFlightState().targetNeedsFlight()
+            if (!waterCombat && !dragon.getCombatFlightState().targetNeedsFlight()
                     && tryBeamOpening(context, target, hasLineOfSight)) return;
         }
 
         if (attackCooldown <= 0
+                && !waterCombat
                 && !isCurrentlyAttacking(dragon)
                 && hasLineOfSight
                 && dragon.distanceTo(target) <= MELEE_RANGE
@@ -240,7 +295,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
         if (phaseTicks >= minimumChaseTicks && !isCurrentlyAttacking(dragon) && hasLineOfSight
                 && !"ready".equals(beamAvailability) && maneuverDistance(dragon, target) <= ORBIT_ABORT_RANGE
-                && (!fleeing || dragon.distanceTo(target) <= CHASE_CONTAIN_RANGE)) {
+                && (!fleeing || (waterCombat ? maneuverDistance(dragon, target) : dragon.distanceTo(target)) <= CHASE_CONTAIN_RANGE)) {
             startAttackPass(context, target, hasLineOfSight);
             return;
         }
@@ -291,6 +346,15 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private boolean commandChaseIntent(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (waterCombat) {
+            if (routeTarget == null || phaseTicks % RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS == 0
+                    || routeReached(dragon)) {
+                Vec3 destination = waterAttackPosition(dragon, predictTargetCenter(dragon, target, 6, 12),
+                        RaevyxStatProfile.WaterSurfaceCombat.ATTACK_HEIGHT);
+                commandManeuver(context, destination, DIRECT_CHASE_SPEED);
+            }
+            return false;
+        }
         boolean dive = shouldDiveChase(dragon, target, 7.0D, 42.0D);
         if (dragon.getCombatFlightState().targetNeedsFlight()) {
             Vec3 destination = flightFeet(dragon, predictTargetCenter(dragon, target, dive ? 3.0D : 6.0D, 12.0D));
@@ -342,9 +406,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
 
-        if (phaseTicks >= BEAM_OPENING_TICKS) {
+        if (waterCombat || phaseTicks >= BEAM_OPENING_TICKS) {
+            if (waterCombat && tryBeamOpening(context, target, hasLineOfSight)) return;
             if (tryRoarOpening(context, target, hasLineOfSight)) return;
-            if (tryBeamOpening(context, target, hasLineOfSight)) return;
+            if (!waterCombat && tryBeamOpening(context, target, hasLineOfSight)) return;
         }
 
         if (phaseTicks >= ORBIT_MINIMUM_TICKS && !isCurrentlyAttacking(dragon)
@@ -386,6 +451,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     }
 
     private void startAttackPass(DragonBrainContext<Raevyx> context, LivingEntity target, boolean hasLineOfSight) {
+        if (waterCombat && tryBeamOpening(context, target, hasLineOfSight)) return;
         if (tryRoarOpening(context, target, hasLineOfSight)) return;
         enterMeleeCommit(context, target);
     }
@@ -417,6 +483,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         Raevyx dragon = context.dragon();
         if (committedIntercept == null || runDirection == null || breakawayTarget == null) {
             enterMeleeCommit(context, target);
+            return;
+        }
+        if (waterCombat && !surfaceBiteReachable(dragon, target)) {
+            enterBreakaway(context, target, "surface:bite-target-submerged");
             return;
         }
         if (routeFailed(dragon)) {
@@ -451,11 +521,25 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             enterMeleeStrike(context, "bite:started-pass");
             return;
         }
-        lastDecision = "commit:intercept";
+        if (waterCombat && (routeReached(dragon)
+                || remainingAlongRun <= Math.max(2.0D, dragon.getDeltaMovement().length() * 2.0D)
+                || dragon.getY() + Math.min(0, dragon.getDeltaMovement().y)
+                        * RaevyxStatProfile.WaterSurfaceCombat.BITE_PULL_OUT_LEAD_TICKS
+                        <= waterSurface + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_CLEARANCE)) {
+            enterMeleeStrike(context, "surface:bite-pull-out");
+            return;
+        }
+        lastDecision = waterCombat ? "surface:bite-intercept" : "commit:intercept";
     }
 
     private void tickMeleeStrike(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (waterCombat && attackCooldown <= 0 && !isCurrentlyAttacking(dragon)
+                && surfaceBiteReachable(dragon, target) && dragon.getSensing().hasLineOfSight(target)
+                && dragon.distanceTo(target) <= MELEE_RANGE && isFacingTarget(dragon, target, 0.15D)
+                && tryStartMeleeAttack(dragon)) {
+            attackCooldown = MELEE_ATTACK_COOLDOWN_TICKS;
+        }
         if (routeTarget == null) {
             if (breakawayTarget == null) {
                 enterBreakaway(context, target, "breakaway:no-strike-egress");
@@ -476,6 +560,18 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void tickBeamPass(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (waterCombat) {
+            if (routeFailed(dragon)) {
+                enterBreakaway(context, target, "surface:beam-lane-blocked");
+            } else if (routeReached(dragon) || dragon.getCombatAim().flightPassOverextended(target)
+                    || phaseTicks >= BEAM_SETUP_TIMEOUT_TICKS
+                    || phaseTicks >= 8 && !dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
+                enterBreakaway(context, target, "surface:beam-pass-complete");
+            } else {
+                lastDecision = "surface:beam-pass";
+            }
+            return;
+        }
         boolean beamActive = dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM);
         if (!beamActive && phaseTicks >= 8) {
             enterBreakaway(context, target, "breakaway:beam-complete");
@@ -578,7 +674,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                 .add(tangent.scale(Math.sin(ORBIT_STEP_RADIANS)))
                 .normalize();
         Vec3 orbitPosition = flightFeet(dragon, targetPosition)
-                .add(orbitDirection.scale(ORBIT_RADIUS))
+                .add(orbitDirection.scale(waterCombat ? RaevyxStatProfile.WaterSurfaceCombat.ATTACK_RADIUS : ORBIT_RADIUS))
                 .add(0.0D, airPassHeight, 0.0D);
         orbitPosition = groundAttackPosition(dragon, target, orbitPosition, attackHeight);
         orbitAnchor = targetCenter(target);
@@ -587,18 +683,40 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void enterMeleeCommit(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (waterCombat && (dragon.tickCount < nextWaterBiteTick || !surfaceBiteReachable(dragon, target))) {
+            enterBreakaway(context, target, "surface:make-attack-space");
+            return;
+        }
         dragon.getCombatFlightState().holdFlightFor(30);
         dragon.getCombatAim().clear();
         clearRouteState();
         phase = AirPhase.MELEE_COMMIT;
         phaseTicks = 0;
         committedIntercept = predictTargetCenter(dragon, target, 8.0D, 16.0D);
+        if (waterCombat) {
+            Vec3 contact = waterAttackPosition(dragon, committedIntercept,
+                    RaevyxStatProfile.WaterSurfaceCombat.SURFACE_CLEARANCE);
+            committedIntercept = contact.add(0, dragon.getBbHeight() * 0.5D, 0);
+            nextWaterBiteTick = dragon.tickCount + RaevyxStatProfile.WaterSurfaceCombat.BITE_INTERVAL_TICKS;
+        }
         runDirection = direction(
                 committedIntercept.subtract(dragon.getBoundingBox().getCenter()),
                 dragon.getLookAngle()
         );
         breakawayTarget = egressPosition(dragon, target, flightFeet(dragon, committedIntercept), runDirection);
-        boolean dive = shouldDiveChase(dragon, target, 7.0D, 42.0D);
+        if (waterCombat) {
+            var space = dragon.getAIMovement().flightSpace();
+            Vec3 contact = flightFeet(dragon, committedIntercept);
+            double reach = RaevyxStatProfile.WaterSurfaceCombat.BITE_RANGE;
+            if (contact.distanceToSqr(target.position()) > reach * reach
+                    || !space.fits(contact) || !space.fits(breakawayTarget)
+                    || !space.corridorClear(dragon.position(), contact)
+                    || !space.corridorClear(contact, breakawayTarget)) {
+                enterBreakaway(context, target, "surface:no-clear-bite-pass");
+                return;
+            }
+        }
+        boolean dive = !waterCombat && shouldDiveChase(dragon, target, 7.0D, 42.0D);
         commandManeuver(context, flightFeet(dragon, committedIntercept),
                 dive ? DIVE_COMMIT_SPEED : DIRECT_COMMIT_SPEED, dive);
         lastDecision = dive ? "commit:dive" : "commit:direct";
@@ -650,6 +768,16 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void commandBeamApproach(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (waterCombat) {
+            if ((beamSetupTarget == null || breakawayTarget == null) && !selectWaterBeamLane(dragon, target)) {
+                enterBreakaway(context, target, "surface:no-clear-beam-lane");
+                return;
+            }
+            if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) waterPassEntered = true;
+            commandManeuver(context, waterPassEntered ? breakawayTarget : beamSetupTarget,
+                    waterPassEntered ? waterBeamPassSpeed : ORBIT_SPEED);
+            return;
+        }
         if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
             commandSteeringBeamPass(context, target);
             return;
@@ -784,6 +912,20 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                     : dragonCenter.subtract(targetCenter(target));
         }
         forward = horizontalDirection(forward, dragon.getLookAngle());
+        if (waterCombat) {
+            var space = dragon.getAIMovement().flightSpace();
+            for (float angle : new float[]{0, (float) Math.toRadians(60 * attackSide),
+                    (float) Math.toRadians(-60 * attackSide)}) {
+                Vec3 course = forward.yRot(angle);
+                Vec3 exit = fitWaterDestination(dragon, egressPosition(dragon, target, dragon.position(), course));
+                if (exit != null && space.corridorClear(dragon.position(), exit)) {
+                    breakawayTarget = exit;
+                    runDirection = course;
+                    commandManeuver(context, exit, BREAKAWAY_SPEED);
+                    return;
+                }
+            }
+        }
         breakawayTarget = egressPosition(dragon, target, dragon.position(), forward);
         runDirection = forward;
         commandManeuver(context, breakawayTarget, BREAKAWAY_SPEED);
@@ -794,6 +936,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         Vec3 tangent = new Vec3(-horizontal.z, 0, horizontal.x).scale(attackSide);
         Vec3 destination = start.add(horizontal.scale(BREAKAWAY_DISTANCE))
                 .add(tangent.scale(isBeingPursued(dragon, target) ? 14.0D : BREAKAWAY_LATERAL_OFFSET));
+        if (waterCombat) {
+            Vec3 aboveWater = waterAttackPosition(dragon, destination, RaevyxStatProfile.WaterSurfaceCombat.ATTACK_HEIGHT);
+            return new Vec3(aboveWater.x, Math.max(dragon.getY(), aboveWater.y), aboveWater.z);
+        }
         if (dragon.getCombatFlightState().targetNeedsFlight()) {
             double targetY = flightFeet(dragon, targetCenter(target)).y;
             double height = targetY + Mth.clamp(dragon.getY() - targetY, -4.0D, 4.0D);
@@ -830,6 +976,19 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void commandManeuver(DragonBrainContext<Raevyx> context, Vec3 target, double speed, boolean dive) {
         routeTarget = clampFlightY(context.dragon(), target);
+        if (waterCombat) {
+            Raevyx dragon = context.dragon();
+            routeTarget = fitWaterDestination(dragon, routeTarget);
+            waterRouteBlocked = routeTarget == null
+                    || !dragon.getAIMovement().flightSpace().corridorClear(dragon.position(), routeTarget);
+            if (waterRouteBlocked) {
+                routeTarget = null;
+                nextWaterRouteTick = dragon.tickCount + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS;
+                context.memories().set(DragonMemories.MOVEMENT_INTENT,
+                        DragonMovementIntent.stop("raevyx-surface:no-clear-lane"));
+                return;
+            }
+        }
         routeGraceTicks = 3;
         context.memories().set(
                 DragonMemories.MOVEMENT_INTENT,
@@ -846,7 +1005,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     }
 
     private boolean routeFailed(Raevyx dragon) {
-        return routeTarget != null && routeGraceTicks <= 0 && dragon.getAIMovement().hasFailed();
+        return waterCombat && waterRouteBlocked
+                || routeTarget != null && routeGraceTicks <= 0 && dragon.getAIMovement().hasFailed();
     }
 
     private void tickCooldowns(Raevyx dragon) {
@@ -864,9 +1024,9 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         beamAvailability = beamBlockReason(dragon, target, hasLineOfSight);
         if (!"ready".equals(beamAvailability)) return false;
         clearRouteState();
-        if (!dragon.getCombatFlightState().targetNeedsFlight() && !selectBeamPosition(dragon, target)) {
-            beamRetryTick = dragon.tickCount + 100;
-            dragon.getCombatFlightState().deferRangedFlightFor(100);
+        if (waterCombat ? !selectWaterBeamLane(dragon, target)
+                : !dragon.getCombatFlightState().targetNeedsFlight() && !selectBeamPosition(dragon, target)) {
+            deferBeamSetup(dragon);
             beamAvailability = "no-firing-position";
             return false;
         }
@@ -879,6 +1039,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     }
 
     private void tickBeamSetup(DragonBrainContext<Raevyx> context, LivingEntity target, boolean hasLineOfSight) {
+        if (waterCombat) {
+            tickWaterBeamSetup(context, target, hasLineOfSight);
+            return;
+        }
         Raevyx dragon = context.dragon();
         beamAvailability = beamBlockReason(dragon, target, hasLineOfSight);
         if ("ready".equals(beamAvailability)) {
@@ -918,13 +1082,19 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             else if (reason.contains("alignment-timeout")) decisions.failSetup(beamSetupTarget);
             else if (reason.contains("shot-blocked")) decisions.fail(DragonCombatDecisionSupport.Failure.BLOCKED_SHOT, beamSetupTarget);
         }
-        beamRetryTick = dragon.tickCount + 100;
+        deferBeamSetup(dragon);
         beamAlignmentTicks = 0;
         dragon.getCombatAim().clear();
-        dragon.getCombatFlightState().deferRangedFlightFor(100);
-        if (maneuverDistance(dragon, target) <= ORBIT_ABORT_RANGE) enterMeleeCommit(context, target);
+        if (waterCombat) enterBreakaway(context, target, "surface:beam-setup-ended");
+        else if (maneuverDistance(dragon, target) <= ORBIT_ABORT_RANGE) enterMeleeCommit(context, target);
         else enterChase(context, target, "chase:beam-setup-ended");
         lastDecision = reason + ":" + phase.name().toLowerCase();
+    }
+
+    private void deferBeamSetup(Raevyx dragon) {
+        int retryTicks = waterCombat ? RaevyxStatProfile.WaterSurfaceCombat.BEAM_SETUP_RETRY_TICKS : 100;
+        beamRetryTick = dragon.tickCount + retryTicks;
+        dragon.getCombatFlightState().deferRangedFlightFor(retryTicks);
     }
 
     private String beamBlockReason(Raevyx dragon, LivingEntity target, boolean visible) {
@@ -942,6 +1112,126 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         if (dragon.distanceTo(target) < RANGED_MIN_RANGE) return "too-close";
         if (dragon.distanceTo(target) > RANGED_MAX_RANGE) return "too-far";
         return "ready";
+    }
+
+    private void observeWaterSurface(Raevyx dragon, LivingEntity target) {
+        if (dragon.tickCount < nextWaterObservationTick) return;
+        nextWaterObservationTick = dragon.tickCount + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS;
+        waterSurface = DragonSurfaceAttackFlight.surfaceHeight(dragon.level(),
+                DragonTargetingHelper.movementAnchor(target).blockPosition());
+    }
+
+    private Vec3 waterAttackPosition(Raevyx dragon, Vec3 position, double height) {
+        double y = Double.isFinite(waterSurface) ? waterSurface + height : dragon.getY();
+        return new Vec3(position.x, y, position.z);
+    }
+
+    private @Nullable Vec3 fitWaterDestination(Raevyx dragon, Vec3 position) {
+        double floor = Double.isFinite(waterSurface)
+                ? waterSurface + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_CLEARANCE : dragon.getY();
+        Vec3 fitted = dragon.getAIMovement().flightSpace().fitDestination(
+                new Vec3(position.x, Math.max(floor, position.y), position.z));
+        return fitted != null && fitted.y >= floor ? fitted : null;
+    }
+
+    private boolean waterRouteClear(Raevyx dragon) {
+        if (routeTarget == null) return false;
+        if (dragon.tickCount % RaevyxStatProfile.WaterSurfaceCombat.SURFACE_RECHECK_TICKS != 0) return true;
+        return (!Double.isFinite(waterSurface)
+                || routeTarget.y >= waterSurface + RaevyxStatProfile.WaterSurfaceCombat.SURFACE_CLEARANCE)
+                && dragon.getAIMovement().flightSpace().corridorClear(dragon.position(), routeTarget);
+    }
+
+    private boolean surfaceBiteReachable(Raevyx dragon, LivingEntity target) {
+        return Double.isFinite(waterSurface) && target.getEyeY() >= waterSurface - 1.0D
+                && dragon.getCombatLearning().hasVisibleObservation(target);
+    }
+
+    private boolean selectWaterBeamLane(Raevyx dragon, LivingEntity target) {
+        Vec3 center = waterAttackPosition(dragon, predictTargetCenter(dragon, target, 4, 8),
+                RaevyxStatProfile.WaterSurfaceCombat.ATTACK_HEIGHT);
+        Vec3 course = horizontalDirection(center.subtract(dragon.position()), dragon.getLookAngle());
+        Vec3 lateral = new Vec3(-course.z, 0, course.x);
+        double sideOffset = RaevyxStatProfile.WaterSurfaceCombat.BEAM_PASS_SIDE_OFFSET;
+        double height = center.y - target.getY();
+        double rangeAlongRun = Math.sqrt(Math.max(0, RANGED_MAX_RANGE * RANGED_MAX_RANGE
+                - height * height - sideOffset * sideOffset)) - Math.sqrt(ROUTE_ARRIVAL_DISTANCE_SQR);
+        if (rangeAlongRun < RaevyxStatProfile.WaterSurfaceCombat.ATTACK_RADIUS) return false;
+        int firingTicks = RaevyxBeamAbility.STARTUP_TICKS + RaevyxStatProfile.WaterSurfaceCombat.BEAM_FIRING_WINDOW_TICKS;
+        double passSpeed = Math.min(dragon.getFlightSpeed() * BEAM_PASS_SPEED, rangeAlongRun / firingTicks);
+        double runIn = Math.max(RaevyxStatProfile.WaterSurfaceCombat.ATTACK_RADIUS, passSpeed * firingTicks);
+        var space = dragon.getAIMovement().flightSpace();
+        for (int side : new int[]{attackSide, -attackSide}) {
+            Vec3 offset = lateral.scale(side * sideOffset);
+            Vec3 entry = fitWaterDestination(dragon, center.subtract(course.scale(runIn)).add(offset));
+            Vec3 exit = fitWaterDestination(dragon, center.add(course.scale(
+                    RaevyxStatProfile.WaterSurfaceCombat.PASS_LENGTH)).add(offset));
+            if (entry == null || exit == null || !space.corridorClear(dragon.position(), entry)
+                    || !space.corridorClear(entry, exit)) continue;
+            beamSetupTarget = entry;
+            beamSetupAnchor = targetCenter(target);
+            breakawayTarget = exit;
+            runDirection = course;
+            waterPassEntered = false;
+            waterBeamPassSpeed = passSpeed / Math.max(0.01D, dragon.getFlightSpeed());
+            attackSide = side;
+            return true;
+        }
+        return false;
+    }
+
+    private void tickWaterBeamSetup(DragonBrainContext<Raevyx> context, LivingEntity target, boolean hasLineOfSight) {
+        Raevyx dragon = context.dragon();
+        beamAvailability = beamBlockReason(dragon, target, hasLineOfSight);
+        boolean enteringLane = !waterPassEntered || !isFollowingWaterBeamLane(dragon);
+        boolean adjustingRange = enteringLane && ("too-close".equals(beamAvailability) || "too-far".equals(beamAvailability));
+        if ("ready".equals(beamAvailability) || adjustingRange) {
+            if (phaseTicks >= RaevyxStatProfile.WaterSurfaceCombat.BEAM_SETUP_TIMEOUT_TICKS) beamAvailability = "alignment-timeout";
+            else if (routeFailed(dragon)) beamAvailability = "setup-route-failed";
+            else if (beamSetupAnchor == null
+                    || targetCenter(target).distanceToSqr(beamSetupAnchor) > ORBIT_RETARGET_DISTANCE_SQR) {
+                beamAvailability = "target-left-setup";
+            }
+        }
+        if (!"ready".equals(beamAvailability)
+                && !(enteringLane && ("too-close".equals(beamAvailability) || "too-far".equals(beamAvailability)))) {
+            abandonBeamSetup(context, target, "surface:beam-setup-" + beamAvailability);
+            return;
+        }
+        if (routeTarget == null) commandBeamApproach(context, target);
+        if (waterRouteBlocked) return;
+        if (!waterPassEntered && routeReached(dragon)) {
+            waterPassEntered = true;
+            commandBeamApproach(context, target);
+        }
+        boolean followingLane = waterPassEntered && isFollowingWaterBeamLane(dragon);
+        if (waterPassEntered && (routeReached(dragon)
+                || followingLane && dragon.getCombatAim().flightPassOverextended(target))) {
+            abandonBeamSetup(context, target, "surface:beam-window-passed");
+            return;
+        }
+        DragonCombatAim.Shot shot = dragon.getAiBeamShot(target, RANGED_MAX_RANGE);
+        if (followingLane && shot != DragonCombatAim.Shot.ALIGNED && !shot.needsAlignment()) {
+            abandonBeamSetup(context, target, "surface:beam-shot-" + shot.name().toLowerCase());
+            return;
+        }
+        if (followingLane && "ready".equals(beamAvailability)
+                && shot == DragonCombatAim.Shot.ALIGNED && dragon.getCombatAim().ready(3)
+                && tryStartRangedAttack(dragon)) {
+            beamAlignmentTicks = 0;
+            attackCooldown = BEAM_ATTACK_COOLDOWN_TICKS;
+            enterBeamPass(context, target, "surface:beam-aligned-pass");
+        } else {
+            beamAlignmentTicks++;
+            lastDecision = followingLane ? "surface:beam-aligning-pass"
+                    : waterPassEntered ? "surface:beam-turn-in" : "surface:beam-run-in";
+        }
+    }
+
+    private boolean isFollowingWaterBeamLane(Raevyx dragon) {
+        Vec3 motion = dragon.getDeltaMovement().multiply(1, 0, 1);
+        return runDirection != null && motion.lengthSqr() > 0.01D
+                && motion.normalize().dot(runDirection) > 0.5D;
     }
 
     private boolean tryStartMeleeAttack(Raevyx dragon) {
@@ -1002,7 +1292,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private boolean isTargetFleeing(Raevyx dragon, LivingEntity target) {
         Vec3 awayFromDragon = targetCenter(target).subtract(dragon.getBoundingBox().getCenter());
-        if (!dragon.getCombatFlightState().targetNeedsFlight()) awayFromDragon = awayFromDragon.multiply(1, 0, 1);
+        if (waterCombat || !dragon.getCombatFlightState().targetNeedsFlight()) awayFromDragon = awayFromDragon.multiply(1, 0, 1);
         if (awayFromDragon.lengthSqr() <= 1.0E-6D) {
             return false;
         }
@@ -1049,10 +1339,11 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private double maneuverDistance(Raevyx dragon, LivingEntity target) {
         Vec3 separation = target.position().subtract(dragon.position());
-        return dragon.getCombatFlightState().targetNeedsFlight() ? separation.length() : separation.horizontalDistance();
+        return !waterCombat && dragon.getCombatFlightState().targetNeedsFlight() ? separation.length() : separation.horizontalDistance();
     }
 
     private Vec3 groundAttackPosition(Raevyx dragon, LivingEntity target, Vec3 destination, double height) {
+        if (waterCombat) return waterAttackPosition(dragon, destination, RaevyxStatProfile.WaterSurfaceCombat.ATTACK_HEIGHT);
         if (dragon.getCombatFlightState().targetNeedsFlight()
                 || DragonTargetingHelper.isMovementAnchorInWater(target)) return destination;
         var space = dragon.getAIMovement().flightSpace();
@@ -1097,6 +1388,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         beamApproachOffset = null;
         beamAlignmentTicks = 0;
         beamEscape = false;
+        waterPassEntered = false;
         routeTarget = null;
         orbitAnchor = null;
         committedIntercept = null;
@@ -1119,13 +1411,18 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         clearRouteState();
         lastDecision = "stopped";
         beamAvailability = "idle";
+        waterCombat = false;
+        waterSurface = Double.NaN;
+        combatTargetId = null;
     }
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         Map<String, String> details = new LinkedHashMap<>(super.getDragonBrainDebugDetails());
         details.put("air_phase", phase.name().toLowerCase());
-        details.put("air_attack_height", Integer.toString(Mth.floor(attackHeight)));
+        details.put("surface_combat", waterCombat ? "raevyx:" + phase.name().toLowerCase() : "inactive");
+        details.put("air_attack_height", Integer.toString(Mth.floor(
+                waterCombat ? RaevyxStatProfile.WaterSurfaceCombat.ATTACK_HEIGHT : attackHeight)));
         details.put("air_route_y", routeTarget == null ? "none" : Integer.toString(Mth.floor(routeTarget.y)));
         details.put("air_decision", lastDecision);
         details.put("air_phase_ticks", Integer.toString(phaseTicks));
