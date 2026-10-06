@@ -1,17 +1,24 @@
 package com.leon.saintsdragons.client.renderer.npc;
 
 import com.leon.saintsdragons.client.model.npc.IvyTheDragonMerchantModel;
+import com.leon.saintsdragons.client.renderer.DragonRiderAttachments;
+import com.leon.saintsdragons.client.renderer.EntityPreviewRenderContext;
 import com.leon.saintsdragons.client.renderer.layer.npc.IvyHeldItemLayer;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 import java.util.Map;
@@ -23,6 +30,8 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
     private static final float CHATTER_Y_OFFSET = 0.15F;
     private static final long CHATTER_TYPE_INTERVAL_MS = 42L;
     private static final long VOICE_BLIP_INTERVAL_MS = 34L;
+    // Her mounting clip lowers the waist by five pixels relative to the player seat origin
+    private static final float MOUNTED_MODEL_Y_OFFSET = 5.0F / 16.0F;
     private final Map<IvyTheDragonMerchant, ChatterRenderState> chatterStates = new WeakHashMap<>();
 
     @Override
@@ -45,10 +54,64 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
     public void render(@NotNull IvyTheDragonMerchant entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        renderIdleChatter(entity, poseStack, bufferSource, packedLight);
+        renderIdleChatter(entity, partialTick, poseStack, bufferSource, packedLight);
+    }
+
+    @Override
+    public void preRender(PoseStack poseStack, IvyTheDragonMerchant entity, BakedGeoModel model,
+                          MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
+                          float partialTick, int packedLight, int packedOverlay,
+                          float red, float green, float blue, float alpha) {
+        if (!isReRender && hasDragonSeat(entity)
+                && DragonRiderAttachments.transformRider(entity, partialTick, poseStack, getRenderOffset(entity, partialTick))) {
+            poseStack.translate(0, MOUNTED_MODEL_Y_OFFSET, 0);
+        }
+        super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick,
+                packedLight, packedOverlay, red, green, blue, alpha);
+    }
+
+    @Override
+    protected void applyRotations(IvyTheDragonMerchant entity, PoseStack poseStack, float ageInTicks,
+                                  float rotationYaw, float partialTick) {
+        if (hasDragonSeat(entity) && entity.getVehicle() instanceof Cindervane dragon) {
+          // let her look around
+            rotationYaw = Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot);
+        }
+        super.applyRotations(entity, poseStack, ageInTicks, rotationYaw, partialTick);
+    }
+
+    @Override
+    public void renderFinal(PoseStack poseStack, IvyTheDragonMerchant entity, BakedGeoModel model,
+                            MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick,
+                            int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+        poseStack.pushPose();
+        translateSeatLabel(entity, partialTick, poseStack, entity.getNameTagOffsetY());
+        super.renderFinal(poseStack, entity, model, bufferSource, buffer, partialTick,
+                packedLight, packedOverlay, red, green, blue, alpha);
+        poseStack.popPose();
+    }
+
+    private static boolean hasDragonSeat(IvyTheDragonMerchant entity) {
+        return !EntityPreviewRenderContext.isRendering()
+                && entity.getVehicle() instanceof Cindervane dragon && !dragon.isSlashGrabPassenger(entity);
+    }
+
+    private void translateSeatLabel(IvyTheDragonMerchant entity, float partialTick, PoseStack poseStack, float height) {
+        if (!hasDragonSeat(entity) || !(entity.getVehicle() instanceof Cindervane dragon)) {
+            return;
+        }
+        var seat = DragonRiderAttachments.resolve(dragon, dragon.getRiderSeatIndex(entity), partialTick);
+        if (seat == null) {
+            return;
+        }
+        Vec3 delta = seat.worldPosition(dragon, partialTick, new Vec3(0, height + MOUNTED_MODEL_Y_OFFSET, 0))
+                .subtract(DragonRiderAttachments.interpolatedPosition(entity, partialTick))
+                .subtract(getRenderOffset(entity, partialTick));
+        poseStack.translate(delta.x, delta.y - height, delta.z);
     }
 
     private void renderIdleChatter(IvyTheDragonMerchant entity,
+                                   float partialTick,
                                    PoseStack poseStack,
                                    MultiBufferSource bufferSource,
                                    int packedLight) {
@@ -67,6 +130,7 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
         Font font = Minecraft.getInstance().font;
         float y = entity.getNameTagOffsetY() + CHATTER_Y_OFFSET;
         poseStack.pushPose();
+        translateSeatLabel(entity, partialTick, poseStack, y);
         poseStack.translate(0.0F, y, 0.0F);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
         poseStack.scale(-0.025F, -0.025F, 0.025F);

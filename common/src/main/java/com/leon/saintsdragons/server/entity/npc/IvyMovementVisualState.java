@@ -6,20 +6,13 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 
 final class IvyMovementVisualState {
-    private static final int MIN_AIRBORNE_TICKS = 4;
-    private static final double FALL_Y_VELOCITY = -0.08D;
-    private static final double MIN_FALL_DROP = 0.5D;
     private static final double SWIM_FAST_SPEED_SQR = 0.06D * 0.06D;
     private static final double WATER_MOVE_SPEED_SQR = 0.015D * 0.015D;
-
-    private int airborneStartTick = -1;
-    private double highestAirY;
-    private double maxAirDrop;
 
     IvyMovementVisualState() {
     }
 
-    void apply(AnimationState<?> state,
+    boolean apply(AnimationState<?> state,
                IvyTheDragonMerchant ivy,
                RawAnimation idle,
                RawAnimation sit,
@@ -49,11 +42,11 @@ final class IvyMovementVisualState {
             case WALK -> AnimationHelper.setAndContinue(state, walk);
             case IDLE -> AnimationHelper.setAndContinue(state, idle);
         }
+        return resolved == State.IDLE || resolved == State.WALK || resolved == State.RUN || resolved == State.FALLING;
     }
 
     private State resolve(AnimationState<?> state, IvyTheDragonMerchant ivy) {
         boolean grounded = ivy.onGround();
-        boolean inFluid = ivy.isInWaterOrBubble() || ivy.isInLava();
         double yVelocity = ivy.getDeltaMovement().y;
 
         if (ivy.isClimbingLadder()) {
@@ -67,30 +60,11 @@ final class IvyMovementVisualState {
         }
 
         if (ivy.isInWaterOrBubble()) {
-            resetAirborne(ivy);
             return waterState(state, ivy);
         }
 
-        if (!grounded) {
-            if (airborneStartTick < 0) {
-                airborneStartTick = ivy.tickCount;
-                highestAirY = ivy.getY();
-                maxAirDrop = 0.0D;
-            }
-            // The predicate runs on both playback ticks and render frames.
-            int airborneTicks = ivy.tickCount - airborneStartTick + 1;
-            highestAirY = Math.max(highestAirY, ivy.getY());
-            maxAirDrop = Math.max(maxAirDrop, highestAirY - ivy.getY());
-            if (!inFluid && airborneTicks >= MIN_AIRBORNE_TICKS) {
-                if (yVelocity < FALL_Y_VELOCITY || maxAirDrop >= MIN_FALL_DROP) {
-                    return State.FALLING;
-                }
-            }
-            return normalGroundState(state, ivy);
-        }
-
-        if (airborneStartTick >= 0) {
-            resetAirborne(ivy);
+        if (!grounded && ivy.getFallAnimationState().isFalling()) {
+            return State.FALLING;
         }
 
         return normalGroundState(state, ivy);
@@ -112,12 +86,6 @@ final class IvyMovementVisualState {
             return State.SWIM_IDLE;
         }
         return ivy.isRunning() || horizontalSpeedSqr > SWIM_FAST_SPEED_SQR ? State.SWIM_FAST : State.SWIM;
-    }
-
-    private void resetAirborne(IvyTheDragonMerchant ivy) {
-        airborneStartTick = -1;
-        highestAirY = ivy.getY();
-        maxAirDrop = 0.0D;
     }
 
     private static State normalGroundState(AnimationState<?> state, IvyTheDragonMerchant ivy) {

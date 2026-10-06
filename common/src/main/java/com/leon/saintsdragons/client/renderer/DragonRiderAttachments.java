@@ -108,7 +108,7 @@ public final class DragonRiderAttachments {
         if (pose.seats.containsKey(seat)) {
             return;
         }
-        // Bone translation includes model scale; the player keeps their own size.
+        // Bone translation includes model scale; the rider keeps their own size.
         Matrix4f riderTransform = new Matrix4f(boneTransform).normalize3x3();
         riderTransform.translate(RiderConfig.getSeatOffset(dragon, seat));
         float yaw = Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot);
@@ -116,20 +116,20 @@ public final class DragonRiderAttachments {
         pose.seats.put(seat, new SeatPose(riderTransform));
     }
 
-    /** Compose with this render pass's view instead of replacing it with a cached view matrix */
-    public static void transformRider(Entity rider, float partialTick, PoseStack poses, Vec3 renderOffset) {
+    public static boolean transformRider(Entity rider, float partialTick, PoseStack poses, Vec3 renderOffset) {
         if (!(rider.getVehicle() instanceof RideableDragonBase dragon)) {
-            return;
+            return false;
         }
         SeatPose seat = resolve(dragon, dragon.getRiderSeatIndex(rider), partialTick);
         if (seat == null) {
-            return;
+            return false;
         }
         Vec3 delta = interpolatedPosition(dragon, partialTick)
                 .subtract(interpolatedPosition(rider, partialTick)).subtract(renderOffset);
         poses.translate(delta.x, delta.y, delta.z);
         poses.mulPoseMatrix(seat.riderTransform);
         poses.last().normal().mul(new Matrix3f(seat.riderTransform).invert().transpose());
+        return true;
     }
 
     public static Vec3 interpolatedPosition(Entity entity, float partialTick) {
@@ -170,11 +170,14 @@ public final class DragonRiderAttachments {
         }
 
         public Vec3 eyePosition(RideableDragonBase dragon, Entity rider, float partialTick) {
-            Vector3f eye = riderTransform.transformPosition(0, rider.getEyeHeight(), 0, new Vector3f());
-            return interpolatedPosition(dragon, partialTick).add(eye.x, eye.y, eye.z);
+            return worldPosition(dragon, partialTick, new Vec3(0, rider.getEyeHeight(), 0));
         }
 
-        /** Keep gameplay yaw/pitch unchanged, and orient the horizon using the seat's actual up axis */
+        public Vec3 worldPosition(RideableDragonBase dragon, float partialTick, Vec3 riderLocalPosition) {
+            Vector3f point = riderTransform.transformPosition(riderLocalPosition.toVector3f());
+            return interpolatedPosition(dragon, partialTick).add(point.x, point.y, point.z);
+        }
+
         public float cameraRoll(float yawDegrees, float pitchDegrees) {
             var look = new org.joml.Quaternionf().rotationYXZ(-yawDegrees * Mth.DEG_TO_RAD,
                     pitchDegrees * Mth.DEG_TO_RAD, 0);

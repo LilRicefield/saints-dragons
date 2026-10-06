@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.util.animation.EntityAnimationController;
+import com.leon.saintsdragons.util.animation.IvyLocomotionAnimationController;
 import com.leon.saintsdragons.util.animation.TickingGeoEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -143,6 +144,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
     private static final ResourceLocation RECRUITED_VISITOR_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/recruited_visitor_greeting");
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> DATA_LANDING_ANIMATION_TICK =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Float> DATA_LANDING_ANIMATION_SPEED =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_TAME =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID =
@@ -284,6 +289,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
     private boolean wasDownedOrArisingAnimation = false;
     private boolean wasBoxingAnimation = false;
     private final IvyMovementVisualState movementVisualState = new IvyMovementVisualState();
+    private final IvyLocomotionBlend locomotionBlend = new IvyLocomotionBlend();
+    private final IvyFallAnimationState fallAnimationState = new IvyFallAnimationState();
+    private boolean locomotionBlendActive;
     private final GenericSwimSteeringController swimSteering;
     private final AsyncSwimController asyncSwimController;
     private IvyBodyControl bodyControl;
@@ -548,6 +556,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_RUNNING, false);
+        this.entityData.define(DATA_LANDING_ANIMATION_TICK, -1L);
+        this.entityData.define(DATA_LANDING_ANIMATION_SPEED, 0.0F);
         this.entityData.define(DATA_TAME, false);
         this.entityData.define(DATA_OWNER_UUID, Optional.empty());
         this.entityData.define(DATA_COMMAND, CompanionCommand.WANDER.id);
@@ -685,6 +695,45 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
 
     public boolean isRunning() {
         return this.entityData.get(DATA_RUNNING);
+    }
+
+    public IvyLocomotionBlend getLocomotionBlend() {
+        return locomotionBlend;
+    }
+
+    public boolean isLocomotionBlendActive() {
+        return locomotionBlendActive;
+    }
+
+    public IvyFallAnimationState getFallAnimationState() {
+        return fallAnimationState;
+    }
+
+    public long getLandingAnimationTick() {
+        return this.entityData.get(DATA_LANDING_ANIMATION_TICK);
+    }
+
+    public float getLandingAnimationSpeed() {
+        return this.entityData.get(DATA_LANDING_ANIMATION_SPEED);
+    }
+
+    public boolean canBlendFallAndLanding() {
+        return isAlive() && !isDowned() && getDownedAriseTicks() <= 0 && !isPassenger()
+                && !isInWaterOrBubble() && !isInLava() && !isClimbingLadder() && !onClimbable()
+                && this.entityData.get(DATA_PASSIVE_USE_ACTION) != PASSIVE_USE_WATER_CLUTCH;
+    }
+
+    @Override
+    protected void checkFallDamage(double yMovement, boolean grounded, BlockState state, BlockPos pos) {
+        // Capture before vanilla resets fallDistance and resolves vertical collision/bouncing.
+        float drop = fallDistance + (float) Math.max(0.0D, -yMovement);
+        float impactSpeed = (float) Math.max(0.0D, -getDeltaMovement().y);
+        super.checkFallDamage(yMovement, grounded, state, pos);
+        if (!level().isClientSide && grounded && canBlendFallAndLanding()
+                && IvyFallAnimationState.isMeaningfulImpact(drop, impactSpeed)) {
+            this.entityData.set(DATA_LANDING_ANIMATION_SPEED, impactSpeed);
+            this.entityData.set(DATA_LANDING_ANIMATION_TICK, level().getGameTime());
+        }
     }
 
     boolean isInShallowWaterForWading() {
@@ -1362,7 +1411,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<IvyTheDragonMerchant> movementController =
-                new EntityAnimationController<>(this, "movement", 3, this::animationPredicate)
+                new IvyLocomotionAnimationController(this, this::animationPredicate)
                         .receiveTriggeredAnimations();
         movementController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         movementController.setParticleKeyframeHandler(this::handleParticleKeyframe);
@@ -1403,6 +1452,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
     }
 
     private <T extends GeoEntity> PlayState animationPredicate(AnimationState<T> state) {
+        locomotionBlendActive = false;
         if (deathTime > 0 || getDeathAnimation() != 0 || !isAlive()) {
             if (state.getController().isPlayingTriggeredAnimation()) {
                 state.getController().forceAnimationReset();
@@ -1464,7 +1514,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
             wasBoxingAnimation = false;
         }
 
-        movementVisualState.apply(state, this, IDLE, SIT, WALK, RUN, FALLING, CLIMBING, CLIMB_IDLE,
+        locomotionBlendActive = movementVisualState.apply(state, this, IDLE, SIT, WALK, RUN, FALLING, CLIMBING, CLIMB_IDLE,
                 SWIM_IDLE, SWIM, SWIM_FAST, WATER_WADE_IDLE, WATER_WADING);
         return PlayState.CONTINUE;
     }
@@ -1918,6 +1968,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements TickingGeo
         super.tick();
         updateRotationDeviation();
         if (level().isClientSide) {
+            locomotionBlend.tick(this);
+            fallAnimationState.tick(this);
             if (!isBoxingRecovering()) {
                 this.clientRecoveryItemVisible = false;
             }
