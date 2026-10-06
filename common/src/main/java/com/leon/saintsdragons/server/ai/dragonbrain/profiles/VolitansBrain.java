@@ -126,7 +126,7 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                                 VolitansStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES,
                                                 VolitansStatProfile.Brain.WATER_ESCAPE_SPEED,
                                                 Volitans::shouldLeaveWater,
-                                                VolitansBrain::canContinueLeavingWater
+                                                Volitans::canContinueLeavingWater
                                         ),
                                         new DragonFindWaterBehaviour<>(VolitansStatProfile.Brain.FIND_WATER_SPEED),
                                         new DragonFollowOwnerBehaviour<>(
@@ -183,16 +183,4 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
         return dragon.distanceToSqr(target) <= followRange * followRange;
     }
 
-    private static boolean canContinueLeavingWater(Volitans dragon) {
-        if (!dragon.canSwim() || dragon.isOrderedToSit()) {
-            return false;
-        }
-        LivingEntity owner = dragon.getOwner();
-        return !dragon.isTame()
-                || dragon.getCommand() != 0
-                || owner == null
-                || !owner.isAlive()
-                || owner.level() != dragon.level()
-                || !owner.isInWaterOrBubble();
-    }
 }

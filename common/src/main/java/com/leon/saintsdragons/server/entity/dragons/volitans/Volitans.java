@@ -33,6 +33,7 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VolitansBrain;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -1736,17 +1737,40 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
             return false;
         }
 
-        LivingEntity owner = getOwner();
-        if (isTame() && owner != null && !owner.isInWater() && distanceToSqr(owner) > 100.0D) {
-            return true;
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive()) {
+            return !DragonOwnerFollowTarget.anchor(target).isInWaterOrBubble();
         }
 
-        LivingEntity target = getTarget();
-        if (target != null && !target.isInWater()) {
-            return true;
+        LivingEntity owner = getOwner();
+        if (hasWaterFollowOwner(owner)) {
+            return shouldFollowOwnerAshore(owner, VolitansStatProfile.Brain.OWNER_WATER_EXIT_START_DISTANCE);
         }
 
         return this.ticksInWater >= 1200 && this.getRandom().nextFloat() < 0.08F;
+    }
+
+    public boolean canContinueLeavingWater() {
+        if (!canSwim() || isOrderedToSit() || isVehicle()) return false;
+        LivingEntity target = getTarget();
+        if (target != null && target.isAlive()) {
+            return !DragonOwnerFollowTarget.anchor(target).isInWaterOrBubble();
+        }
+        LivingEntity owner = getOwner();
+        return !hasWaterFollowOwner(owner)
+                || shouldFollowOwnerAshore(owner, VolitansStatProfile.Brain.OWNER_WATER_EXIT_STOP_DISTANCE);
+    }
+
+    private boolean hasWaterFollowOwner(@Nullable LivingEntity owner) {
+        return isTame() && getCommand() == 0 && owner != null && owner.isAlive()
+                && owner.level() == level();
+    }
+
+    private boolean shouldFollowOwnerAshore(LivingEntity owner, double minimumDistance) {
+        var anchor = DragonOwnerFollowTarget.anchor(owner);
+        return anchor.onGround() && !anchor.isInWaterOrBubble()
+                && !owner.isInWaterOrBubble()
+                && DragonOwnerFollowTarget.anchorDistanceToSqr(this, owner) > minimumDistance * minimumDistance;
     }
 
     @Override

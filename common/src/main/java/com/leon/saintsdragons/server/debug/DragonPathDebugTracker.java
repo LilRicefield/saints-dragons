@@ -812,6 +812,9 @@ public final class DragonPathDebugTracker {
                 String formation = packFollow.getDragonBrainDebugDetails().get("formation");
                 if (formation != null) summary.append(",pack={").append(formation).append('}');
             }
+            if (activeBehaviour instanceof DragonWaterEscapeBehaviour<?> waterEscape) {
+                summary.append(",water_exit=").append(waterEscape.getDragonBrainDebugDetails());
+            }
             if (registered.behaviour() instanceof AirCombatMovementBehaviour<?>
                     || registered.behaviour() instanceof AirToGroundTransitionBehaviour<?>
                     || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>

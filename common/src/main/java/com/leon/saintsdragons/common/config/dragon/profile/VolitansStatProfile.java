@@ -162,6 +162,8 @@ public final class VolitansStatProfile {
     }
 
     public static final class Brain {
+        public static final double OWNER_WATER_EXIT_START_DISTANCE = 20.0D;
+        public static final double OWNER_WATER_EXIT_STOP_DISTANCE = 12.0D;
         public static final double GROUND_WANDER_SPEED = 0.9D;
         public static final double FIND_WATER_SPEED = 1.0D;
         public static final float WATER_ESCAPE_TURN_DEGREES = 8.0F;
