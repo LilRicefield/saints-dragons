@@ -66,6 +66,7 @@ dependencies {
     modApi include("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }
+    modCompileOnly "com.eliotlash.mclib:mclib:20"
     modCompileOnly "dev.emi:emi-fabric:${rootProject.emi_version}:api"
     modCompileOnly "maven.modrinth:jade:${rootProject.jade_fabric_version}"
 

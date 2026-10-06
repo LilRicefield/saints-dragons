@@ -89,6 +89,8 @@ dependencies {
 
     forge "net.minecraftforge:forge:${rootProject.minecraft_version}-${rootProject.forge_version}"
 
+    compileOnly "com.eliotlash.mclib:mclib:20"
+
     // Compile-only bridge for Fabric @Environment metadata that can appear on shared/common deps.
     // This avoids javac "unknown enum constant EnvType.CLIENT" warnings in Forge builds.
     compileOnly "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
