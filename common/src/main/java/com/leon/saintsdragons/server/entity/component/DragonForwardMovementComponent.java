@@ -6,6 +6,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class DragonForwardMovementComponent {
     private static final double MAX_MOVE_STEP = 0.45D;
+    private static final double GROUND_CONTACT_EPSILON = 1.0E-4D;
 
     private final DragonEntity dragon;
     private final StateAccess state;
@@ -194,7 +195,13 @@ public final class DragonForwardMovementComponent {
         int slices = Math.max(1, (int) Math.ceil(longestAxis / MAX_MOVE_STEP));
         Vec3 slice = nudge.scale(1.0D / slices);
         for (int i = 0; i < slices; i++) {
-            dragon.move(MoverType.SELF, slice);
+            boolean keepGroundContact = slice.y <= 0.0D && !dragon.isAerial()
+                    && !dragon.isInWaterOrBubble() && !dragon.isInLava()
+                    && dragon.onGround();
+            Vec3 movement = keepGroundContact
+                    ? new Vec3(slice.x, Math.min(slice.y, -GROUND_CONTACT_EPSILON), slice.z)
+                    : slice;
+            dragon.move(MoverType.SELF, movement);
         }
     }
 

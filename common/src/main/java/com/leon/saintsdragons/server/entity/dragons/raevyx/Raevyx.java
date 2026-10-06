@@ -2400,6 +2400,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isFlying() && !isInWaterOrBubble() && !isInLava()) {
                 this.setSpeed(this.getRiddenSpeed(player));
                 super.travel(motion);
+            } else if (!isAerial() && !isInWaterOrBubble() && !isInLava()) {
+                Vec3 current = getDeltaMovement();
+                setDeltaMovement(0.0D, current.y, 0.0D);
+                super.travel(Vec3.ZERO);
             }
             if (isGroundRending()) {
                 dashDodgeNudge.applyContinuousTravelMotion();
