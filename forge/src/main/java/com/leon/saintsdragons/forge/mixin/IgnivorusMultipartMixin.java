@@ -25,8 +25,8 @@ public abstract class IgnivorusMultipartMixin implements IForgeEntity, DragonPar
         this.saintsdragons$forgePartManager = new ForgeIgnivorusPartManager((Ignivorus) (Object) this);
     }
 
-    @Inject(method = "tick", at = @At("RETURN"))
-    private void onTick(CallbackInfo ci) {
+    @Override
+    public void updateDragonParts() {
         if (this.saintsdragons$forgePartManager != null) {
             this.saintsdragons$forgePartManager.updatePartPositions();
         }

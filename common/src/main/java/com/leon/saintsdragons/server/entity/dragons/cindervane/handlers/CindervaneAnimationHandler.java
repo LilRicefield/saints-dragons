@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -188,25 +187,8 @@ public class CindervaneAnimationHandler {
     }
 
     public PlayState flightPredicate(AnimationState<Cindervane> state) {
-        if (amphithere.isDying()) {
-            return PlayState.STOP;
-        }
-        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
-        if (!aerialState) {
-            return PlayState.STOP;
-        }
-        if (amphithere.isTakeoff()) {
-            return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        if (amphithere.isFlightBlendActive()) {
-            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
-                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        var visualState = amphithere.getVisualFlightState(state.getPartialTick());
-        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
-        }
-        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightLocomotion(state, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS,
+                false, false, current -> amphithere.getVisualFlightState(current.getPartialTick()));
     }
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
         state.getController().transitionLength(ACTION_TRANSITION_TICKS);

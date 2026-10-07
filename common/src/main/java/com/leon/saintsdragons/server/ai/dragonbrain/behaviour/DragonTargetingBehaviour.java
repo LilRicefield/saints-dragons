@@ -33,6 +33,9 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     private static final int DRACONIAN_SWARM_POLL_INTERVAL_TICKS = 10;
 
     private final DragonPursuitSafety pursuitSafety = new DragonPursuitSafety();
+    private int lastOwnerHurtTimestamp;
+    private int lastOwnerAttackTimestamp;
+    private int lastSelfHurtTimestamp;
     private String source = "none";
     private int sourcePriority = Integer.MAX_VALUE;
     private int draconianSwarmPollCooldown;
@@ -192,6 +195,46 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
 
     @Nullable
     protected abstract TargetChoice findPriorityTarget(DragonBrainContext<T> context);
+
+    /** Poll only when the species reaches owner defense in its priority order. */
+    @Nullable
+    protected final TargetChoice pollOwnerDefense(T dragon, int hurtPriority, int attackPriority) {
+        LivingEntity owner = dragon.getOwner();
+        if (owner == null) {
+            return null;
+        }
+        LivingEntity threat = owner.getLastHurtByMob();
+        int timestamp = owner.getLastHurtByMobTimestamp();
+        if (timestamp != lastOwnerHurtTimestamp && isUsableTarget(dragon, threat)) {
+            lastOwnerHurtTimestamp = timestamp;
+            return targetChoice(threat, "owner_hurt", hurtPriority);
+        }
+        threat = owner.getLastHurtMob();
+        timestamp = owner.getLastHurtMobTimestamp();
+        if (timestamp != lastOwnerAttackTimestamp && isUsableTarget(dragon, threat)) {
+            lastOwnerAttackTimestamp = timestamp;
+            return targetChoice(threat, "owner_attacked", attackPriority);
+        }
+        return null;
+    }
+
+    /** Consume an eligible event only when the species reaches its retaliation branch. */
+    @Nullable
+    protected final TargetChoice pollRetaliation(T dragon, int priority) {
+        LivingEntity attacker = dragon.getLastHurtByMob();
+        int timestamp = dragon.getLastHurtByMobTimestamp();
+        if (timestamp != lastSelfHurtTimestamp
+                && canReactToRetaliation(dragon, attacker, timestamp)
+                && isUsableTarget(dragon, attacker)) {
+            lastSelfHurtTimestamp = timestamp;
+            return targetChoice(attacker, "retaliation", priority);
+        }
+        return null;
+    }
+
+    protected boolean canReactToRetaliation(T dragon, @Nullable LivingEntity attacker, int timestamp) {
+        return true;
+    }
 
     protected boolean isUsableTarget(T dragon, @Nullable LivingEntity target) {
         return DragonTargetLifecycle.isValidTarget(dragon, target) && dragon.canTarget(target);

@@ -53,26 +53,14 @@ public interface DragonBrainOwner<T extends DragonEntity> {
     }
 
     default Brain<T> makeBrain(Brain<T> brain) {
+        List<DragonBehaviourGroup<T>> groups = getDragonBrainBehaviourGroups();
+        DragonBrainValidation.validate(this, groups);
         List<DragonBrainDiagnostics.RegisteredBehaviour> registeredBehaviours = new ArrayList<>();
-        for (DragonBehaviourGroup<T> group : getDragonBrainBehaviourGroups()) {
+        for (DragonBehaviourGroup<T> group : groups) {
             ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super T>>> behaviours = ImmutableList.builder();
             int priority = group.activity() == Activity.CORE ? 0 : 10;
-            List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
-            if (group.activity() == Activity.IDLE) {
-                configuredBehaviours.addAll(idlePerceptionBehaviours(usesDragonScent()));
-            }
-            if (group.activity() == Activity.FIGHT) {
-                configuredBehaviours.add(new AirToGroundTransitionBehaviour<>());
-            }
-            configuredBehaviours.addAll(group.behaviours());
-            if (group.activity() == Activity.FIGHT) {
-                configuredBehaviours.add(new DragonFlightMovementRecoveryBehaviour<>());
-            }
-            if (group.activity() == Activity.CORE) {
-                configuredBehaviours.add(new DragonPerceptionBehaviour<>());
-                configuredBehaviours.add(new DragonSleepBehaviour<>());
-                configuredBehaviours.add(new DragonTacticalPlannerBehaviour<>());
-            }
+            List<DragonBehaviour<T>> configuredBehaviours = getDragonBrainBehaviours(group);
+            DragonBrainValidation.validateBehaviours(this, group.activity(), configuredBehaviours);
             for (DragonBehaviour<T> behaviour : configuredBehaviours) {
                 behaviour.bindActivity(group.activity(), priority);
                 behaviours.add(Pair.of(priority++, behaviour));
@@ -95,6 +83,21 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         brain.useDefaultActivity();
         DragonBrainDiagnostics.attach(brain, registeredBehaviours);
         return brain;
+    }
+
+    // Common services around the species' ordered behaviours
+    default List<DragonBehaviour<T>> getDragonBrainBehaviours(DragonBehaviourGroup<T> group) {
+        List<DragonBehaviour<T>> behaviours = new ArrayList<>();
+        if (group.activity() == Activity.IDLE) {
+            behaviours.addAll(idlePerceptionBehaviours(usesDragonScent()));
+        }
+        behaviours.addAll(group.behaviours());
+        if (group.activity() == Activity.CORE) {
+            behaviours.add(new DragonPerceptionBehaviour<>());
+            behaviours.add(new DragonSleepBehaviour<>());
+            behaviours.add(new DragonTacticalPlannerBehaviour<>());
+        }
+        return behaviours;
     }
 
     default boolean usesDragonScent() {

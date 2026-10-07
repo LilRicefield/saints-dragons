@@ -311,11 +311,9 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private final AnimationController<Volitans> vocalController;
     private final AnimationController<Volitans> interactionController;
     private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
-    private int timeFlying;
     private int spineDropCooldownTicks;
     private int ticksInWater;
     private int ticksOutOfWater;
-    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
     private float smoothedPlayerPitchRad = 0f;
@@ -626,11 +624,6 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     }
 
     @Override
-    protected int getFlightMode() {
-        return evaluateStandardFlightMode(false);
-    }
-
-    @Override
     public DragonFlightAnimationProfile getFlightAnimationProfile() {
         return VolitansStatProfile.FlightAnimation.ANIMATION_PROFILE;
     }
@@ -643,26 +636,6 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     @Override
     public boolean isFlightBlendActive() {
         return super.isFlightBlendActive() && !isTamingStunned();
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
-        return DATA_FLYING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
-        return DATA_TAKEOFF;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
-        return DATA_HOVERING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
-        return DATA_LANDING;
     }
 
     @Override
@@ -1007,8 +980,12 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected boolean shouldBankDuringFlight() {
+        return isFlying() && !isLanding();
+    }
+
+    @Override
+    protected void tickFlightLifecycle() {
         breathStream.tick();
         if (level() instanceof ServerLevel serverLevel) {
             DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
@@ -1089,14 +1066,9 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
             handleAmbientSounds();
             tickWaterPreferenceTimers();
             tickBreathGaugeEnergy();
-            tickStandardTakeoffAndGroundedAerialRecovery();
-            tickRiderTakeoff();
+            tickFlightTakeoff();
 
-            if (isFlying()) {
-                timeFlying++;
-            } else {
-                timeFlying = 0;
-            }
+            tickFlightDuration();
 
             tickRiderLandingBlendTimer();
             updateSittingProgress();
@@ -1118,21 +1090,12 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
 
         }
 
-        tickBankingLogic();
-        tickBarrelRollLogic();
-        tickPitchingLogic();
+        tickFlightOrientation();
         breathPose.tick(this, (isBreathing() || getBreathIntroAge(1.0F) >= 0.0F)
                 && !isBurrowing() && !isUltimateSlamActive(), getBreathVisualDirection(1.0F));
 
         this.noPhysics = false;
-        boolean shouldUseAirNavigation = isAerial();
-        if (shouldUseAirNavigation) {
-            this.setNoGravity(true);
-            switchToAirNavigation();
-        } else {
-            this.setNoGravity(false);
-            switchToGroundNavigation();
-        }
+        tickFlightNavigationState();
 
         syncFlightAnimationState();
         tickAsyncFlightNavigation(isAiSpecialCombatActive() || isAiSpecialCombatReserved());
@@ -1356,17 +1319,15 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController);
+        AnimationHelper.registerDragonControllers(this, controllers, vocalController,
+                movementController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
-                fastActionController, flightController, airActionController, vocalController, interactionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupAirActionController(airActionController);
-        AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupMovementController(movementController);
     }
@@ -2351,17 +2312,6 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         return true;
     }
 
-    private void tickBankingLogic() {
-        DragonFlightVisuals.tickBanking(
-                this.flightVisualState,
-                isFlying() && !isLanding(),
-                this.horizontalCollision,
-                this.verticalCollision,
-                this.getYRot(),
-                this.yRotO
-        );
-    }
-
     private Vec3 getRiderDashForwardVector() {
         LivingEntity rider = getControllingPassenger();
         if (rider != null) {
@@ -2658,11 +2608,6 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     }
 
     @Override
-    protected DragonFlightVisuals.State getFlightVisualState() {
-        return this.flightVisualState;
-    }
-
-    @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
         return DATA_FLIGHT_PITCH;
     }
@@ -2674,7 +2619,8 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
 
     // Remove this and voli ain't pitching right
     // Needs custom pitching logic for both water and air locomotions
-    private void tickPitchingLogic() {
+    @Override
+    protected void tickFlightPitch() {
         prevFlightPitchRad = flightPitchRad;
         if (level().isClientSide) {
             flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);

@@ -216,32 +216,10 @@ public final class VolitansAnimationHandler {
         );
     }
     public PlayState flightPredicate(AnimationState<Volitans> state) {
-        if (dragon.isDying() || dragon.isTamingStunned()) {
-            return PlayState.STOP;
-        }
-        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
-        if (!aerialState) {
-            return PlayState.STOP;
-        }
-        if (dragon.isTakeoff()) {
-            return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-
-        if (dragon.isFlightBlendActive()) {
-            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
-                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        DragonFlightStateEvaluator.VisualState visualState;
-        if (dragon.isLanding()) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
-        } else {
-            float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
-            visualState = dragon.evaluateMotionFlightState(animationPitchRad);
-        }
-        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
-        }
-        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightLocomotion(state, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS,
+                dragon.isTamingStunned(), false,
+                current -> dragon.isLanding() ? DragonFlightStateEvaluator.VisualState.GLIDE_DOWN
+                        : dragon.evaluateMotionFlightState(-dragon.getFlightPitchRadians(current.getPartialTick())));
     }
     public PlayState actionPredicate(AnimationState<Volitans> state) {
         state.getController().transitionLength(ACTION_TRANSITION_TICKS);

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
@@ -12,6 +13,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import software.bernie.geckolib.core.animatable.GeoAnimatable;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
@@ -38,6 +40,44 @@ public final class AnimationHelper {
     public static final String DANCE = "dance";
 
     private AnimationHelper() {
+    }
+
+    /** Preserve the supplied layer order while installing shared sound and vocal handling. */
+    @SafeVarargs
+    public static <T extends DragonEntity> void registerDragonControllers(T dragon,
+            AnimatableManager.ControllerRegistrar registrar, AnimationController<T> vocal,
+            AnimationController<T>... orderedControllers) {
+        registerSoundKeyframes(dragon, orderedControllers);
+        registerGrumbles(vocal, dragon);
+        registrar.add(orderedControllers);
+    }
+
+    /** Standard flight predicate; special triggered actions are handled by the caller first. */
+    public static <T extends RideableFlyingDragon> PlayState handleFlightLocomotion(AnimationState<T> state,
+            FlightAnimations animations, FlightTransitions transitions) {
+        return handleFlightLocomotion(state, animations, transitions, false, false,
+                current -> current.getAnimatable().evaluateMotionFlightState(
+                        current.getAnimatable().getFlightPitchRadians(current.getPartialTick())));
+    }
+
+    public static <T extends RideableFlyingDragon> PlayState handleFlightLocomotion(AnimationState<T> state,
+            FlightAnimations animations, FlightTransitions transitions, boolean blocked, boolean riderTakeoff,
+            Function<AnimationState<T>, DragonFlightStateEvaluator.VisualState> resolvePose) {
+        T dragon = state.getAnimatable();
+        if (blocked || dragon.isDying()
+                || !(dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering())) {
+            return PlayState.STOP;
+        }
+        if (dragon.isTakeoff()) {
+            return handleTakeoff(state, riderTakeoff, animations, transitions);
+        }
+        var pose = dragon.isFlightBlendActive()
+                ? DragonFlightStateEvaluator.VisualState.GLIDE : resolvePose.apply(state);
+        // Blended fliers apply their dive pose procedurally over the glide base.
+        if (pose == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN && dragon.getFlightAnimationProfile() != null) {
+            pose = DragonFlightStateEvaluator.VisualState.GLIDE;
+        }
+        return handleFlightState(state, pose, animations, transitions);
     }
 
     @SafeVarargs

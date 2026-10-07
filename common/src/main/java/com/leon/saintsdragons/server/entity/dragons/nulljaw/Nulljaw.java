@@ -30,7 +30,6 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoun
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.core.BlockPos;
@@ -153,7 +152,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private final AnimationController<Nulljaw> instantController;
     private final AnimationController<Nulljaw> vocalController;
     private final AnimationController<Nulljaw> interactionController;
-    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
 
     @Nullable
     private UUID packLeaderUuid;
@@ -414,6 +412,11 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
+    protected void tickFlightLifecycle() {
+        // Permanent floating uses aiStep rather than takeoff, landing, or winged flight updates.
+    }
+
+    @Override
     public void aiStep() {
         super.aiStep();
         tickStandardPitchingLogic();
@@ -439,10 +442,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         }
     }
 
-    @Override
-    protected DragonFlightVisuals.State getFlightVisualState() {
-        return this.flightVisualState;
-    }
+
 
     @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
@@ -1219,33 +1219,13 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
-    protected int getFlightMode() {
+    public int getFlightMode() {
         return isActuallyHovering() ? 2 : 5;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
         return ModAbilities.NULLJAW_HURT;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
-        return DATA_FLYING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
-        return DATA_TAKEOFF;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
-        return DATA_HOVERING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
-        return DATA_LANDING;
     }
 
     @Override

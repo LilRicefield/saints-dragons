@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
+import com.leon.saintsdragons.server.entity.part.DragonPartProvider;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
@@ -103,6 +104,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
     private final DragonFlightEffort flightEffort = new DragonFlightEffort();
     private final DragonFlightBlend flightBlend = new DragonFlightBlend();
+    protected final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
+    public int timeFlying;
+    protected int airTicks;
+    public int groundTicks;
     private Vec3 lastFlightAnimationPosition;
     private Vec3 lastDivePosePosition;
     private final DragonCombatAim combatAim = new DragonCombatAim(this);
@@ -151,13 +156,21 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return combatDecisionSupport;
     }
 
-    protected abstract EntityDataAccessor<Boolean> getFlyingDataAccessor();
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
+    }
 
-    protected abstract EntityDataAccessor<Boolean> getTakeoffDataAccessor();
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
+    }
 
-    protected abstract EntityDataAccessor<Boolean> getHoveringDataAccessor();
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
+    }
 
-    protected abstract EntityDataAccessor<Boolean> getLandingDataAccessor();
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
+    }
 
     protected int getFlightAnimationTransitionTicks() {
         return 1;
@@ -790,7 +803,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     @Override
-    public void tick() {
+    public final void tick() {
+        beforeFlightTick();
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
         tickDivePose();
@@ -801,6 +815,134 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         tickNearWaterFlightSplash();
         tickFlightAnimationEffort();
         tickFlightBlend();
+        tickFlightLifecycle();
+        afterFlightTick();
+        if (this instanceof DragonPartProvider parts) {
+            parts.updateDragonParts();
+        }
+    }
+
+    protected void beforeFlightTick() {
+    }
+
+    protected void afterFlightTick() {
+    }
+
+    /**
+     * Default lifecycle for a simple flier. Species with interleaved ability updates can override
+     * this hook and use the same stages at their existing points in the tick.
+     */
+    protected void tickFlightLifecycle() {
+        tickRiderControlLock();
+        tickFlightOrientation();
+        if (!level().isClientSide) {
+            tickFlightTakeoff();
+            tickFlightGroundContact();
+            tickFlightContactCounters();
+            tickFlightDuration();
+            syncFlightAnimationState();
+        }
+        tickFlightNavigationState();
+        tickAsyncFlightNavigation();
+        if (!level().isClientSide) {
+            tickAnimationStates();
+        }
+    }
+
+    protected final void tickFlightTakeoff() {
+        tickStandardTakeoffAndGroundedAerialRecovery();
+        tickRiderTakeoff();
+    }
+
+    protected final void tickFlightDuration() {
+        timeFlying = isFlying() ? timeFlying + 1 : 0;
+    }
+
+    protected final void tickFlightContactCounters() {
+        if (isFlying()) {
+            airTicks++;
+            groundTicks = 0;
+        } else {
+            groundTicks++;
+            airTicks = 0;
+        }
+    }
+
+    protected final void tickFlightOrientation() {
+        DragonFlightVisuals.tickBanking(getFlightVisualState(), shouldBankDuringFlight(),
+                horizontalCollision, verticalCollision, getYRot(), yRotO);
+        afterFlightBanking();
+        if (pitchBeforeFlightRoll()) {
+            tickFlightPitch();
+            tickBarrelRollLogic();
+        } else {
+            tickBarrelRollLogic();
+            tickFlightPitch();
+        }
+    }
+
+    protected boolean shouldBankDuringFlight() {
+        return isFlying() && !isLanding() && !isHovering();
+    }
+
+    protected void afterFlightBanking() {
+    }
+
+    protected boolean pitchBeforeFlightRoll() {
+        return false;
+    }
+
+    protected void tickFlightPitch() {
+        tickStandardPitchingLogic();
+    }
+
+    /** Ground contact outside a planned landing still retires the ordinary flight state. */
+    protected final void tickFlightGroundContact() {
+        if (level().isClientSide) return;
+        boolean grounded = onGround() && !isInWater();
+        if (isFlying()) {
+            fallDistance = 0.0F;
+            if (grounded && !isTakeoff()) {
+                if (isLanding()) completeAiLanding();
+                else onFlightGroundedWithoutLanding();
+            }
+        } else if (isLanding() && grounded) {
+            completeAiLanding();
+        } else if (!isLanding()) {
+            onGroundedFlightIdle();
+        }
+    }
+
+    protected void onFlightGroundedWithoutLanding() {
+        setLanding(false);
+        setFlying(false);
+    }
+
+    protected void onGroundedFlightIdle() {
+    }
+
+    protected final void tickFlightNavigationState() {
+        setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
+        switch (getFlightNavigationPolicy()) {
+            case FOLLOW_FLIGHT_STATE -> {
+                if (isAerial()) switchToAirNavigation();
+                else switchToGroundNavigation();
+            }
+            case GROUND_FALLBACK -> {
+                if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
+                    switchToGroundNavigation();
+                }
+            }
+            case KEEP_CURRENT -> { }
+        }
+    }
+
+    protected FlightNavigationPolicy getFlightNavigationPolicy() {
+        return FlightNavigationPolicy.FOLLOW_FLIGHT_STATE;
+    }
+
+    protected enum FlightNavigationPolicy {
+        FOLLOW_FLIGHT_STATE, GROUND_FALLBACK, KEEP_CURRENT
     }
 
     private void tickDivePose() {
@@ -1833,7 +1975,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     @Override
-    protected abstract int getFlightMode();
+    public int getFlightMode() {
+        return evaluateStandardFlightMode(false);
+    }
 
     /** Return a species profile to opt into effort-driven flight and the shared pose mixer. */
     public @Nullable DragonFlightAnimationProfile getFlightAnimationProfile() {
@@ -2094,7 +2238,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected DragonFlightVisuals.State getFlightVisualState() {
-        return null;
+        return flightVisualState;
     }
 
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {

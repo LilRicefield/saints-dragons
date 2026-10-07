@@ -33,7 +33,6 @@ import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRide
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
-import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
@@ -244,9 +243,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final AnimationController<Cindervane> interactionController;
     private final SimpleContainer cindervaneChestInventory = new SimpleContainer(CINDERVANE_CHEST_SLOTS);
     private int targetCooldown;
-    private int airTicks;
-    public int groundTicks;
-    public int timeFlying = 0;
     private int fireBodySuppressionTicks;
     private Vec3 lastFireBodyDiveRingPosition;
     private int fireBodyDiveRingCooldown;
@@ -258,7 +254,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Nullable
     private UUID packLeaderUuid;
     private final CindervanePackFlightCoordinator packFlightCoordinator = new CindervanePackFlightCoordinator();
-    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private static final float[] TAIL_COUNTER_BANK_DEGREES = {2.0F, 3.0F, 4.0F, 3.0F};
     private static final float TAIL_BANK_FOLLOW_BLEND = 0.45F;
     private final float[] tailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
@@ -511,52 +506,37 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         setLanding(landing);
     }
 
-
-    private void tickFlightLifecycle() {
-        if (!this.level().isClientSide) {
-            if (!this.isOrderedToSit() && getSitProgress() != 0f) {
+    private void tickGroundedFlightState() {
+        if (!level().isClientSide) {
+            if (!isOrderedToSit() && getSitProgress() != 0f) {
                 clearSitProgress();
             }
-            boolean onGroundNow = this.onGround() && !this.isInWater();
-            if (isLanding() && onGroundNow) {
+            if (isLanding() && onGround() && !isInWater()) {
                 handleAiLandingComplete();
             }
-
-            if (isFlying()) {
-                airTicks++;
-                groundTicks = 0;
-                this.fallDistance = 0.0F;
-
-                if (onGroundNow && !isTakeoff()) {
-                    if (isLanding()) {
-                        handleAiLandingComplete();
-                    } else {
-                        setLanding(false);
-                    }
-                    setFlying(false);
-                }
-            } else {
-                groundTicks++;
-                airTicks = 0;
-            }
-
+            tickFlightContactCounters();
+            tickFlightGroundContact();
             tickAnimationStates();
         }
-        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
-        if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
-            switchToGroundNavigation();
-        }
+        tickFlightNavigationState();
     }
 
-    public void tick() {
-        super.tick();
-        tickRiderControlLock();
-        tickBankingLogic();
+    @Override
+    protected void afterFlightBanking() {
         tickTailCounterBank();
-        tickBarrelRollLogic();
-        tickStandardPitchingLogic();
+    }
+
+    @Override
+    protected FlightNavigationPolicy getFlightNavigationPolicy() {
+        return FlightNavigationPolicy.GROUND_FALLBACK;
+    }
+
+    @Override
+    protected void tickFlightLifecycle() {
+        tickRiderControlLock();
+        tickFlightOrientation();
         tickScreenShake();
-        tickFlightLifecycle();
+        tickGroundedFlightState();
         if (level().isClientSide) {
             return;
         }
@@ -582,11 +562,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
         syncFlightAnimationState();
         tickAsyncFlightNavigation();
-        if (isFlying()) {
-            timeFlying++;
-        } else {
-            timeFlying = 0;
-        }
+        tickFlightDuration();
         tickFeedingCooldown();
         handleAmbientSounds();
 
@@ -716,18 +692,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.setNoGravity(isFlying() || isHovering());
     }
 
-    private void tickBankingLogic() {
-        boolean shouldBank = isFlying() && !isLanding() && !isHovering();
-        DragonFlightVisuals.tickBanking(
-                this.flightVisualState,
-                shouldBank,
-                this.horizontalCollision,
-                this.verticalCollision,
-                this.getYRot(),
-                this.yRotO
-        );
-    }
-
     private void tickTailCounterBank() {
         System.arraycopy(tailBankFollow, 0, previousTailBankFollow, 0, tailBankFollow.length);
         float bank = Mth.clamp(flightVisualState.bankAngle / 90.0F, -1.0F, 1.0F);
@@ -784,11 +748,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public boolean isRiderLandingBlendActive() {
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
-    }
-
-    @Override
-    protected DragonFlightVisuals.State getFlightVisualState() {
-        return this.flightVisualState;
     }
 
     @Override
@@ -853,11 +812,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     protected void customServerAiStep() {
         DragonBrain.tick(DRAGON_BRAIN, this);
         super.customServerAiStep();
-    }
-
-    @Override
-    public int getFlightMode() {
-        return evaluateStandardFlightMode(false);
     }
 
     @Override
@@ -1487,17 +1441,15 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, flightController, vocalController, actionController, fastActionController, interactionController);
+        AnimationHelper.registerDragonControllers(this, controllers, vocalController,
+                movementController, flightController, vocalController, actionController, fastActionController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
-                fastActionController, flightController, vocalController, interactionController);
         animationHandler.setupMovementController(movementController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
-        AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupInteractionController(interactionController);
     }
 
@@ -1873,26 +1825,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public CindervanePackFlightCoordinator getPackFlightCoordinator() {
         return packFlightCoordinator;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
-        return DATA_FLYING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
-        return DATA_TAKEOFF;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
-        return DATA_HOVERING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
-        return DATA_LANDING;
     }
 
     @Override

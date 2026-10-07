@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
-import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
 
@@ -375,26 +374,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     private PlayState selectFlightAnimation(AnimationState<Ignivorus> state) {
-        if (dragon.isDying() || dragon.isTamingStunned()) {
-            return PlayState.STOP;
-        }
-        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
-        if (!aerialState) {
-            return PlayState.STOP;
-        }
-        if (dragon.isTakeoff()) {
-            return AnimationHelper.handleTakeoff(state, false,
-                    dragon.isPhase2Active() ? PHASE2_FLIGHT_ANIMATIONS : FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        if (dragon.isFlightBlendActive()) {
-            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
-                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        var visualState = dragon.getVisualFlightState(state.getPartialTick());
-        if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
-        }
-        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightLocomotion(state,
+                dragon.isTakeoff() && dragon.isPhase2Active() ? PHASE2_FLIGHT_ANIMATIONS : FLIGHT_ANIMATIONS,
+                FLIGHT_TRANSITIONS, dragon.isTamingStunned(), false,
+                current -> dragon.getVisualFlightState(current.getPartialTick()));
     }
 
     public PlayState actionPredicate(AnimationState<Ignivorus> state) {

@@ -19,6 +19,7 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
     private final boolean claimsControl;
     private Activity activity;
     private int priority = -1;
+    private boolean registeredWithBrain;
 
     protected DragonBehaviour() {
         this(Map.of(), true);
@@ -71,6 +72,14 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
 
     protected static boolean hasCommittedAction(DragonEntity dragon) {
         return DragonBehaviourEligibility.hasCommittedAction(dragon);
+    }
+
+    final boolean claimBrainRegistration() {
+        if (registeredWithBrain || activity != null) {
+            return false;
+        }
+        registeredWithBrain = true;
+        return true;
     }
 
     final void bindActivity(Activity activity, int priority) {

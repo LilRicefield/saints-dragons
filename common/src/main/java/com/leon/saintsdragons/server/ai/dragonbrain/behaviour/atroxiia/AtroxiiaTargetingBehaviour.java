@@ -12,37 +12,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 public final class AtroxiiaTargetingBehaviour extends DragonTargetingBehaviour<Atroxiia> {
-    private int lastOwnerHurtTimestamp;
-    private int lastOwnerAttackTimestamp;
-    private int lastSelfHurtTimestamp;
     private int playerPollCooldown;
 
     @Nullable
     @Override
     protected TargetChoice findPriorityTarget(DragonBrainContext<Atroxiia> context) {
         Atroxiia dragon = context.dragon();
-        LivingEntity owner = dragon.getOwner();
-        if (owner != null) {
-            LivingEntity threat = owner.getLastHurtByMob();
-            int timestamp = owner.getLastHurtByMobTimestamp();
-            if (timestamp != lastOwnerHurtTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerHurtTimestamp = timestamp;
-                return targetChoice(threat, "owner_hurt", 0);
-            }
-
-            threat = owner.getLastHurtMob();
-            timestamp = owner.getLastHurtMobTimestamp();
-            if (timestamp != lastOwnerAttackTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerAttackTimestamp = timestamp;
-                return targetChoice(threat, "owner_attacked", 1);
-            }
+        TargetChoice ownerDefense = pollOwnerDefense(dragon, 0, 1);
+        if (ownerDefense != null) {
+            return ownerDefense;
         }
 
-        LivingEntity attacker = dragon.getLastHurtByMob();
-        int hurtTimestamp = dragon.getLastHurtByMobTimestamp();
-        if (hurtTimestamp != lastSelfHurtTimestamp && isUsableTarget(dragon, attacker)) {
-            lastSelfHurtTimestamp = hurtTimestamp;
-            return targetChoice(attacker, "retaliation", 2);
+        TargetChoice retaliation = pollRetaliation(dragon, 2);
+        if (retaliation != null) {
+            return retaliation;
         }
 
         if (playerPollCooldown-- <= 0) {

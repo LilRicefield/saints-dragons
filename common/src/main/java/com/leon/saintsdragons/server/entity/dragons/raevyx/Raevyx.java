@@ -42,7 +42,6 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTaming
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
-import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -224,12 +223,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private final ScreenShakeComponent screenShakeComponent;
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final DragonBreathPose breathPose = new DragonBreathPose(RaevyxStatProfile.BreathPose.PROFILE);
-    public int timeFlying = 0;
     public boolean landingFlag = false;
     public boolean landedFlag = false;
     public int landingTimer = 0;
     public int landedTimer = 0;
-    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private static final float[] TAIL_COUNTER_BANK_DEGREES = {2.0F, 3.0F, 4.0F, 4.0F, 3.0F};
     private static final float TAIL_BANK_FOLLOW_BLEND = 0.45F;
     private final float[] tailBankFollow = new float[TAIL_COUNTER_BANK_DEGREES.length];
@@ -1071,26 +1068,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return hit.getLocation();
     }
     @Override
-    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
-        return DATA_FLYING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
-        return DATA_TAKEOFF;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
-        return DATA_HOVERING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
-        return DATA_LANDING;
-    }
-
-    @Override
     protected boolean normalizeFlyingStateRequest(boolean flying) {
         return flying && !isBaby();
     }
@@ -1175,11 +1152,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     public int getGroundMoveState() { return getIntegerData(DATA_GROUND_MOVE_STATE); }
     
-    @Override
-    protected int getFlightMode() {
-        return evaluateStandardFlightMode(false);
-    }
-
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
         return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
@@ -1713,21 +1685,45 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     @Override
-    public void tick() {
-        super.tick();
+    protected void afterFlightBanking() {
+        tickTailCounterBank();
+    }
+
+    @Override
+    protected FlightNavigationPolicy getFlightNavigationPolicy() {
+        return FlightNavigationPolicy.GROUND_FALLBACK;
+    }
+
+    @Override
+    protected boolean pitchBeforeFlightRoll() {
+        return true;
+    }
+
+    @Override
+    protected void onFlightGroundedWithoutLanding() {
+        setLanding(false);
+        setLanded(false);
+        landingTimer = 0;
+        setFlying(false);
+    }
+
+    @Override
+    protected void onGroundedFlightIdle() {
+        landingTimer = 0;
+    }
+
+    @Override
+    protected void tickFlightLifecycle() {
         if (level() instanceof ServerLevel serverLevel) {
             DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
         }
         tickControllers();
-        tickBankingLogic();
-        tickTailCounterBank();
-        tickStandardPitchingLogic();
-        tickBarrelRollLogic();
+        tickFlightOrientation();
         tickScreenShake();
         if (!level().isClientSide) {
             diveImpactAbility.tickServer();
         }
-        tickFlightLifecycle();
+        tickGroundedFlightState();
         if (!level().isClientSide) {
             syncCustomDiveLoopEnabled();
         }
@@ -1737,15 +1733,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return;
         }
         tickSittingState();
-        tickStandardTakeoffAndGroundedAerialRecovery();
-        tickRiderTakeoff();
+        tickFlightTakeoff();
         tickHurtSoundCooldown();
         spawnPendingFamilyBabies(ModEntities.RAEVYX.get(), Raevyx::applyConfiguredAttributes);
-        if (isFlying()) {
-            timeFlying++;
-        } else {
-            timeFlying = 0;
-        }
+        tickFlightDuration();
         if (isFlying() && getControllingPassenger() != null) {
             if (!isLanding() && !isBeaming() && !isTakeoff() && isHovering()) {
                 setHovering(false);
@@ -1844,37 +1835,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     }
 
-    private void tickFlightLifecycle() {
-        if (!this.level().isClientSide) {
-            boolean onGroundNow = this.onGround() && !this.isInWater();
-
-            if (isFlying()) {
-                this.fallDistance = 0.0F;
-                if (onGroundNow && !isTakeoff()) {
-                    if (isLanding()) {
-                        handleAiLandingComplete();
-                    } else {
-                        setLanding(false);
-                        setLanded(false);
-                        landingTimer = 0;
-                        setFlying(false);
-                    }
-                }
-            } else {
-                if (isLanding() && onGroundNow) {
-                    handleAiLandingComplete();
-                } else if (!isLanding()) {
-                    landingTimer = 0;
-                }
-            }
-            syncFlightAnimationState();
-        }
-
-        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
-
-        if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
-            switchToGroundNavigation();
-        }
+    private void tickGroundedFlightState() {
+        tickFlightGroundContact();
+        syncFlightAnimationState();
+        tickFlightNavigationState();
     }
 
     private void tickScreenShake() {
@@ -2251,17 +2215,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
     }
 
-    private void tickBankingLogic() {
-        boolean shouldBank = isFlying() && !isLanding() && !isHovering();
-        DragonFlightVisuals.tickBanking(
-                this.flightVisualState,
-                shouldBank,
-                this.horizontalCollision,
-                this.verticalCollision,
-                this.getYRot(),
-                this.yRotO
-        );
-    }
     
     private void tickTailCounterBank() {
         System.arraycopy(tailBankFollow, 0, previousTailBankFollow, 0, tailBankFollow.length);
@@ -2315,11 +2268,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     public boolean isRiderLandingBlendActive() {
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
-    }
-
-    @Override
-    protected DragonFlightVisuals.State getFlightVisualState() {
-        return this.flightVisualState;
     }
 
     @Override
@@ -3128,13 +3076,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
+        AnimationHelper.registerDragonControllers(this, controllers, vocalController,
+                movementController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
-                fastActionController, flightController, vocalController, interactionController);
-        AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupMovementController(movementController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);

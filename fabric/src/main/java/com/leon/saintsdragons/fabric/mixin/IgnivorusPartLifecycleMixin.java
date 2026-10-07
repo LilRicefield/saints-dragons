@@ -2,7 +2,6 @@ package com.leon.saintsdragons.fabric.mixin;
 
 import com.leon.saintsdragons.fabric.entity.part.FabricDragonPart;
 import com.leon.saintsdragons.fabric.entity.part.FabricIgnivorusPartManager;
-import com.leon.saintsdragons.fabric.entity.part.IgnivorusPartProvider;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.part.DragonPartProvider;
 import net.minecraft.world.entity.Entity;
@@ -15,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Ignivorus.class)
-public abstract class IgnivorusPartLifecycleMixin implements IgnivorusPartProvider, DragonPartProvider {
+public abstract class IgnivorusPartLifecycleMixin implements DragonPartProvider {
 
     @Unique
     private FabricIgnivorusPartManager saintsdragons$fabricPartManager;
@@ -25,13 +24,8 @@ public abstract class IgnivorusPartLifecycleMixin implements IgnivorusPartProvid
         this.saintsdragons$fabricPartManager = new FabricIgnivorusPartManager((Ignivorus) (Object) this);
     }
 
-    @Inject(method = "tick", at = @At("RETURN"))
-    private void onTick(CallbackInfo ci) {
-        saintsdragons$refreshParts();
-    }
-
     @Override
-    public void saintsdragons$refreshParts() {
+    public void updateDragonParts() {
         if (this.saintsdragons$fabricPartManager != null) {
             this.saintsdragons$fabricPartManager.updatePartPositions();
         }
@@ -45,7 +39,7 @@ public abstract class IgnivorusPartLifecycleMixin implements IgnivorusPartProvid
     }
 
     @Override
-    public FabricDragonPart[] saintsdragons$getParts() {
+    public Entity[] dragonParts() {
         if (this.saintsdragons$fabricPartManager == null) {
             return new FabricDragonPart[0];
         }
@@ -55,6 +49,4 @@ public abstract class IgnivorusPartLifecycleMixin implements IgnivorusPartProvid
         return this.saintsdragons$fabricPartManager.getParts();
     }
 
-    @Override
-    public Entity[] dragonParts() { return saintsdragons$getParts(); }
 }

@@ -5,7 +5,7 @@ import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.fabric.entity.part.FabricDragonPartIndex;
-import com.leon.saintsdragons.fabric.entity.part.IgnivorusPartProvider;
+import com.leon.saintsdragons.server.entity.part.DragonPartProvider;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
@@ -27,8 +27,8 @@ public final class FabricServerEvents {
 
     public static void init() {
         ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-            if (entity instanceof IgnivorusPartProvider provider) {
-                provider.saintsdragons$refreshParts();
+            if (entity instanceof DragonPartProvider provider) {
+                provider.updateDragonParts();
             }
         });
         ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {

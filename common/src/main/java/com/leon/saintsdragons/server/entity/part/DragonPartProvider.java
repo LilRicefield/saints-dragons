@@ -4,4 +4,6 @@ import net.minecraft.world.entity.Entity;
 
 public interface DragonPartProvider {
     Entity[] dragonParts();
+
+    void updateDragonParts();
 }

@@ -25,9 +25,6 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
     private static final double BABY_PROTECTION_RANGE = StegonautStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
     private static final double PACK_ASSIST_RANGE = StegonautStatProfile.TargetingBehaviour.PACK_ASSIST_RANGE;
 
-    private int lastOwnerHurtTimestamp;
-    private int lastOwnerAttackTimestamp;
-    private int lastSelfHurtTimestamp;
     private int packPollCooldown;
     private int raidPollCooldown;
     private int playerPollCooldown;
@@ -48,21 +45,9 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
             return null;
         }
 
-        LivingEntity owner = dragon.getOwner();
-        if (owner != null) {
-            LivingEntity threat = owner.getLastHurtByMob();
-            int timestamp = owner.getLastHurtByMobTimestamp();
-            if (timestamp != lastOwnerHurtTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerHurtTimestamp = timestamp;
-                return choice(threat, Source.OWNER_HURT);
-            }
-
-            threat = owner.getLastHurtMob();
-            timestamp = owner.getLastHurtMobTimestamp();
-            if (timestamp != lastOwnerAttackTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerAttackTimestamp = timestamp;
-                return choice(threat, Source.OWNER_ATTACKED);
-            }
+        TargetChoice ownerDefense = pollOwnerDefense(dragon, Source.OWNER_HURT.priority, Source.OWNER_ATTACKED.priority);
+        if (ownerDefense != null) {
+            return ownerDefense;
         }
 
         if (packPollCooldown-- <= 0) {
@@ -73,11 +58,9 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
             }
         }
 
-        LivingEntity attacker = dragon.getLastHurtByMob();
-        int hurtTimestamp = dragon.getLastHurtByMobTimestamp();
-        if (hurtTimestamp != lastSelfHurtTimestamp && isUsableTarget(dragon, attacker)) {
-            lastSelfHurtTimestamp = hurtTimestamp;
-            return choice(attacker, Source.RETALIATION);
+        TargetChoice retaliation = pollRetaliation(dragon, Source.RETALIATION.priority);
+        if (retaliation != null) {
+            return retaliation;
         }
 
         if (playerPollCooldown-- <= 0) {

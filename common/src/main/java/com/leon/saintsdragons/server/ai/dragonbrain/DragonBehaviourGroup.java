@@ -78,6 +78,12 @@ public final class DragonBehaviourGroup<T extends DragonEntity> {
             return this;
         }
 
+        /** Release the outgoing activity's movement request and ground navigation state */
+        public Builder<T> clearMovementWhenStopped() {
+            return clearWhenStopped(DragonMemories.MOVEMENT_INTENT, DragonMemories.WALK_TARGET,
+                    DragonMemories.PATH, DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
+        }
+
         public DragonBehaviourGroup<T> build() {
             return new DragonBehaviourGroup<>(activity, behaviours, requirements, clearWhenStopped);
         }

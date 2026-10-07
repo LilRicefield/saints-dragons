@@ -228,33 +228,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"))) {
             return PlayState.CONTINUE;
         }
-        if (wyvern.isDying() || wyvern.isTamingStunned()) {
-            return PlayState.STOP;
-        }
-        boolean aerialState = wyvern.isFlying() || wyvern.isTakeoff() || wyvern.isLanding() || wyvern.isHovering();
-        if (!aerialState) {
-            return PlayState.STOP;
-        }
-        if (wyvern.isTakeoff()) {
-            return AnimationHelper.handleTakeoff(
-                    state,
-                    wyvern.getControllingPassenger() != null,
-                    FLIGHT_ANIMATIONS,
-                    FLIGHT_TRANSITIONS
-            );
-        }
-        if (wyvern.isFlightBlendActive()) {
-            // The flight controller samples all three clips; this silent base handles entry/exit.
-            return AnimationHelper.handleFlightState(state, DragonFlightStateEvaluator.VisualState.GLIDE,
-                    FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        boolean invertedGlide = wyvern.isInvertedFlightGlide(state.getPartialTick());
-        DragonFlightStateEvaluator.VisualState visualState = wyvern.getVisualFlightState(state.getPartialTick());
-        if (invertedGlide
-                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
-        }
-        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightLocomotion(state, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS,
+                wyvern.isTamingStunned(), wyvern.getControllingPassenger() != null,
+                current -> {
+                    boolean inverted = wyvern.isInvertedFlightGlide(current.getPartialTick());
+                    var visualState = wyvern.getVisualFlightState(current.getPartialTick());
+                    return inverted ? DragonFlightStateEvaluator.VisualState.GLIDE : visualState;
+                });
     }
 
     public PlayState raevyxActionPredicate(AnimationState<Raevyx> state) {

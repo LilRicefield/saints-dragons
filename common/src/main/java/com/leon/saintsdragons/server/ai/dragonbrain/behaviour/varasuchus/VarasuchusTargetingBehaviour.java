@@ -25,9 +25,6 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
     private static final double BABY_PROTECTION_RANGE = VarasuchusStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
     private static final double COMMITTED_RETENTION_MULTIPLIER = VarasuchusStatProfile.TargetingBehaviour.COMMITTED_RETENTION_MULTIPLIER;
 
-    private int lastOwnerHurtTimestamp;
-    private int lastOwnerAttackTimestamp;
-    private int lastSelfHurtTimestamp;
     private int roostPollCooldown;
     private int playerPollCooldown;
     private int raidPollCooldown;
@@ -42,13 +39,9 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
         if (dragon.shouldSuspendRoostWandering()) {
             protectingBabies = false;
-            LivingEntity attacker = dragon.getLastHurtByMob();
-            int hurtTimestamp = dragon.getLastHurtByMobTimestamp();
-            if (hurtTimestamp != lastSelfHurtTimestamp
-                    && isRecentAttacker(dragon, attacker, hurtTimestamp)
-                    && isUsableTarget(dragon, attacker)) {
-                lastSelfHurtTimestamp = hurtTimestamp;
-                return choice(attacker, Source.RETALIATION);
+            TargetChoice retaliation = pollRetaliation(dragon, Source.RETALIATION.priority);
+            if (retaliation != null) {
+                return retaliation;
             }
             Player intruder = pollRoostIntruder(context.level(), dragon);
             if (intruder != null) {
@@ -57,21 +50,9 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
             return null;
         }
 
-        LivingEntity owner = dragon.getOwner();
-        if (owner != null) {
-            LivingEntity threat = owner.getLastHurtByMob();
-            int timestamp = owner.getLastHurtByMobTimestamp();
-            if (timestamp != lastOwnerHurtTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerHurtTimestamp = timestamp;
-                return choice(threat, Source.OWNER_HURT);
-            }
-
-            threat = owner.getLastHurtMob();
-            timestamp = owner.getLastHurtMobTimestamp();
-            if (timestamp != lastOwnerAttackTimestamp && isUsableTarget(dragon, threat)) {
-                lastOwnerAttackTimestamp = timestamp;
-                return choice(threat, Source.OWNER_ATTACKED);
-            }
+        TargetChoice ownerDefense = pollOwnerDefense(dragon, Source.OWNER_HURT.priority, Source.OWNER_ATTACKED.priority);
+        if (ownerDefense != null) {
+            return ownerDefense;
         }
 
         List<Varasuchus> babies = protectableBabies(dragon);
@@ -83,11 +64,9 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
             }
         }
 
-        LivingEntity attacker = dragon.getLastHurtByMob();
-        int hurtTimestamp = dragon.getLastHurtByMobTimestamp();
-        if (hurtTimestamp != lastSelfHurtTimestamp && isUsableTarget(dragon, attacker)) {
-            lastSelfHurtTimestamp = hurtTimestamp;
-            return choice(attacker, Source.RETALIATION);
+        TargetChoice retaliation = pollRetaliation(dragon, Source.RETALIATION.priority);
+        if (retaliation != null) {
+            return retaliation;
         }
 
         Player intruder = pollRoostIntruder(context.level(), dragon);
@@ -284,6 +263,11 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
             }
         }
         return newest;
+    }
+
+    @Override
+    protected boolean canReactToRetaliation(Varasuchus dragon, @Nullable LivingEntity attacker, int timestamp) {
+        return !dragon.shouldSuspendRoostWandering() || isRecentAttacker(dragon, attacker, timestamp);
     }
 
     private boolean isRecentAttacker(Varasuchus dragon,

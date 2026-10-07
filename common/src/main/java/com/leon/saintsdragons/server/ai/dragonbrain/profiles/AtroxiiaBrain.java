@@ -2,116 +2,67 @@ package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
 import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
 
-import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.GroundDragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundFollowOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LookAtAttackTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.atroxiia.AtroxiiaGroundCombatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.atroxiia.AtroxiiaTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.atroxiia.AtroxiiaWaterCombatBehaviour;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.sensing.Sensor;
-import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.world.entity.schedule.Activity;
 
 import java.util.List;
 
-public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
+public final class AtroxiiaBrain extends GroundDragonBrain<Atroxiia> {
 
     @Override
-    public List<SensorType<? extends Sensor<? super Atroxiia>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
+    public boolean usesDragonScent() {
+        return true;
     }
 
     @Override
-    public void updateActivity(Brain<Atroxiia> brain, Atroxiia dragon) {
-        LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (canFight(dragon, target)) {
-            brain.setActiveActivityIfPossible(getCombatActivity(brain));
-            return;
-        }
-
-        if (target != null && (!DragonTargetLifecycle.isValidTarget(dragon, target)
-                || !withinAggroRange(dragon, target))) {
-            DragonTargetLifecycle.clearCombatTarget(brain, dragon, true);
-        }
-        brain.useDefaultActivity();
-    }
-
-    @Override
-    public List<DragonBehaviourGroup<Atroxiia>> getDragonBrainBehaviourGroups() {
+    protected List<DragonBehaviourGroup<Atroxiia>> createBehaviourGroups() {
         return List.of(
-                DragonBehaviourGroup.<Atroxiia>activity(Activity.CORE)
-                        .behaviours(
-                                new AtroxiiaTargetingBehaviour(),
-                                new DragonIdleLookBehaviour<>(8.0D),
-                                new ApplyMovementIntentBehaviour<>(),
-                                new MoveToGroundWalkTargetBehaviour<>(),
-                                new LookAtAttackTargetBehaviour<>(30.0F, 30.0F)
-                        )
-                        .build(),
-                DragonBehaviourGroup.<Atroxiia>activity(Activity.FIGHT)
-                        .behaviours(
-                                new SetWalkTargetToAttackTargetBehaviour<>(
-                                        AtroxiiaGroundCombatBehaviour.CHASE_SPEED,
-                                        AtroxiiaGroundCombatBehaviour::meleeStopRange,
-                                        (dragon, target) -> AtroxiiaGroundCombatBehaviour.isMovementCommitted(dragon)
-                                ),
-                                new AsyncWaterChaseTargetBehaviour<>(AtroxiiaStatProfile.Brain.WATER_CHASE_SPEED, AtroxiiaStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
-                                new AtroxiiaGroundCombatBehaviour(),
-                                new AtroxiiaWaterCombatBehaviour()
-                        )
-                        .clearWhenStopped(
-                                DragonMemories.MOVEMENT_INTENT,
-                                DragonMemories.WALK_TARGET,
-                                DragonMemories.PATH,
-                                DragonMemories.CANT_REACH_WALK_TARGET_SINCE
-                        )
-                        .build(),
-                DragonBehaviourGroup.<Atroxiia>activity(Activity.IDLE)
-                        .behaviours(
-                                new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(AtroxiiaStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, AtroxiiaStatProfile.Brain.WATER_ESCAPE_SPEED),
-                                        new DragonBreedBehaviour<>(AtroxiiaStatProfile.Brain.BREED_SPEED, Atroxiia.class,
-                                                Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
-                                        new DragonGroundFollowOwnerBehaviour<>(
-                                                DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
-                                        new DragonGroundWanderBehaviour<>(AtroxiiaStatProfile.Brain.GROUND_WANDER_SPEED, 100)
-                                )
-                        )
-                        .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)
-                        .build()
+                coreGroup(30.0F, new AtroxiiaTargetingBehaviour()),
+                fightGroup(
+                    new SetWalkTargetToAttackTargetBehaviour<>(
+                            AtroxiiaGroundCombatBehaviour.CHASE_SPEED,
+                            AtroxiiaGroundCombatBehaviour::meleeStopRange,
+                            (dragon, target) -> AtroxiiaGroundCombatBehaviour.isMovementCommitted(dragon)
+                    ),
+                    new AsyncWaterChaseTargetBehaviour<>(AtroxiiaStatProfile.Brain.WATER_CHASE_SPEED, AtroxiiaStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
+                    new AtroxiiaGroundCombatBehaviour(),
+                    new AtroxiiaWaterCombatBehaviour()
+                ),
+                idleGroup(
+                    new DragonWaterEscapeBehaviour<>(AtroxiiaStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, AtroxiiaStatProfile.Brain.WATER_ESCAPE_SPEED),
+                    new DragonBreedBehaviour<>(AtroxiiaStatProfile.Brain.BREED_SPEED, Atroxiia.class,
+                            Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
+                    new DragonGroundFollowOwnerBehaviour<>(
+                            DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
+                    new DragonGroundWanderBehaviour<>(AtroxiiaStatProfile.Brain.GROUND_WANDER_SPEED, 100)
+                )
         );
     }
 
-    private boolean canFight(Atroxiia dragon, LivingEntity target) {
-        return DragonTargetLifecycle.isValidTarget(dragon, target)
+    @Override
+    protected boolean canFight(Atroxiia dragon, LivingEntity target) {
+        return super.canFight(dragon, target)
                 && dragon.canTarget(target)
                 && !dragon.isBaby()
                 && !dragon.isTamingStunned()
-                && !dragon.isVehicle()
                 && !dragon.isPassenger()
-                && !dragon.isOrderedToSit()
-                && (dragon.isGroundedForAction() || dragon.isInWaterOrBubble())
-                && withinAggroRange(dragon, target);
+                && (dragon.isGroundedForAction() || dragon.isInWaterOrBubble());
     }
 
-    private boolean withinAggroRange(Atroxiia dragon, LivingEntity target) {
+    @Override
+    protected boolean withinAggroRange(Atroxiia dragon, LivingEntity target) {
         double followRange = Math.max(16.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
         return dragon.distanceToSqr(target) <= followRange * followRange;
     }

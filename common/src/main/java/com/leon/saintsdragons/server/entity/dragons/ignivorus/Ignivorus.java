@@ -46,7 +46,6 @@ import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderC
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightAnimationProfile;
 import com.leon.saintsdragons.util.animation.DragonFlightAnimationController;
-import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
@@ -336,9 +335,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private final AnimationController<Ignivorus> interactionController;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
-    public int timeFlying = 0;
-    private int airTicks;
-    public int groundTicks;
     private Vec3 fireAimDir;
     private final DragonBreathPose breathPose = new DragonBreathPose(IgnivorusStatProfile.BreathPose.PROFILE);
     private String aiFireBreathDecision = "idle";
@@ -362,7 +358,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private final IgnivorusBreathStream fireBreathStream = new IgnivorusBreathStream(this);
     private int fireTime = 0;
     private Vec3 fireServerTarget = null;
-    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private boolean bulldozing = false;
     private int bulldozeCooldownTicks = 0;
     private final Map<Integer, Integer> bulldozeHitCooldowns = new HashMap<>();
@@ -632,12 +627,24 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
-    public void tick() {
+    protected void beforeFlightTick() {
         if (!level().isClientSide) {
             roostComponent.tick();
         }
-        super.tick();
+    }
 
+    @Override
+    protected boolean shouldBankDuringFlight() {
+        return isFlying();
+    }
+
+    @Override
+    protected FlightNavigationPolicy getFlightNavigationPolicy() {
+        return FlightNavigationPolicy.KEEP_CURRENT;
+    }
+
+    @Override
+    protected void tickFlightLifecycle() {
         if (level() instanceof ServerLevel serverLevel) {
             DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
         }
@@ -656,16 +663,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tickScreenShake();
         tickCinematicZoom();
         tickStandardTakeoffAndGroundedAerialRecovery();
-        if (isFlying()) {
-            airTicks++;
-            groundTicks = 0;
-            timeFlying++;
-
-        } else {
-            groundTicks++;
-            airTicks = 0;
-            timeFlying = 0;
-        }
+        tickFlightContactCounters();
+        tickFlightDuration();
 
         syncFlightAnimationState();
 
@@ -677,7 +676,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             setHovering(false);
         }
 
-        this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
+        tickFlightNavigationState();
 
         if (isSkyfallMovementLocked()) {
             if (!level().isClientSide && !isAiFlightDone()) {
@@ -688,9 +687,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             tickAsyncFlightNavigation();
         }
 
-        tickBankingLogic();
-        tickBarrelRollLogic();
-        tickStandardPitchingLogic();
+        tickFlightOrientation();
         breathPose.tick(this, isBreathingFire() && getSkyfallElapsedTicks(1.0F) < 0.0F,
                 getFireBreathVisualDirection(1.0F));
         collisionState.invalidate();
@@ -2332,26 +2329,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
-    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
-        return DATA_FLYING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
-        return DATA_TAKEOFF;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
-        return DATA_HOVERING;
-    }
-
-    @Override
-    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
-        return DATA_LANDING;
-    }
-
-    @Override
     protected boolean canApplyFlyingState(boolean flying) {
         return isAiWaterBreachTakeoffActive()
                 || !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
@@ -2383,11 +2360,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void onLandingDataSet(boolean landing) {
-    }
-
-    @Override
-    public int getFlightMode() {
-        return evaluateStandardFlightMode(false);
     }
 
     @Override
@@ -2894,22 +2866,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         super.onDeathAbilityStarted();
     }
 
-    private void tickBankingLogic() {
-        DragonFlightVisuals.tickBanking(
-                this.flightVisualState,
-                this.isFlying(),
-                this.horizontalCollision,
-                this.verticalCollision,
-                this.getYRot(),
-                this.yRotO
-        );
-    }
-
-    @Override
-    protected DragonFlightVisuals.State getFlightVisualState() {
-        return this.flightVisualState;
-    }
-
     @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
         return DATA_FLIGHT_PITCH;
@@ -3257,13 +3213,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Actions such as roar must retain control of jaw tracks also present in the mixed flight pose.
-        controllers.add(movementController, flightController, vocalController, actionController, fastActionController, interactionController);
+        AnimationHelper.registerDragonControllers(this, controllers, vocalController,
+                movementController, flightController, vocalController, actionController, fastActionController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
-                fastActionController, flightController, vocalController, interactionController);
-        AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupMovementController(movementController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);

@@ -1,13 +1,10 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
-import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw.NulljawBreedBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw.NulljawFloatWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw.NulljawFollowOwnerBehaviour;
@@ -22,33 +19,23 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.sensing.Sensor;
-import net.minecraft.world.entity.ai.sensing.SensorType;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 
 import java.util.List;
 
-public final class NulljawBrain implements DragonBrainOwner<Nulljaw> {
+public final class NulljawBrain extends DragonBrainProfile<Nulljaw> {
     @Override
-    public List<SensorType<? extends Sensor<? super Nulljaw>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
-    }
-
-    @Override
-    public void updateActivity(Brain<Nulljaw> brain, Nulljaw dragon) {
+    protected boolean selectPriorityActivity(Brain<Nulljaw> brain, Nulljaw dragon) {
         Entity projectile = brain.getMemory(DragonMemories.INTERCEPT_PROJECTILE).orElse(null);
-        LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (NulljawShulkerBulletSensorBehaviour.isValidThreat(dragon, projectile)
-                || canFight(dragon, target)) {
+        if (NulljawShulkerBulletSensorBehaviour.isValidThreat(dragon, projectile)) {
             brain.setActiveActivityIfPossible(getCombatActivity(brain));
-        } else {
-            brain.useDefaultActivity();
+            return true;
         }
+        return false;
     }
 
     @Override
-    public List<DragonBehaviourGroup<Nulljaw>> getDragonBrainBehaviourGroups() {
+    protected List<DragonBehaviourGroup<Nulljaw>> createBehaviourGroups() {
         return List.of(
                 DragonBehaviourGroup.<Nulljaw>activity(Activity.CORE)
                         .behaviours(
@@ -62,35 +49,28 @@ public final class NulljawBrain implements DragonBrainOwner<Nulljaw> {
                         .behaviours(new NulljawTacticalCombatBehaviour())
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)
                         .build(),
-                DragonBehaviourGroup.<Nulljaw>activity(Activity.IDLE)
-                        .behaviours(
-                                new FirstApplicableDragonBehaviour<>(
-                                        new NulljawFollowParentBehaviour(),
-                                        new NulljawFollowOwnerBehaviour(),
-                                        new NulljawTemptBehaviour(),
-                                        new NulljawBreedBehaviour(
-                                                1.0D,
-                                                Nulljaw.BREED_PARTNER_RANGE,
-                                                Nulljaw.BREED_DISTANCE_SQR
-                                        ),
-                                        new NulljawPackFollowBehaviour(),
-                                        new NulljawFloatWanderBehaviour()
-                                )
-                        )
-                        .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)
-                        .build()
+                idleGroup(
+                    new NulljawFollowParentBehaviour(),
+                    new NulljawFollowOwnerBehaviour(),
+                    new NulljawTemptBehaviour(),
+                    new NulljawBreedBehaviour(
+                            1.0D,
+                            Nulljaw.BREED_PARTNER_RANGE,
+                            Nulljaw.BREED_DISTANCE_SQR
+                    ),
+                    new NulljawPackFollowBehaviour(),
+                    new NulljawFloatWanderBehaviour()
+                )
         );
     }
 
-    private boolean canFight(Nulljaw dragon, LivingEntity target) {
-        if (!DragonTargetLifecycle.isValidTarget(dragon, target)
+    @Override
+    protected boolean canFight(Nulljaw dragon, LivingEntity target) {
+        if (!super.canFight(dragon, target)
                 || !target.attackable()
                 || dragon.isAlly(target)
                 || dragon.isBaby()
-                || dragon.isVehicle()
-                || dragon.isPassenger()
-                || dragon.isOrderedToSit()
-                || target instanceof Player player && (player.isCreative() || player.isSpectator())) {
+                || dragon.isPassenger()) {
             return false;
         }
         double range = Math.max(16.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
